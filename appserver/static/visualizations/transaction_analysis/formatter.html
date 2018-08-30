@@ -1,0 +1,51 @@
+<form class="splunk-formatter-section" section-label="Default Thresholds">
+    <splunk-control-group label="Warning Threshold">
+        <splunk-text-input name="{{VIZ_NAMESPACE}}.warningThreshold" value="12"></splunk-text-input>
+	</splunk-control-group>
+	<splunk-control-group label="Critical Threshold">
+        <splunk-text-input name="{{VIZ_NAMESPACE}}.criticalThreshold" value="18"></splunk-text-input>
+	</splunk-control-group>
+</form>
+
+<form class="splunk-formatter-section" section-label="Options">
+    <splunk-control-group label="Granularity">
+        <splunk-text-input name="{{VIZ_NAMESPACE}}.granularity" value="5"></splunk-text-input>
+    </splunk-control-group>
+	 <splunk-control-group label="Show Legend">
+		<splunk-select name="{{VIZ_NAMESPACE}}.showLegend" value="true" section-label="Show Legend">
+			<option value="true">Show Legend</option>
+			<option value="false">Hide Legend</option>
+		</splunk-select>
+	</splunk-control-group>
+	
+</form>
+
+<form class="splunk-formatter-section" section-label="Colours">
+    <splunk-control-group label="Ok Colour">		<splunk-color-picker name="{{VIZ_NAMESPACE}}.okColour" value="#78B24A">			</splunk-color-picker></splunk-control-group>
+	<splunk-control-group label="Warning Colour">	<splunk-color-picker name="{{VIZ_NAMESPACE}}.warningColour" value="#E0C135">	</splunk-color-picker></splunk-control-group>
+	<splunk-control-group label="Critical Colour">	<splunk-color-picker name="{{VIZ_NAMESPACE}}.criticalColour" value="#DD0000">	</splunk-color-picker></splunk-control-group>
+	<splunk-control-group label="No Data Colour">	<splunk-color-picker name="{{VIZ_NAMESPACE}}.noDataColour" value="#5EBFC6">		</splunk-color-picker></splunk-control-group>
+</form>
+
+<form class="splunk-formatter-section" section-label="Downtime Range">
+    <splunk-control-group label="Downtime Start">
+        <splunk-text-input name="{{VIZ_NAMESPACE}}.downTimeStart" value="0"></splunk-text-input>
+	</splunk-control-group>
+	<splunk-control-group label="Downtime End">
+        <splunk-text-input name="{{VIZ_NAMESPACE}}.downTimeEnd" value="7"></splunk-text-input>
+	</splunk-control-group>
+</form>
+
+<form class="splunk-formatter-section" section-label="Time Format">
+    <splunk-control-group label="Time Format">
+		<splunk-select name="{{VIZ_NAMESPACE}}.timeFormat" value="h:mm A" section-label="Time Format">
+			<option value="h:mm A">10:35 PM</option>
+			<option value="H:mm">22:35</option>
+			<option value="hA">10PM</option>
+			<option value="H">22</option>
+			<option value="h:mm:ss A">10:35:06 PM</option>
+			<option value="H:mm:ss">22:35:06</option>
+		</splunk-select>
+	</splunk-control-group>
+</form>
+
