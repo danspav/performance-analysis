@@ -42,16 +42,20 @@ define([
 		
 		//Make sure we have the following: _time, name, value, status
 		var i = 0;
-		var allFieldsThere = true
+		var hasName = false;
+		var hasTime = false;
+		var hasStatus = false;
+		var hasValue = false;
 		for(i=0; i<data.fields.length; i++){
-			if(data.fields[i].name!="_time" && data.fields[i].name!="name" && data.fields[i].name!="value" && data.fields[i].name!="status"){
-				allFieldsThere = false;
-			}
+			if(data.fields[i].name=="_time") hasTime =true;
+			if(data.fields[i].name=="status") hasStatus =true;
+			if(data.fields[i].name=="value") hasValue =true;
+			if(data.fields[i].name=="name") hasName =true;
 		}
 		
 		// Check for invalid data
-		if(!allFieldsThere){
-			throw new SplunkVisualizationBase.VisualizationError('Missing values. Please include the following fields in your search query: name, value, status');
+		if(!(hasTime && hasStatus && hasValue && hasName)){
+			throw new SplunkVisualizationBase.VisualizationError('Missing values. Please include the following fields in your search query: name, value, status.<br>e.g. <code>...| table _time, name, value, status, threshold_warning, threshold_critical</code>');
 		}
 		return data;
 	},
