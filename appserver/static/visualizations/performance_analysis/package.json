@@ -1,28 +1,27 @@
 {
-  "name": "jds_transaction_analysis",
+  "name": "performance_analysis",
   "version": "1.0.0",
-  "description": "Visualisation of Transaction Performance and Availability.",
+  "description": "A Splunk visualisation for showing tabular performance and availabilty metrics over time.",
   "main": "visualization.js",
   "scripts": {
     "build": "$SPLUNK_HOME/bin/splunk cmd node ./node_modules/webpack/bin/webpack.js",
     "devbuild": "$SPLUNK_HOME/bin/splunk cmd node ./node_modules/webpack/bin/webpack.js --progress",
     "watch": "$SPLUNK_HOME/bin/splunk cmd node ./node_modules/webpack/bin/webpack.js -d --watch --progress"
   },
-  "author": "Daniel Spavin (JDS)",
+  "author": "Daniel Spavin (https://spavin.org)",
   "license": "MIT",
   "devDependencies": {
     "webpack": "^1.12.6"
   },
   "dependencies": {
     "classes": "^0.3.0",
-    "d3": "^3.5.17",
-    "jquery": "^2.2.0",
+    "jquery": "^3.0.0",
     "moment": "^2.18.1",
     "stringify": "^5.1.0",
     "underscore": "^1.8.3"
   },
   "keywords": [
-    "Visualisation",
+    "visualization",
     "JDS"
   ]
 }
