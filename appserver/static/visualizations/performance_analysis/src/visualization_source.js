@@ -3,7 +3,7 @@ define([
             'underscore',
             'api/SplunkVisualizationBase',
             'api/SplunkVisualizationUtils',
-			'jds_transaction_analysis',
+			'performance_analysis',
 			'moment'
         ],
         function(
@@ -19,7 +19,7 @@ define([
             // Save this.$el for convenience
             this.$el = $(this.el);
             // Add a css selector class
-            this.$el.addClass('transaction_analysis');
+            this.$el.addClass('performance_analysis');
         },
  
         getInitialDataParams: function() {
@@ -85,8 +85,8 @@ define([
  
 		//this.$el.class="transaction_analysis";
 		
-		//var trans_analysis = require("jds_transaction_analysis");
-		const { transaction_analysis, transaction, time_bucket } = require('jds_transaction_analysis');
+		//var trans_analysis = require("performance_analysis");
+		const { performance_analysis, transaction, time_bucket } = require('performance_analysis');
 		
 		// Get Config parameters:
 		var granularity = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'granularity']) || 15;
@@ -96,9 +96,11 @@ define([
 		var noDataColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'noDataColour'] || "#5EBFC6";		
 		var warningThreshold = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'warningThreshold']) || 8;
 		var criticalThreshold = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'criticalThreshold']) || 12;
-		
-		
-		var ta = new transaction_analysis(granularity, warningThreshold, criticalThreshold);
+		var timeFormat = config[this.getPropertyNamespaceInfo().propertyNamespace + "timeFormat"] || "h:mm A";
+		var downTimeStart = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + "downTimeStart"]) || 0
+		var downTimeEnd = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + "downTimeEnd"]) || 0
+		var showLegend = config[this.getPropertyNamespaceInfo().propertyNamespace + showLegend] || true
+		var ta = new performance_analysis(granularity, warningThreshold, criticalThreshold, downTimeStart,downTimeEnd,timeFormat,showLegend);
 		
 		ta.set_colours(okColour,warningColour,criticalColour,noDataColour);
 		var vizObj = this

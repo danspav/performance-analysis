@@ -19,13 +19,13 @@ table.performance_analysis td.ok { border: 1px solid #efefef;background: #5cc05c
 table.performance_analysis td.warning { border: 1px solid #efefef;background: rgb(255, 193, 0); }
 table.performance_analysis td.critical { border: 1px solid #efefef;background: rgb(214,59,59); }
 table.performance_analysis td.nodata {border: 1px solid #efefef;}
-table.performance_analysis td.error_10 { background:url(/static/app/performance_analysis_vis/images/error_10.png) no-repeat center top; }
-table.performance_analysis td.error_20 { background: url(/static/app/performance_analysis_vis/images/error_20.png) no-repeat center top; }
-table.performance_analysis td.error_50 { background: url(/static/app/performance_analysis_vis/images/error_50.png) no-repeat center top; }
-table.performance_analysis td.error_30 { background: url(/static/app/performance_analysis_vis/images/error_30.png) no-repeat center top; }
-table.performance_analysis td.error_70 { background: url(/static/app/performance_analysis_vis/images/error_70.png) no-repeat center top; }
-table.performance_analysis td.error_90 { background: url(/static/app/performance_analysis_vis/images/error_90.png) no-repeat center top; }
+table.performance_analysis td.error_10 { background:url(/static/app/performance-analysis/images/error_10.png) no-repeat center top; }
+table.performance_analysis td.error_20 { background: url(/static/app/performance-analysis/images/error_20.png) no-repeat center top; }
+table.performance_analysis td.error_50 { background: url(/static/app/performance-analysis/images/error_50.png) no-repeat center top; }
+table.performance_analysis td.error_30 { background: url(/static/app/performance-analysis/images/error_30.png) no-repeat center top; }
+table.performance_analysis td.error_70 { background: url(/static/app/performance-analysis/images/error_70.png) no-repeat center top; }
+table.performance_analysis td.error_90 { background: url(/static/app/performance-analysis/images/error_90.png) no-repeat center top; }
 table.performance_analysis td.time { background-color: #f1f1f1;}
-table.performance_analysis td.downtime { background: url(/static/app/performance_analysis_vis/images/downtime.gif) repeat;}
+table.performance_analysis td.downtime { background: url(/static/app/performance-analysis/images/downtime.gif) repeat;}
 table.performance_analysis td{border-radius:5px; border:none!important;}
 table.performance_analysis_legend{background: none!important; border: 1px solid #efefef!important;width:auto!important;display:none;}

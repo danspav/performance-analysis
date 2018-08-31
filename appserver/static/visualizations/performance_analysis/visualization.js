@@ -64,7 +64,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	            // Save this.$el for convenience
 	            this.$el = $(this.el);
 	            // Add a css selector class
-	            this.$el.addClass('transaction_analysis');
+	            this.$el.addClass('performance_analysis');
 	        },
 	 
 	        getInitialDataParams: function() {
@@ -130,8 +130,8 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	 
 			//this.$el.class="transaction_analysis";
 			
-			//var trans_analysis = require("jds_transaction_analysis");
-			const { transaction_analysis, transaction, time_bucket } = __webpack_require__(5);
+			//var trans_analysis = require("performance_analysis");
+			const { performance_analysis, transaction, time_bucket } = __webpack_require__(5);
 			
 			// Get Config parameters:
 			var granularity = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'granularity']) || 15;
@@ -141,12 +141,11 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 			var noDataColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'noDataColour'] || "#5EBFC6";		
 			var warningThreshold = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'warningThreshold']) || 8;
 			var criticalThreshold = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'criticalThreshold']) || 12;
-			var downTimeStart = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'downTimeStart']) || 0;
-			var downTimeEnd = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'downTimeEnd']) || 0;
-			var timeFormat = config[this.getPropertyNamespaceInfo().propertyNamespace + 'timeFormat'] || "h:mm A";
-			var showLegend = config[this.getPropertyNamespaceInfo().propertyNamespace + 'showLegend'] || true;
-			
-			var ta = new transaction_analysis(granularity, warningThreshold, criticalThreshold, downTimeStart,downTimeEnd,timeFormat,showLegend);
+			var timeFormat = config[this.getPropertyNamespaceInfo().propertyNamespace + "timeFormat"] || "h:mm A";
+			var downTimeStart = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + "downTimeStart"]) || 0
+			var downTimeEnd = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + "downTimeEnd"]) || 0
+			var showLegend = config[this.getPropertyNamespaceInfo().propertyNamespace + showLegend] || true
+			var ta = new performance_analysis(granularity, warningThreshold, criticalThreshold, downTimeStart,downTimeEnd,timeFormat,showLegend);
 			
 			ta.set_colours(okColour,warningColour,criticalColour,noDataColour);
 			var vizObj = this
@@ -11558,304 +11557,304 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 /***/ (function(module, exports, __webpack_require__) {
 
 	//https://docs.npmjs.com/getting-started/creating-node-modules
-	//https://googlechrome.github.io/samples/classes-es6/
-	class transaction_analysis{
-		constructor(granularity, warning_threshold, critical_threshold,down_time_start,down_time_end,time_format,show_legend){
-			this.transactions = [];
-			this.num_transactions = 0;
-			this.start_time = Date.now();
-			this.end_time = Date.now();
-			this.granularity = granularity;
-			this.numBuckets = 12;
-			this.warning_threshold = warning_threshold;
-			this.critical_threshold = critical_threshold;
-			//Colour Defaults:
-			this.okColour = "#78B24A";
-			this.warningColour = "#E0C135";
-			this.criticalColour = "#DD0000";
-			this.noDataColour = "#5EBFC6";
-			this.downTimeStart=down_time_start;
-			this.downTimeEnd=down_time_end;
-			this.timeFormat = time_format;
-			this.showLegend = show_legend;
-			//----------------
-			this.data_item;
-			this.current_transaction;
-		}
-		
-
-		//Method to set all the colours for OK / Warning/ Critical / NoData
-		set_colours(okColour, warningColour, criticalColour, noDataColour){
-			this.okColour = okColour;
-			this.warningColour = warningColour;
-			this.criticalColour = criticalColour;
-			this.noDataColour = noDataColour;
-		}
-
-
-		setData(data){
-			var temp_bucket;
-			var bucket;
-			var bucket_start_time_seconds;
-			var bucket_end_time_seconds;
-			var bucket_index = 0;
-			var start_time_in_seconds;
-			var time_minute = 0;
-			var time_hour = 0;
-			var i = 0;
-			var fields = [];
-			var data_item;
-			var current_transaction;
-			var k;
-			var oMoment = __webpack_require__(6);
-			var date_first_row;
-			var date_last_row;
-			var date_temp;
-			var SplunkVisUtils = __webpack_require__(4);
-			var vizUtils = __webpack_require__(4);
-			const { transaction_analysis, transaction, time_bucket } = __webpack_require__(5);
-			//------------------------------  Get data row field indexes ----------------------------------------------------------------------
-			for (i=0; i<data.fields.length; i++){
-				fields[data.fields[i].name.toLowerCase()]  = i;
-			}
-
-			// Set up the Start and End dates based on data supplied. This will determine how much time each bucket has, as  num_buckets is configurable
-			date_first_row = data.rows[0][fields["_time"]];
-			date_first_row  = oMoment(date_first_row);
-			date_last_row = data.rows[data.rows.length-1][fields["_time"]];
-			date_last_row = oMoment(date_last_row); //, 'DD/MM/YYYY HH:mm:ss A'
-			//Set earliest time as start time, and latest time as end time
-			if (date_first_row > date_last_row) { 
-				this.start_time = SplunkVisUtils.parseTimestamp(date_last_row);
-				this.end_time = SplunkVisUtils.parseTimestamp(date_first_row);
-			}else{
-				this.start_time = SplunkVisUtils.parseTimestamp(date_first_row);
-				this.end_time = SplunkVisUtils.parseTimestamp(date_last_row);
+		//https://googlechrome.github.io/samples/classes-es6/
+		class performance_analysis{
+			constructor(granularity, warning_threshold, critical_threshold,down_time_start,down_time_end,time_format,show_legend){
+				this.transactions = [];
+				this.num_transactions = 0;
+				this.start_time = Date.now();
+				this.end_time = Date.now();
+				this.granularity = granularity;
+				this.numBuckets = 12;
+				this.warning_threshold = warning_threshold;
+				this.critical_threshold = critical_threshold;
+				//Colour Defaults:
+				this.okColour = "#78B24A";
+				this.warningColour = "#E0C135";
+				this.criticalColour = "#DD0000";
+				this.noDataColour = "#5EBFC6";
+				this.downTimeStart=down_time_start;
+				this.downTimeEnd=down_time_end;
+				this.timeFormat = time_format;
+				this.showLegend = show_legend;
+				//----------------
+				this.data_item;
+				this.current_transaction;
 			}
 			
-			//Snap to the granularity - e.g. if Granularity is 5 minutes, set start/end time to hh:00:00, hh:05:00, hh:10:00
-			if(this.granularity<=60){
-				time_minute = oMoment(this.start_time).minute()
-				this.start_time=oMoment(this.start_time).minute(Math.floor(time_minute/this.granularity)* this.granularity).second(0).toDate();
-				time_minute = oMoment(this.start_end).minute()
-				this.end_time=oMoment(this.end_time).minute(Math.ceil(time_minute/this.granularity)* this.granularity).second(0).toDate();
-			}else{
-				// Granularity is more than 1 hour - just set start minutes/seconds to hh:00:00 and end minutes/seconds to hh:59:59
-				this.start_time=oMoment(this.start_time).minute(0).second(0).toDate();
-				this.end_time=oMoment(this.end_time).minute(59).second(59).toDate();
+
+			//Method to set all the colours for OK / Warning/ Critical / NoData
+			set_colours(okColour, warningColour, criticalColour, noDataColour){
+				this.okColour = okColour;
+				this.warningColour = warningColour;
+				this.criticalColour = criticalColour;
+				this.noDataColour = noDataColour;
 			}
-			
-			var currentTime = this.start_time.getTime();
-			var localOffset = (-1) * this.start_time.getTimezoneOffset() * 60000;
-			var start_time_in_seconds = Math.round(new Date(currentTime + localOffset).getTime() / 1000);
-			var start_time_in_seconds_utc = this.start_time.getTime()/1000;
-			// Timezone won't affect the number of buckets
-			this.num_buckets = Math.ceil(((this.end_time.getTime() / 1000)  - (this.start_time.getTime() / 1000) ) / (this.granularity*60)) +1;
-			//---------------- End set start / end time from data object ----------------------------
 
 
-			// Get the current transation, or create it if it doesn't yet exist
-			for (i=0; i<data.rows.length; i++){
-				data_item = data.rows[i];
-				//------------------------------  Create or Locate Transaction Objects ----------------------------------------------------------------------
-				if(typeof this.transactions[vizUtils.escapeHtml(data_item[fields["transaction_name"]])] === 'undefined') {
-					// does not exist
-					this.transactions[vizUtils.escapeHtml(data_item[fields["transaction_name"]])] = new transaction(vizUtils.escapeHtml(data_item[fields["transaction_name"]]));
-					this.num_transactions++;
-					current_transaction = this.transactions[vizUtils.escapeHtml(data_item[fields["transaction_name"]])];
-					current_transaction.num_buckets = this.num_buckets;
-					// Create Time Buckets for this transaction
-					for(k=0;k<current_transaction.num_buckets;k++){
-						//Set up the time bucket
-						bucket_start_time_seconds = start_time_in_seconds + (k *  this.granularity * 60);
-						bucket_end_time_seconds = start_time_in_seconds + ((1+k) * this.granularity * 60) -1;
-						temp_bucket = new time_bucket();
-						temp_bucket.set_colours(this.okColour, this.warningColour, this.criticalColour, this.noDataColour);
-						temp_bucket.warning_threshold = data_item[fields["warning_threshold"]] || this.warning_threshold;
-						temp_bucket.critical_threshold = data_item[fields["critical_threshold"]] || this.critical_threshold;
-						temp_bucket.set_start_time(bucket_start_time_seconds);
-						temp_bucket.set_end_time(bucket_end_time_seconds);
-						// Is the bucket during down time?
-						if(oMoment(temp_bucket.start_time).hour() >= this.downTimeStart && oMoment(temp_bucket.end_time).hour() < this.downTimeEnd) temp_bucket.isInDownTime = true;
-						//Add to Transaction's bucket array
-						current_transaction.buckets.push(temp_bucket);
-					}
-				} else {
-					// does exist
+			setData(data){
+				var temp_bucket;
+				var bucket;
+				var bucket_start_time_seconds;
+				var bucket_end_time_seconds;
+				var bucket_index = 0;
+				var start_time_in_seconds;
+				var time_minute = 0;
+				var time_hour = 0;
+				var i = 0;
+				var fields = [];
+				var data_item;
+				var current_transaction;
+				var k;
+				var oMoment = __webpack_require__(6);
+				var date_first_row;
+				var date_last_row;
+				var date_temp;
+				var SplunkVisUtils = __webpack_require__(4);
+				var vizUtils = __webpack_require__(4);
+				const { performance_analysis, transaction, time_bucket } = __webpack_require__(5);
+				//------------------------------  Get data row field indexes ----------------------------------------------------------------------
+				for (i=0; i<data.fields.length; i++){
+					fields[data.fields[i].name.toLowerCase()]  = i;
 				}
-				//------------------------------  Fill in details for Bucket Objects ----------------------------------------------------------------------
-				current_transaction = this.transactions[vizUtils.escapeHtml(data_item[fields["transaction_name"]])];		
-				// Find the correct bucket to put the transaction details into:
-				// Index = Math.ceiling(   (time - start_time) / granularity   ) 
-				bucket_start_time_seconds = oMoment(data_item[fields["_time"]]).toDate().getTime()/1000; 
-				bucket_index = Math.ceil(   (bucket_start_time_seconds - (start_time_in_seconds_utc-1)) / (60*this.granularity)) -1;
-				if (bucket_index > current_transaction.buckets.length) bucket_index = current_transaction.buckets.length-1;
-				current_transaction.buckets[bucket_index].add_transaction(data_item, fields);
-			}	
-		}
 
-		getHTML(){
-			var transaction_counter = 0;
-			var bucket_counter = 0;
-			var css="";
-			var html = '<table class="transaction_analysis">';
-			var transaction;
-			var oMoment = __webpack_require__(6);
-			var transaction_names = Object.keys(this.transactions);
-			for(transaction_counter=0; transaction_counter < transaction_names.length ; transaction_counter++){
-				transaction = this.transactions[transaction_names[transaction_counter]];
+				// Set up the Start and End dates based on data supplied. This will determine how much time each bucket has, as  num_buckets is configurable
+				date_first_row = data.rows[0][fields["_time"]];
+				date_first_row  = oMoment(date_first_row);
+				date_last_row = data.rows[data.rows.length-1][fields["_time"]];
+				date_last_row = oMoment(date_last_row); //, 'DD/MM/YYYY HH:mm:ss A'
+				//Set earliest time as start time, and latest time as end time
+				if (date_first_row > date_last_row) { 
+					this.start_time = SplunkVisUtils.parseTimestamp(date_last_row);
+					this.end_time = SplunkVisUtils.parseTimestamp(date_first_row);
+				}else{
+					this.start_time = SplunkVisUtils.parseTimestamp(date_first_row);
+					this.end_time = SplunkVisUtils.parseTimestamp(date_last_row);
+				}
 				
-				// Print out the header row of the table
-				if(transaction_counter==0){
-					html += '<tr><td>&nbsp;</td>';
-					for(bucket_counter=0; bucket_counter < this.num_buckets -1; bucket_counter++){
-						//If time is in a downtime period, add the downtime class
-						css = (transaction.buckets[bucket_counter].isInDownTime) ? " downtime" : "";
-						html += '<td class="time' + css + '">' + oMoment(transaction.buckets[bucket_counter].start_time).format(this.timeFormat) + '</td>';
+				//Snap to the granularity - e.g. if Granularity is 5 minutes, set start/end time to hh:00:00, hh:05:00, hh:10:00
+				if(this.granularity<=60){
+					time_minute = oMoment(this.start_time).minute()
+					this.start_time=oMoment(this.start_time).minute(Math.floor(time_minute/this.granularity)* this.granularity).second(0).toDate();
+					time_minute = oMoment(this.start_end).minute()
+					this.end_time=oMoment(this.end_time).minute(Math.ceil(time_minute/this.granularity)* this.granularity).second(0).toDate();
+				}else{
+					// Granularity is more than 1 hour - just set start minutes/seconds to hh:00:00 and end minutes/seconds to hh:59:59
+					this.start_time=oMoment(this.start_time).minute(0).second(0).toDate();
+					this.end_time=oMoment(this.end_time).minute(59).second(59).toDate();
+				}
+				
+				var currentTime = this.start_time.getTime();
+				var localOffset = (-1) * this.start_time.getTimezoneOffset() * 60000;
+				var start_time_in_seconds = Math.round(new Date(currentTime + localOffset).getTime() / 1000);
+				var start_time_in_seconds_utc = this.start_time.getTime()/1000;
+				// Timezone won't affect the number of buckets
+				this.num_buckets = Math.ceil(((this.end_time.getTime() / 1000)  - (this.start_time.getTime() / 1000) ) / (this.granularity*60)) +1;
+				//---------------- End set start / end time from data object ----------------------------
+
+
+				// Get the current transation, or create it if it doesn't yet exist
+				for (i=0; i<data.rows.length; i++){
+					data_item = data.rows[i];
+					//------------------------------  Create or Locate Transaction Objects ----------------------------------------------------------------------
+					if(typeof this.transactions[vizUtils.escapeHtml(data_item[fields["transaction_name"]])] === 'undefined') {
+						// does not exist
+						this.transactions[vizUtils.escapeHtml(data_item[fields["transaction_name"]])] = new transaction(vizUtils.escapeHtml(data_item[fields["transaction_name"]]));
+						this.num_transactions++;
+						current_transaction = this.transactions[vizUtils.escapeHtml(data_item[fields["transaction_name"]])];
+						current_transaction.num_buckets = this.num_buckets;
+						// Create Time Buckets for this transaction
+						for(k=0;k<current_transaction.num_buckets;k++){
+							//Set up the time bucket
+							bucket_start_time_seconds = start_time_in_seconds + (k *  this.granularity * 60);
+							bucket_end_time_seconds = start_time_in_seconds + ((1+k) * this.granularity * 60) -1;
+							temp_bucket = new time_bucket();
+							temp_bucket.set_colours(this.okColour, this.warningColour, this.criticalColour, this.noDataColour);
+							temp_bucket.warning_threshold = data_item[fields["warning_threshold"]] || this.warning_threshold;
+							temp_bucket.critical_threshold = data_item[fields["critical_threshold"]] || this.critical_threshold;
+							temp_bucket.set_start_time(bucket_start_time_seconds);
+							temp_bucket.set_end_time(bucket_end_time_seconds);
+							// Is the bucket during down time?
+							if(oMoment(temp_bucket.start_time).hour() >= this.downTimeStart && oMoment(temp_bucket.end_time).hour() < this.downTimeEnd) temp_bucket.isInDownTime = true;
+							//Add to Transaction's bucket array
+							current_transaction.buckets.push(temp_bucket);
+						}
+					} else {
+						// does exist
 					}
-					html+= '</tr>';
-				}
-				//---------------------------------------
-				html += '<tr><tr><td class="transaction_name">' + transaction.name + '</td>';
-				for(bucket_counter=0; bucket_counter < this.num_buckets -1; bucket_counter++){
-					html += transaction.buckets[bucket_counter].getHTML();
-				}
-				html += '</tr>';
-			} // loop transaction_counter
-			html += '</table>';
-			//Add a legend?
-			if(this.showLegend!="false"){
-				html += '<table class=transaction_analysis_legend_container"><tr><td><a href="#" onclick="$(\'table.transaction_analysis_legend\').toggle();return false;" title="View Legend"><img src="/static/app/transaction_analysis_vis/images/legend.gif" alt="Show or hide the legend" width="16" height="16" /></a></td><td>';
-				html += '<table class="transaction_analysis transaction_analysis_legend"><tr><td><strong>Legend:</strong></td>';
-				html += '<td class="ok"><img src="/static/app/transaction_analysis_vis/images/blank.gif" alt="Infrastrucure OK" width="16" height="16" /></td><td>Infrastructure OK</td><td>&nbsp;</td>';
-				html += '<td class="warning"><img src="/static/app/transaction_analysis_vis/images/blank.gif" alt="Infrastrucure Amber" width="16" height="16" /></td><td>Infrastructure Amber</td><td>&nbsp;</td>';
-				html += '<td class="critical"><img src="/static/app/transaction_analysis_vis/images/blank.gif" alt="Infrastrucure Red" width="16" height="16" /></td><td>Infrastructure Red</td><td>&nbsp;</td>';
-				html += '<td><img src="/static/app/transaction_analysis_vis/images/amber.png" style="width:16px; height: 16px;" width="16" height="16" title="Application reported AMBER" /></td><td>Application Ammber</td><td>&nbsp;</td>';
-				html += '<td><img src="/static/app/transaction_analysis_vis/images/red.png" style="width:16px; height: 16px;" width="16" height="16" title="Application reported Red" /></td><td>Application Red</td><td>&nbsp;</td>';
-				html += '<td class="downtime"><img src="/static/app/transaction_analysis_vis/images/blank.gif" alt="Down time" width="16" height="16" /></td><td>Down Time</td><td>&nbsp;</td></tr></table></td></table>';
+					//------------------------------  Fill in details for Bucket Objects ----------------------------------------------------------------------
+					current_transaction = this.transactions[vizUtils.escapeHtml(data_item[fields["transaction_name"]])];		
+					// Find the correct bucket to put the transaction details into:
+					// Index = Math.ceiling(   (time - start_time) / granularity   ) 
+					bucket_start_time_seconds = oMoment(data_item[fields["_time"]]).toDate().getTime()/1000; 
+					bucket_index = Math.ceil(   (bucket_start_time_seconds - (start_time_in_seconds_utc-1)) / (60*this.granularity)) -1;
+					if (bucket_index > current_transaction.buckets.length) bucket_index = current_transaction.buckets.length-1;
+					current_transaction.buckets[bucket_index].add_transaction(data_item, fields);
+				}	
 			}
-			
-			return html;
-		}
-	}
 
-	/* transaction class
-		This class defines a row in the transaction analysis graph.
-		It will house the time buckets, transaction name etc.
-		There will be multiple instances, but one per transaction name
-	*/
-	class transaction{
-
-		constructor(tname){
-			this.name = tname;		// the Transaction Name
-			this.num_passed = 0;		// The number of passed transactions
-			this.num_failed = 0;		// The number of failed transactions
-			this.total = 0;			// the Total number of transactions
-			this.buckets = [];	// The timebuckets
-		}
-	}
-
-	/* timeBucket class
-		This class is a collection of cells that will become the red/yellow/green/blue boxes in the analysis graph
-	*/
-	class  time_bucket {
-		
-		constructor(){
-			this.start_time;
-			this.end_time;
-			this.sum_response_time = 0.0;
-			this.average_response_time = 0.0;
-			this.num_passed = 0;
-			this.num_failed = 0;
-			this.num_amber = 0;
-			this.num_red = 0;
-			this.num_green = 0;
-			this.total = 0;
-			this.errorpc = 0.0;
-			this.warning_threshold = 8;
-			this.critical_threshold = 12;
-			//Colour Defaults:
-			this.okColour = "#78B24A";
-			this.warningColour = "#E0C135";
-			this.criticalColour = "#DD0000";
-			this.noDataColour = "#5EBFC6";
-			this.isInDownTime = false;
-		}
-		
-
-		set_colours(okColour, warningColour, criticalColour, noDataColour){
-			this.okColour =okColour;
-			this.warningColour = warningColour;
-			this.criticalColour = criticalColour;
-			this.noDataColour = noDataColour;
-		}
-		set_start_time(start){ 
-			this.start_time = new Date(1970, 0, 1); // Epoch
-			this.start_time.setSeconds(start);
-	    }
-		
-		set_end_time (end){
-			this.end_time = new Date(1970, 0, 1); // Epoch
-			this.end_time.setSeconds(end);
-	    };
-		
-		add_transaction(result_row,fields){
-			// Add the passed, failed, update percentages etc
-			if (result_row[fields["result"]].toLowerCase()!="fail"){
-				this.num_passed++;
-				this.sum_response_time += parseFloat(result_row[fields["response_time"]]);
-				this.average_response_time = Math.round(this.sum_response_time/ this.num_passed,2);
-			} 
-			if (result_row[fields["result"]].toLowerCase()=="fail") this.num_failed++;
-			if (result_row[fields["result"]].toLowerCase()=="green") this.num_green++;
-			if (result_row[fields["result"]].toLowerCase()=="amber") this.num_amber++;
-			if (result_row[fields["result"]].toLowerCase()=="red") this.num_red++;
-			if (result_row[fields["result"]].toLowerCase()=="critical") this.num_red++;
-			this.total++;
-			this.errorpc = +((this.num_failed / this.total).toFixed(2));
-		}
-		
-		getHTML(){
-			var css_class= '';
-			var html = '';
-			var downtimeHTML = '';
-			var colour = "";
-			var td_image = "";
-			// ---- Errors ----
-			if (this.errorpc >= 0) css_class = 'error_0';
-			if (this.errorpc >= .10) css_class =  'error_10';
-			if (this.errorpc >= .30) css_class =  'error_30';
-			if (this.errorpc >= .50) css_class =  'error_50';
-			if (this.errorpc >= .70) css_class =  'error_70';
-			if (this.errorpc >= .90) css_class =  'error_90';
-			
-			if (this.num_amber==0 && this.num_red==0){
-				td_image='<img src="/static/app/transaction_analysis_vis/images/blank.gif" style="width:16px; height: 16px;" width="16" height="16"  title="Application reported:&#13;GREEN ' + this.num_green + ' time(s)&#13;AMBER 0 time(s)&#13;RED 0 time(s)" />'
-			}else if(this.num_amber >0 && this.num_red==0){ 
-				td_image='<img src="/static/app/transaction_analysis_vis/images/amber.png" style="width:16px; height: 16px;" width="16" height="16" title="Application reported:&#13;GREEN ' + this.num_green + ' time(s)&#13;AMBER ' + this.num_amber + ' time(s)&#13;RED 0 time(s)" />'
-			} else{
-				td_image= '<img src="/static/app/transaction_analysis_vis/images/red.png" style="width:16px; height: 16px;" width="16" height="16"  title="Application reported:&#13;GREEN ' + this.num_green + ' time(s)&#13;AMBER ' + this.num_amber + ' time(s)&#13;RED ' + this.num_red + ' time(s)" />'
-			}
-			//if (this.num_passed==0){
-			//// ---- No Data----
-		    //		css_class += ' nodata';
-			//	colour = this.noDataColour;
-			//}else{
-				// ---- Response Time ----
-				if (this.average_response_time >= this.critical_threshold){ css_class += ' critical'; colour = this.criticalColour;}
-				if (this.average_response_time < this.critical_threshold && this.average_response_time >= this.warning_threshold) { css_class += ' warning'; colour = this.warningColour;}
-				if (this.average_response_time < this.warning_threshold) {css_class += ' ok'; colour = this.okColour;}
-			//}
-			if(this.isInDownTime) css_class += ' downtime'
-			html = '<td class="jds_ta_clickable ' + css_class + '" style="text-align:center;background-color: ' + colour + '!IMPORTANT" start_time="' + (this.start_time.getTime()/1000) + '" end_time="'+ (this.end_time.getTime()/1000) + '">' + td_image + '</td>';
+			getHTML(){
+				var transaction_counter = 0;
+				var bucket_counter = 0;
+				var css="";
+				var html = '<table class="performance_analysis">';
+				var transaction;
+				var oMoment = __webpack_require__(6);
+				var transaction_names = Object.keys(this.transactions);
+				for(transaction_counter=0; transaction_counter < transaction_names.length ; transaction_counter++){
+					transaction = this.transactions[transaction_names[transaction_counter]];
 					
-			return html;
+					// Print out the header row of the table
+					if(transaction_counter==0){
+						html += '<tr><td>&nbsp;</td>';
+						for(bucket_counter=0; bucket_counter < this.num_buckets -1; bucket_counter++){
+							//If time is in a downtime period, add the downtime class
+							css = (transaction.buckets[bucket_counter].isInDownTime) ? " downtime" : "";
+							html += '<td class="time' + css + '">' + oMoment(transaction.buckets[bucket_counter].start_time).format(this.timeFormat) + '</td>';
+						}
+						html+= '</tr>';
+					}
+					//---------------------------------------
+					html += '<tr><tr><td class="transaction_name">' + transaction.name + '</td>';
+					for(bucket_counter=0; bucket_counter < this.num_buckets -1; bucket_counter++){
+						html += transaction.buckets[bucket_counter].getHTML();
+					}
+					html += '</tr>';
+				} // loop transaction_counter
+				html += '</table>';
+				//Add a legend?
+				if(this.showLegend!="false"){
+					html += '<table class=performance_analysis_legend_container"><tr><td><a href="#" onclick="$(\'table.performance_analysis_legend\').toggle();return false;" title="View Legend"><img src="/static/app/performance-analysis/images/legend.gif" alt="Show or hide the legend" width="16" height="16" /></a></td><td>';
+					html += '<table class="performance_analysis performance_analysis_legend"><tr><td><strong>Legend:</strong></td>';
+					html += '<td class="ok"><img src="/static/app/performance-analysis/images/blank.gif" alt="Infrastrucure OK" width="16" height="16" /></td><td>Infrastructure OK</td><td>&nbsp;</td>';
+					html += '<td class="warning"><img src="/static/app/performance-analysis/images/blank.gif" alt="Infrastrucure Amber" width="16" height="16" /></td><td>Infrastructure Amber</td><td>&nbsp;</td>';
+					html += '<td class="critical"><img src="/static/app/performance-analysis/images/blank.gif" alt="Infrastrucure Red" width="16" height="16" /></td><td>Infrastructure Red</td><td>&nbsp;</td>';
+					html += '<td><img src="/static/app/performance-analysis/images/amber.png" style="width:16px; height: 16px;" width="16" height="16" title="Application reported AMBER" /></td><td>Application Ammber</td><td>&nbsp;</td>';
+					html += '<td><img src="/static/app/performance-analysis/images/red.png" style="width:16px; height: 16px;" width="16" height="16" title="Application reported Red" /></td><td>Application Red</td><td>&nbsp;</td>';
+					html += '<td class="downtime"><img src="/static/app/performance-analysis/images/blank.gif" alt="Down time" width="16" height="16" /></td><td>Down Time</td><td>&nbsp;</td></tr></table></td></table>';
+				}
+				
+				return html;
+			}
 		}
-	}
+
+		/* transaction class
+			This class defines a row in the transaction analysis graph.
+			It will house the time buckets, transaction name etc.
+			There will be multiple instances, but one per transaction name
+		*/
+		class transaction{
+
+			constructor(tname){
+				this.name = tname;		// the Transaction Name
+				this.num_passed = 0;		// The number of passed transactions
+				this.num_failed = 0;		// The number of failed transactions
+				this.total = 0;			// the Total number of transactions
+				this.buckets = [];	// The timebuckets
+			}
+		}
+
+		/* timeBucket class
+			This class is a collection of cells that will become the red/yellow/green/blue boxes in the analysis graph
+		*/
+		class  time_bucket {
+			
+			constructor(){
+				this.start_time;
+				this.end_time;
+				this.sum_response_time = 0.0;
+				this.average_response_time = 0.0;
+				this.num_passed = 0;
+				this.num_failed = 0;
+				this.num_amber = 0;
+				this.num_red = 0;
+				this.num_green = 0;
+				this.total = 0;
+				this.errorpc = 0.0;
+				this.warning_threshold = 8;
+				this.critical_threshold = 12;
+				//Colour Defaults:
+				this.okColour = "#78B24A";
+				this.warningColour = "#E0C135";
+				this.criticalColour = "#DD0000";
+				this.noDataColour = "#5EBFC6";
+				this.isInDownTime = false;
+			}
+			
+
+			set_colours(okColour, warningColour, criticalColour, noDataColour){
+				this.okColour =okColour;
+				this.warningColour = warningColour;
+				this.criticalColour = criticalColour;
+				this.noDataColour = noDataColour;
+			}
+			set_start_time(start){ 
+				this.start_time = new Date(1970, 0, 1); // Epoch
+				this.start_time.setSeconds(start);
+		    }
+			
+			set_end_time (end){
+				this.end_time = new Date(1970, 0, 1); // Epoch
+				this.end_time.setSeconds(end);
+		    };
+			
+			add_transaction(result_row,fields){
+				// Add the passed, failed, update percentages etc
+				if (result_row[fields["result"]].toLowerCase()!="fail"){
+					this.num_passed++;
+					this.sum_response_time += parseFloat(result_row[fields["response_time"]]);
+					this.average_response_time = Math.round(this.sum_response_time/ this.num_passed,2);
+				} 
+				if (result_row[fields["result"]].toLowerCase()=="fail") this.num_failed++;
+				if (result_row[fields["result"]].toLowerCase()=="green") this.num_green++;
+				if (result_row[fields["result"]].toLowerCase()=="amber") this.num_amber++;
+				if (result_row[fields["result"]].toLowerCase()=="red") this.num_red++;
+				if (result_row[fields["result"]].toLowerCase()=="critical") this.num_red++;
+				this.total++;
+				this.errorpc = +((this.num_failed / this.total).toFixed(2));
+			}
+			
+			getHTML(){
+				var css_class= '';
+				var html = '';
+				var downtimeHTML = '';
+				var colour = "";
+				var td_image = "";
+				// ---- Errors ----
+				if (this.errorpc >= 0) css_class = 'error_0';
+				if (this.errorpc >= .10) css_class =  'error_10';
+				if (this.errorpc >= .30) css_class =  'error_30';
+				if (this.errorpc >= .50) css_class =  'error_50';
+				if (this.errorpc >= .70) css_class =  'error_70';
+				if (this.errorpc >= .90) css_class =  'error_90';
+				
+				if (this.num_amber==0 && this.num_red==0){
+					td_image='<img src="/static/app/performance-analysis/images/blank.gif" style="width:16px; height: 16px;" width="16" height="16"  title="Application reported:&#13;GREEN ' + this.num_green + ' time(s)&#13;AMBER 0 time(s)&#13;RED 0 time(s)" />'
+				}else if(this.num_amber >0 && this.num_red==0){ 
+					td_image='<img src="/static/app/performance-analysis/images/amber.png" style="width:16px; height: 16px;" width="16" height="16" title="Application reported:&#13;GREEN ' + this.num_green + ' time(s)&#13;AMBER ' + this.num_amber + ' time(s)&#13;RED 0 time(s)" />'
+				} else{
+					td_image= '<img src="/static/app/performance-analysis/images/red.png" style="width:16px; height: 16px;" width="16" height="16"  title="Application reported:&#13;GREEN ' + this.num_green + ' time(s)&#13;AMBER ' + this.num_amber + ' time(s)&#13;RED ' + this.num_red + ' time(s)" />'
+				}
+				//if (this.num_passed==0){
+				//// ---- No Data----
+			    //		css_class += ' nodata';
+				//	colour = this.noDataColour;
+				//}else{
+					// ---- Response Time ----
+					if (this.average_response_time >= this.critical_threshold){ css_class += ' critical'; colour = this.criticalColour;}
+					if (this.average_response_time < this.critical_threshold && this.average_response_time >= this.warning_threshold) { css_class += ' warning'; colour = this.warningColour;}
+					if (this.average_response_time < this.warning_threshold) {css_class += ' ok'; colour = this.okColour;}
+				//}
+				if(this.isInDownTime) css_class += ' downtime'
+				html = '<td class="jds_ta_clickable ' + css_class + '" style="text-align:center;background-color: ' + colour + '!IMPORTANT" start_time="' + (this.start_time.getTime()/1000) + '" end_time="'+ (this.end_time.getTime()/1000) + '">' + td_image + '</td>';
+						
+				return html;
+			}
+		}
 
 
 
-	module.exports = { transaction_analysis, transaction, time_bucket}
+		module.exports = { performance_analysis, transaction, time_bucket}
 
 
 /***/ }),
