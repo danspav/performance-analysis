@@ -35,11 +35,23 @@ define([
 		if(data.rows.length < 1){
 			return false;
 		}
-		var datum = SplunkVisualizationUtils.escapeHtml(parseFloat(data.rows[0][0]));
- 
+		// We need a minimum of 3 fields returned
+		if(data.fields.length < 3){
+			throw new SplunkVisualizationBase.VisualizationError("Missing values. Please include the following fields in your search query: name, value, result");
+		}
+		
+		//Make sure we have the following: _time, name, value, result
+		var i = 0;
+		var allFieldsThere = true
+		for(i=0; i<data.fields.length; i++){
+			if(data.fields[i].name!="_time" && data.fields[i].name!="name" && data.fields[i].name!="value" && data.fields[i].name!="result"){
+				allFieldsThere = false;
+			}
+		}
+		
 		// Check for invalid data
-		if(_.isNaN(datum)){
-			throw new SplunkVisualizationBase.VisualizationError('This meter only supports numbers');
+		if(!allFieldsThere){
+			throw new SplunkVisualizationBase.VisualizationError('Missing values. Please include the following fields in your search query: name, value, result');
 		}
 		return data;
 	},
@@ -86,7 +98,7 @@ define([
 		//this.$el.class="transaction_analysis";
 		
 		//var trans_analysis = require("performance_analysis");
-		const { performance_analysis, transaction, time_bucket } = require('performance_analysis');
+		const { performance_analysis, item, time_bucket } = require('performance_analysis');
 		
 		// Get Config parameters:
 		var granularity = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'granularity']) || 15;
@@ -97,16 +109,18 @@ define([
 		var warningThreshold = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'warningThreshold']) || 8;
 		var criticalThreshold = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'criticalThreshold']) || 12;
 		var timeFormat = config[this.getPropertyNamespaceInfo().propertyNamespace + "timeFormat"] || "h:mm A";
-		var downTimeStart = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + "downTimeStart"]) || 0
-		var downTimeEnd = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + "downTimeEnd"]) || 0
-		var showLegend = config[this.getPropertyNamespaceInfo().propertyNamespace + showLegend] || true
-		var ta = new performance_analysis(granularity, warningThreshold, criticalThreshold, downTimeStart,downTimeEnd,timeFormat,showLegend);
+		var downTimeStart = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + "downTimeStart"]) || 0;
+		var downTimeEnd = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + "downTimeEnd"]) || 0;
+		var showLegend = config[this.getPropertyNamespaceInfo().propertyNamespace + showLegend] || true;
 		
-		ta.set_colours(okColour,warningColour,criticalColour,noDataColour);
+		// Now load the visualisation
+		var perfAnalysisVis = new performance_analysis(granularity, warningThreshold, criticalThreshold, downTimeStart,downTimeEnd,timeFormat,showLegend);
+		
+		perfAnalysisVis.set_colours(okColour,warningColour,criticalColour,noDataColour);
 		var vizObj = this
-		ta.setData(data);
-		this.$el.html(ta.getHTML());
-		var cells = document.getElementsByClassName("jds_ta_clickable");//this.$el.getElementsByClassName("jds_ta_clickable");
+		perfAnalysisVis.setData(data);
+		this.$el.html(perfAnalysisVis.getHTML());
+		var cells = document.getElementsByClassName("jds_ta_clickable");
 		var i = 0;
 		
 		for(i=0;i<cells.length;i++){
