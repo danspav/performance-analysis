@@ -37,21 +37,21 @@ define([
 		}
 		// We need a minimum of 3 fields returned
 		if(data.fields.length < 3){
-			throw new SplunkVisualizationBase.VisualizationError("Missing values. Please include the following fields in your search query: name, value, result");
+			throw new SplunkVisualizationBase.VisualizationError("Missing values. Please include the following fields in your search query: name, value, status");
 		}
 		
-		//Make sure we have the following: _time, name, value, result
+		//Make sure we have the following: _time, name, value, status
 		var i = 0;
 		var allFieldsThere = true
 		for(i=0; i<data.fields.length; i++){
-			if(data.fields[i].name!="_time" && data.fields[i].name!="name" && data.fields[i].name!="value" && data.fields[i].name!="result"){
+			if(data.fields[i].name!="_time" && data.fields[i].name!="name" && data.fields[i].name!="value" && data.fields[i].name!="status"){
 				allFieldsThere = false;
 			}
 		}
 		
 		// Check for invalid data
 		if(!allFieldsThere){
-			throw new SplunkVisualizationBase.VisualizationError('Missing values. Please include the following fields in your search query: name, value, result');
+			throw new SplunkVisualizationBase.VisualizationError('Missing values. Please include the following fields in your search query: name, value, status');
 		}
 		return data;
 	},
