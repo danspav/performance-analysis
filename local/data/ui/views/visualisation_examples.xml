@@ -1,0 +1,33 @@
+<dashboard>
+  <label>Visualisation Examples</label>
+  <row>
+    <panel>
+      <title>Infrastructure and Application Performance</title>
+      <viz type="performance-analysis.performance_analysis">
+        <search>
+          <query>| inputlookup sample-data.csv | rename _time as time | rename unix_time as _time | table _time, name, value, status</query>
+          <earliest>1535727601</earliest>
+          <latest>1535731200</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="height">331</option>
+        <option name="performance-analysis.performance_analysis.criticalColour">#DD0000</option>
+        <option name="performance-analysis.performance_analysis.criticalThreshold">75</option>
+        <option name="performance-analysis.performance_analysis.downTimeEnd">4</option>
+        <option name="performance-analysis.performance_analysis.downTimeStart">0</option>
+        <option name="performance-analysis.performance_analysis.granularity">30</option>
+        <option name="performance-analysis.performance_analysis.noDataColour">#5EBFC6</option>
+        <option name="performance-analysis.performance_analysis.okColour">#78B24A</option>
+        <option name="performance-analysis.performance_analysis.showLegend">true</option>
+        <option name="performance-analysis.performance_analysis.timeFormat">h:mm A</option>
+        <option name="performance-analysis.performance_analysis.warningColour">#E0C135</option>
+        <option name="performance-analysis.performance_analysis.warningThreshold">60</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </viz>
+    </panel>
+  </row>
+</dashboard>
