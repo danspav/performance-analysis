@@ -160,10 +160,10 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 			var timeFormat = config[this.getPropertyNamespaceInfo().propertyNamespace + "timeFormat"] || "h:mm A";
 			var downTimeStart = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + "downTimeStart"]) || 0;
 			var downTimeEnd = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + "downTimeEnd"]) || 0;
-			var showLegend = config[this.getPropertyNamespaceInfo().propertyNamespace + showLegend] || true;
-			
+			var showLegend = config[this.getPropertyNamespaceInfo().propertyNamespace + "showLegend"] || true;
+			var showStatusAsText = config[this.getPropertyNamespaceInfo().propertyNamespace + "showStatusAsText"] || true;
 			// Now load the visualisation
-			var perfAnalysisVis = new performance_analysis(granularity, warningThreshold, criticalThreshold, downTimeStart,downTimeEnd,timeFormat,showLegend);
+			var perfAnalysisVis = new performance_analysis(granularity, warningThreshold, criticalThreshold, downTimeStart,downTimeEnd,timeFormat,showLegend,showStatusAsText);
 			
 			perfAnalysisVis.set_colours(okColour,warningColour,criticalColour,noDataColour);
 			var vizObj = this
@@ -11589,7 +11589,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 		
 		
 		class performance_analysis{
-			constructor(granularity, warning_threshold, critical_threshold,down_time_start,down_time_end,time_format,show_legend){
+			constructor(granularity, warning_threshold, critical_threshold,down_time_start,down_time_end,time_format,show_legend,showStatusAsText){
 				this.items = [];
 				this.num_items = 0;
 				this.start_time = Date.now();
@@ -11606,7 +11606,8 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 				this.downTimeStart=down_time_start;
 				this.downTimeEnd=down_time_end;
 				this.timeFormat = time_format;
-				this.showLegend = show_legend;
+				this.showLegend = (show_legend=="true");
+				this.showStatusAsText = (showStatusAsText=="true");
 				//----------------
 				this.data_item;
 				this.current_item;
@@ -11643,84 +11644,90 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 				var SplunkVisUtils = __webpack_require__(4);
 				var vizUtils = __webpack_require__(4);
 				const { performance_analysis, item, time_bucket } = __webpack_require__(5);
-				//------------------------------  Get data row field indexes ----------------------------------------------------------------------
-				for (i=0; i<data.fields.length; i++){
-					fields[data.fields[i].name.toLowerCase()]  = i;
-				}
-
-				// Set up the Start and End dates based on data supplied. This will determine how much time each bucket has, as  num_buckets is configurable
-				date_first_row = data.rows[0][fields["_time"]];
-				date_first_row  = oMoment(date_first_row);
-				date_last_row = data.rows[data.rows.length-1][fields["_time"]];
-				date_last_row = oMoment(date_last_row); //, 'DD/MM/YYYY HH:mm:ss A'
-				//Set earliest time as start time, and latest time as end time
-				if (date_first_row > date_last_row) { 
-					this.start_time = SplunkVisUtils.parseTimestamp(date_last_row);
-					this.end_time = SplunkVisUtils.parseTimestamp(date_first_row);
-				}else{
-					this.start_time = SplunkVisUtils.parseTimestamp(date_first_row);
-					this.end_time = SplunkVisUtils.parseTimestamp(date_last_row);
-				}
 				
-				//Snap to the granularity - e.g. if Granularity is 5 minutes, set start/end time to hh:00:00, hh:05:00, hh:10:00
-				if(this.granularity<=60){
-					time_minute = oMoment(this.start_time).minute()
-					this.start_time=oMoment(this.start_time).minute(Math.floor(time_minute/this.granularity)* this.granularity).second(0).toDate();
-					time_minute = oMoment(this.start_end).minute()
-					this.end_time=oMoment(this.end_time).minute(Math.ceil(time_minute/this.granularity)* this.granularity).second(0).toDate();
-				}else{
-					// Granularity is more than 1 hour - just set start minutes/seconds to hh:00:00 and end minutes/seconds to hh:59:59
-					this.start_time=oMoment(this.start_time).minute(0).second(0).toDate();
-					this.end_time=oMoment(this.end_time).minute(59).second(59).toDate();
-				}
-				
-				var currentTime = this.start_time.getTime();
-				var localOffset = (-1) * this.start_time.getTimezoneOffset() * 60000;
-				var start_time_in_seconds = Math.round(new Date(currentTime + localOffset).getTime() / 1000);
-				var start_time_in_seconds_utc = this.start_time.getTime()/1000;
-				// Timezone won't affect the number of buckets
-				this.num_buckets = Math.ceil(((this.end_time.getTime() / 1000)  - (this.start_time.getTime() / 1000) ) / (this.granularity*60)) +1;
-				//---------------- End set start / end time from data object ----------------------------
-
-
-				// Get the current transation, or create it if it doesn't yet exist
-				for (i=0; i<data.rows.length; i++){
-					data_item = data.rows[i];
-					//------------------------------  Create or Locate item Objects ----------------------------------------------------------------------
-					if(typeof this.items[vizUtils.escapeHtml(data_item[fields["name"]])] === 'undefined') {
-						// does not exist
-						this.items[vizUtils.escapeHtml(data_item[fields["name"]])] = new item(vizUtils.escapeHtml(data_item[fields["name"]]));
-						this.num_items++;
-						current_item = this.items[vizUtils.escapeHtml(data_item[fields["name"]])];
-						current_item.num_buckets = this.num_buckets;
-						// Create Time Buckets for this item
-						for(k=0;k<current_item.num_buckets;k++){
-							//Set up the time bucket
-							bucket_start_time_seconds = start_time_in_seconds + (k *  this.granularity * 60);
-							bucket_end_time_seconds = start_time_in_seconds + ((1+k) * this.granularity * 60) -1;
-							temp_bucket = new time_bucket();
-							temp_bucket.set_colours(this.okColour, this.warningColour, this.criticalColour, this.noDataColour);
-							temp_bucket.warning_threshold = data_item[fields["warning_threshold"]] || this.warning_threshold;
-							temp_bucket.critical_threshold = data_item[fields["critical_threshold"]] || this.critical_threshold;
-							temp_bucket.set_start_time(bucket_start_time_seconds);
-							temp_bucket.set_end_time(bucket_end_time_seconds);
-							// Is the bucket during down time?
-							if(oMoment(temp_bucket.start_time).hour() >= this.downTimeStart && oMoment(temp_bucket.start_time).hour() < this.downTimeEnd) temp_bucket.isInDownTime = true;
-							//Add to item's bucket array
-							current_item.buckets.push(temp_bucket);
-						}
-					} else {
-						// does exist
+				try{
+					//------------------------------  Get data row field indexes ----------------------------------------------------------------------
+					for (i=0; i<data.fields.length; i++){
+						fields[data.fields[i].name.toLowerCase()]  = i;
 					}
-					//------------------------------  Fill in details for Bucket Objects ----------------------------------------------------------------------
-					current_item = this.items[vizUtils.escapeHtml(data_item[fields["name"]])];		
-					// Find the correct bucket to put the item details into:
-					// Index = Math.ceiling(   (time - start_time) / granularity   ) 
-					bucket_start_time_seconds = oMoment(data_item[fields["_time"]]).toDate().getTime()/1000; 
-					bucket_index = Math.ceil(   (bucket_start_time_seconds - (start_time_in_seconds_utc-1)) / (60*this.granularity)) -1;
-					if (bucket_index > current_item.buckets.length) bucket_index = current_item.buckets.length-1;
-					current_item.buckets[bucket_index].add_item(data_item, fields);
-				}	
+
+					// Set up the Start and End dates based on data supplied. This will determine how much time each bucket has, as  num_buckets is configurable
+					date_first_row = data.rows[0][fields["_time"]];
+					date_first_row  = oMoment(date_first_row);
+					date_last_row = data.rows[data.rows.length-1][fields["_time"]];
+					date_last_row = oMoment(date_last_row); //, 'DD/MM/YYYY HH:mm:ss A'
+					//Set earliest time as start time, and latest time as end time
+					if (date_first_row > date_last_row) { 
+						this.start_time = SplunkVisUtils.parseTimestamp(date_last_row);
+						this.end_time = SplunkVisUtils.parseTimestamp(date_first_row);
+					}else{
+						this.start_time = SplunkVisUtils.parseTimestamp(date_first_row);
+						this.end_time = SplunkVisUtils.parseTimestamp(date_last_row);
+					}
+					
+					//Snap to the granularity - e.g. if Granularity is 5 minutes, set start/end time to hh:00:00, hh:05:00, hh:10:00
+					if(this.granularity<=60){
+						time_minute = oMoment(this.start_time).minute()
+						this.start_time=oMoment(this.start_time).minute(Math.floor(time_minute/this.granularity)* this.granularity).second(0).toDate();
+						time_minute = oMoment(this.start_end).minute()
+						this.end_time=oMoment(this.end_time).minute(Math.ceil(time_minute/this.granularity)* this.granularity).second(0).toDate();
+					}else{
+						// Granularity is more than 1 hour - just set start minutes/seconds to hh:00:00 and end minutes/seconds to hh:59:59
+						this.start_time=oMoment(this.start_time).minute(0).second(0).toDate();
+						this.end_time=oMoment(this.end_time).minute(59).second(59).toDate();
+					}
+					
+					var currentTime = this.start_time.getTime();
+					var localOffset = (-1) * this.start_time.getTimezoneOffset() * 60000;
+					var start_time_in_seconds = Math.round(new Date(currentTime + localOffset).getTime() / 1000);
+					var start_time_in_seconds_utc = this.start_time.getTime()/1000;
+					// Timezone won't affect the number of buckets
+					this.num_buckets = Math.ceil(((this.end_time.getTime() / 1000)  - (this.start_time.getTime() / 1000) ) / (this.granularity*60)) +1;
+					//---------------- End set start / end time from data object ----------------------------
+
+
+					// Get the current transation, or create it if it doesn't yet exist
+					for (i=0; i<data.rows.length; i++){
+						data_item = data.rows[i];
+						//------------------------------  Create or Locate item Objects ----------------------------------------------------------------------
+						if(typeof this.items[vizUtils.escapeHtml(data_item[fields["name"]])] === 'undefined') {
+							// does not exist
+							this.items[vizUtils.escapeHtml(data_item[fields["name"]])] = new item(vizUtils.escapeHtml(data_item[fields["name"]]));
+							this.num_items++;
+							current_item = this.items[vizUtils.escapeHtml(data_item[fields["name"]])];
+							current_item.num_buckets = this.num_buckets;
+							// Create Time Buckets for this item
+							for(k=0;k<current_item.num_buckets;k++){
+								//Set up the time bucket
+								bucket_start_time_seconds = start_time_in_seconds + (k *  this.granularity * 60);
+								bucket_end_time_seconds = start_time_in_seconds + ((1+k) * this.granularity * 60) -1;
+								temp_bucket = new time_bucket();
+								temp_bucket.showStatusAsText = this.showStatusAsText;
+								temp_bucket.set_colours(this.okColour, this.warningColour, this.criticalColour, this.noDataColour);
+								temp_bucket.warning_threshold = data_item[fields["warning_threshold"]] || this.warning_threshold;
+								temp_bucket.critical_threshold = data_item[fields["critical_threshold"]] || this.critical_threshold;
+								temp_bucket.set_start_time(bucket_start_time_seconds);
+								temp_bucket.set_end_time(bucket_end_time_seconds);
+								// Is the bucket during down time?
+								if(oMoment(temp_bucket.start_time).hour() >= this.downTimeStart && oMoment(temp_bucket.start_time).hour() < this.downTimeEnd) temp_bucket.isInDownTime = true;
+								//Add to item's bucket array
+								current_item.buckets.push(temp_bucket);
+							}
+						} else {
+							// does exist
+						}
+						//------------------------------  Fill in details for Bucket Objects ----------------------------------------------------------------------
+						current_item = this.items[vizUtils.escapeHtml(data_item[fields["name"]])];		
+						// Find the correct bucket to put the item details into:
+						// Index = Math.ceiling(   (time - start_time) / granularity   ) 
+						bucket_start_time_seconds = oMoment(data_item[fields["_time"]]).toDate().getTime()/1000; 
+						bucket_index = Math.ceil(   (bucket_start_time_seconds - (start_time_in_seconds_utc-1)) / (60*this.granularity)) -1;
+						if (bucket_index >= current_item.buckets.length) bucket_index = current_item.buckets.length-1;
+						current_item.buckets[bucket_index].add_item(data_item, fields);
+					}	
+				} catch(err) {
+					console.log("Error setting data. " + err);
+				}
 			}
 
 			getHTML(){
@@ -11800,6 +11807,10 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 				this.critical_threshold = 12;
 				this.sum_value = 0.0;
 				this.average_value = 0.0;
+				this.showStatusAsText = true;
+				// Status can be a float or string (12.20 or "GREEN")
+				this.sum_status = 0.0;
+				this.average_status = 0.0;
 				//Colour Defaults:
 				this.okColour = "#78B24A";
 				this.warningColour = "#E0C135";
@@ -11826,6 +11837,8 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 		    };
 			
 			add_item(result_row,fields){
+				var temp_status=0.0;
+				var temp_value=0.0;
 				try{
 					//GREEN
 					if (result_row[fields["status"]].toLowerCase()=="green") this.num_green++;
@@ -11844,10 +11857,17 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 					if (result_row[fields["status"]].toLowerCase()=="fail") this.num_red++;
 					
 					// Add the passed, failed, update percentages etc
-					this.sum_value += parseFloat(result_row[fields["value"]]);
+					temp_value=parseFloat(result_row[fields["value"]]);
+					if (isNaN(temp_value)) { temp_value=0;}
+					this.sum_value += temp_value;
 					// Increment total values for this bucket
 					this.total++;
-					this.average_value = Math.round(this.sum_value/ this.total,2);
+					this.average_value = (this.sum_value/ this.total).toFixed(2);
+					
+					temp_status=parseFloat(result_row[fields["status"]]);
+					if (isNaN(temp_status)) { temp_status=0;}
+					this.sum_status += temp_status;
+					this.average_status = (this.sum_status/ this.total).toFixed(2); 
 					
 				} catch(err) {
 					console.log("Error determining status / value.")
@@ -11860,8 +11880,9 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 				var downtimeHTML = '';
 				var colour = "";
 				var td_image = "";
-				
-				if (this.num_amber==0 && this.num_red==0 && this.num_green==0){
+				if (!this.showStatusAsText && !isNaN(this.average_status)){
+					td_image = "<span class=\"status_value\">" + this.average_status + "</span>";
+				}else if (this.num_amber==0 && this.num_red==0 && this.num_green==0){
 					td_image='<img src="/static/app/performance-analysis/images/blank.gif" style="width:16px; height: 16px;" width="16" height="16"  title="Application reported:&#13;GREEN ' + this.num_green + ' time(s)&#13;AMBER 0 time(s)&#13;RED 0 time(s)" />'
 				}else if (this.num_amber==0 && this.num_red==0 && this.num_green > 0){
 					td_image='<img src="/static/app/performance-analysis/images/green.png" style="width:16px; height: 16px;" width="16" height="16"  title="Application reported:&#13;GREEN ' + this.num_green + ' time(s)&#13;AMBER 0 time(s)&#13;RED 0 time(s)" />'
