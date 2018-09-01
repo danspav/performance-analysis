@@ -10,4 +10,4 @@ default.visualizations.custom.performance_analysis.performance_analysis.downTime
 default.visualizations.custom.performance_analysis.performance_analysis.downTimeEnd = <float>
 default.visualizations.custom.performance_analysis.performance_analysis.timeFormat = <string>
 default.visualizations.custom.performance_analysis.performance_analysis.showLegend = <string>
-default.visualizations.custom.performance_analysis.performance_analysis.iconSet = <string>
+default.visualizations.custom.performance_analysis.performance_analysis.showStatusAsText = <string>
