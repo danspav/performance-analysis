@@ -115,8 +115,8 @@ define([
 		var timeFormat = config[this.getPropertyNamespaceInfo().propertyNamespace + "timeFormat"] || "h:mm A";
 		var downTimeStart = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + "downTimeStart"]) || 0;
 		var downTimeEnd = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + "downTimeEnd"]) || 0;
-		var showLegend = config[this.getPropertyNamespaceInfo().propertyNamespace + showLegend] || true;
-		var showStatusAsText = config[this.getPropertyNamespaceInfo().propertyNamespace + showStatusAsText] || true;
+		var showLegend = config[this.getPropertyNamespaceInfo().propertyNamespace + "showLegend"] || true;
+		var showStatusAsText = config[this.getPropertyNamespaceInfo().propertyNamespace + "showStatusAsText"] || true;
 		// Now load the visualisation
 		var perfAnalysisVis = new performance_analysis(granularity, warningThreshold, criticalThreshold, downTimeStart,downTimeEnd,timeFormat,showLegend,showStatusAsText);
 		
