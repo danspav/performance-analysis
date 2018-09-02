@@ -4,7 +4,8 @@ define([
             'api/SplunkVisualizationBase',
             'api/SplunkVisualizationUtils',
 			'performance_analysis',
-			'moment'
+			'moment',
+			'tooltip',
         ],
         function(
             $,
@@ -103,6 +104,10 @@ define([
 		
 		//var trans_analysis = require("performance_analysis");
 		const { performance_analysis, item, time_bucket } = require('performance_analysis');
+		const Tooltip = require('tooltip');
+		var tip = Tooltip();
+		
+		
 		
 		// Get Config parameters:
 		var granularity = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'granularity']) || 15;
