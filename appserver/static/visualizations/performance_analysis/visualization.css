@@ -4,7 +4,7 @@
  */
 
 /* Formatting for text element*/
-table.performance_analysis {border-collapse: separate;border-spacing: 5px 5px;width:100%;border-radius: 10px;border:1px solid #999999;
+table.performance_analysis {border-collapse: separate;border-spacing: 3px 3px;width:100%;border-radius: 10px;border:1px solid #999999;
 
 background: rgb(255,255,255); /* Old browsers */
 background: -moz-linear-gradient(top, rgba(255,255,255,1) 0%, rgba(196,196,196,1) 100%); /* FF3.6-15 */
