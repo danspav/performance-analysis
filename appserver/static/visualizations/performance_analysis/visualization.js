@@ -100,7 +100,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 			
 			// Check for invalid data
 			if(!(hasTime && hasStatus && hasValue && hasName)){
-				throw new SplunkVisualizationBase.VisualizationError('Missing values. Please include the following fields in your search query: name, value, status.<br>e.g. <code>...| table _time, name, value, status, threshold_warning, threshold_critical</code>');
+				throw new SplunkVisualizationBase.VisualizationError('Missing values. Please include the following fields in your search query: name, value, status. E.g. ...| table _time, name, value, status, threshold_warning, threshold_critical');
 			}
 			return data;
 		},
