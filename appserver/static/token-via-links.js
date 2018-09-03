@@ -11,7 +11,8 @@ require(['jquery', 'underscore', 'splunkjs/mvc', 'util/console'], function($, _,
      }
      $('.dashboard-body').on('click', '[data-on-class],[data-off-class],[data-set-token],[data-unset-token],[data-token-json]', function(e) {
          e.preventDefault();
-		
+		console.log("Inside the click bit.");
+console.log("target.data('on-class')=" + target.data('on-class'));
          var target = $(e.currentTarget);
 		 
 		 var cssOnClass= target.data('on-class');
