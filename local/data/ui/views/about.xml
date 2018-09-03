@@ -2,25 +2,13 @@
   <label>About</label>
   <description>How to use the Performance Analysis visualization.</description>
   <row>
-    <panel><html>
+    <panel>
+      <html>
       <h2>Performance Analysis Visualization</h2>
       <h4>Version: 1.0</h4>
       <h4>Created by Daniel Spavin (<a href="mailto:daniel@spavin.org">daniel@spavin.org</a>)</h4>
-        </html></panel>
-  </row>
-    <row>
-    <panel><html>
-      <h4>Settings</h4>
-      <img src="/static/app/performance-analysis/about-default-thresholds.png" /> <br />
-      <img src="/static/app/performance-analysis/about-options.png" /><br />
-      <img src="/static/app/performance-analysis/about-colours.png" /><br />
-      <img src="/static/app/performance-analysis/about-downtime-range.png" /><br />
-      <img src="static/app/performance-analysis/about-time-format.png" /><br />
-      
-      
-      
-      
-        </html></panel>
+        </html>
+    </panel>
   </row>
   <row>
     <panel>
@@ -49,6 +37,70 @@
         <option name="trellis.scales.shared">1</option>
         <option name="trellis.size">medium</option>
       </viz>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html>
+        <style>
+          .button {
+    background-color: #4CAF50; /* Green */
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    }</style>
+      <h4>Settings</h4>
+      <a class="button">Default Thresholds</a>
+      <table>
+        <tr>
+            <td>
+              <img src="/static/app/performance-analysis/images/about-default-thresholds.png"/>
+            </td>
+            <td>The default thresholds will be used for all rows if you don't specify any thresholds in your search query.<br />
+            This value controls the background color of the cells, where green indicates that the value is normal, yellow indicates a warning, and red indicates a critical state.<br />
+            You can set these valuse in the search query by using an <code>eval</code> statement:<br />
+            <code>...| eval warning_threshold = case(name=="windows_server", 60,name=="unix_server", 65, 1==1, 70)<br />
+            | eval critical_threshold = case(name=="windows_server", 80,name=="unix_server", 85, 1==1, 90)</code></td>
+          </tr>
+      <tr>
+            <td>
+              <img src="/static/app/performance-analysis/images/about-options.png"/>
+            </td>
+            <td><b>Granularity</b> sets the duration of each cell, in minutes. <br /> 5 = 5 minute intervals.<br />30 = half-hour intervals.<br />60 = 1 hour intervals.<br /><br />
+            <b>Show Legend</b> turns the legend on and off. When set to 'show' the visualization will have a legend at the bottom left. <br /><br />
+            <b>Status Format</b> determines what sort of decoration goes in the middle of the cells. Select 'Text' for textual values (GREEN / AMBER / RED) and 'Numerical' to show a number instead.
+            </td>
+          </tr>
+      <tr>
+            <td>
+              <img src="/static/app/performance-analysis/images/about-colours.png"/>
+            </td>
+            <td><b>Colours</b> allows you to choose the colour scheme for the values (cell background colours).</td>
+          </tr>
+      <tr>
+            <td>
+              <img src="/static/app/performance-analysis/images/about-downtime-range.png"/>
+            </td>
+            <td><b>Downtime Range</b> lets you indicate when there is regular scheduled downtime for your environment. Use 24 hour format: 0 = Midnight, 12 = Midday, 22 = 10 PM.<br />
+            Downtime is indicated by showing a grayed out cell. You can still see the value and status, however the downtime indication lets you know that downtime was in effect.
+            </td>
+          </tr>
+      <tr>
+            <td>
+              <img src="/static/app/performance-analysis/images/about-time-format.png"/>
+            </td>
+            <td><b>Time Format</b> lets you choose how the times are displayed at the top of the visualization. </td>
+          </tr>
+      </table>
+      
+      
+      
+      
+        </html>
     </panel>
   </row>
 </dashboard>
