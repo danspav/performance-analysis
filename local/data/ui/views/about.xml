@@ -2,6 +2,27 @@
   <label>About</label>
   <description>How to use the Performance Analysis visualization.</description>
   <row>
+    <panel><html>
+      <h2>Performance Analysis Visualization</h2>
+      <h4>Version: 1.0</h4>
+      <h4>Created by Daniel Spavin (<a href="mailto:daniel@spavin.org">daniel@spavin.org</a>)</h4>
+        </html></panel>
+  </row>
+    <row>
+    <panel><html>
+      <h4>Settings</h4>
+      <img src="/static/app/performance-analysis/about-default-thresholds.png" /> <br />
+      <img src="/static/app/performance-analysis/about-options.png" /><br />
+      <img src="/static/app/performance-analysis/about-colours.png" /><br />
+      <img src="/static/app/performance-analysis/about-downtime-range.png" /><br />
+      <img src="static/app/performance-analysis/about-time-format.png" /><br />
+      
+      
+      
+      
+        </html></panel>
+  </row>
+  <row>
     <panel>
       <title>Server Infrastructure and Application Performance</title>
       <viz type="performance-analysis.performance_analysis">
