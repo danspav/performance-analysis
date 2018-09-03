@@ -1,5 +1,6 @@
 <dashboard>
   <label>Visualisation Examples</label>
+  <description>Showing Server and Application performance</description>
   <row>
     <panel>
       <title>Server Infrastructure and Application Performance</title>
