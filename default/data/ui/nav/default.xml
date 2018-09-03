@@ -1,4 +1,7 @@
-<nav search_view="search" color="#65A637">
-  <view name="search" default="true" />
-  <view name="dashboards" />
+<nav search_view="search" color="#5C8EB1">
+  <view name="search" />
+  <view name="about" default="true" />
+  <view name="visualisation_examples" />
+  <view name="settings" />
+  
 </nav>
