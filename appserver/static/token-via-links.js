@@ -12,12 +12,13 @@ require(['jquery', 'underscore', 'splunkjs/mvc', 'util/console'], function($, _,
      $('.dashboard-body').on('click', '[data-on-class],[data-off-class],[data-set-token],[data-unset-token],[data-token-json]', function(e) {
          e.preventDefault();
 		console.log("Inside the click bit.");
-console.log("target.data('on-class')=" + target.data('on-class'));
          var target = $(e.currentTarget);
+console.log("here");
+console.log("target.data('on-class')=" + target.data('on-class'));
 		 
 		 var cssOnClass= target.data('on-class');
 		 var cssOffClass = target.data('off-class');
-		 if (cssOnclass) {
+		 if (cssOnClass) {
 			$("." + cssOnClass).attr('class', cssOffClass);
 			target.attr('class', cssOnClass);
 		 }
@@ -27,7 +28,13 @@ console.log("target.data('on-class')=" + target.data('on-class'));
          }
          var unsetTokenName = target.data('unset-token');
          if (unsetTokenName) {
-             setToken(unsetTokenName, undefined);
+	    var tokens = unsetTokenName.split(",");
+		var arrayLength = tokens.length;
+		for (var i = 0; i < arrayLength; i++) {
+		   setToken(tokens[i], undefined);
+		    //Do something
+		}      
+             //setToken(unsetTokenName, undefined);
          }
          var tokenJson = target.data('token-json');
          if (tokenJson) {
