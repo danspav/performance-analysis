@@ -5,7 +5,7 @@ modtime = 1527903015.253431000
 [views/visualisation_examples]
 owner = admin
 version = 7.0.1
-modtime = 1535953104.428316200
+modtime = 1536015127.209718600
 
 [lookups/sample-data.csv]
 access = read : [ * ], write : [ admin ]
@@ -15,10 +15,15 @@ version = 7.1.1
 modtime = 1535781803.434188000
 
 [nav/default]
-version = 7.1.1
-modtime = 1535956812.408905000
+version = 7.0.1
+modtime = 1536015289.361718600
 
 [views/about]
 owner = admin
-version = 7.1.1
-modtime = 1535973805.000921000
+version = 7.0.1
+modtime = 1536015344.054718600
+
+[views/settings]
+owner = admin
+version = 7.0.1
+modtime = 1536015472.629718600

@@ -45,7 +45,7 @@
         <option name="performance-analysis.performance_analysis.criticalThreshold">18</option>
         <option name="performance-analysis.performance_analysis.downTimeEnd">7</option>
         <option name="performance-analysis.performance_analysis.downTimeStart">0</option>
-        <option name="performance-analysis.performance_analysis.granularity">60</option>
+        <option name="performance-analysis.performance_analysis.granularity">180</option>
         <option name="performance-analysis.performance_analysis.noDataColour">#5EBFC6</option>
         <option name="performance-analysis.performance_analysis.okColour">#78B24A</option>
         <option name="performance-analysis.performance_analysis.showLegend">true</option>
@@ -58,8 +58,6 @@
         <option name="trellis.size">medium</option>
       </viz>
     </panel>
-  </row>
-  <row>
     <panel>
       <title>Numeric Status Values</title>
       <viz type="performance-analysis.performance_analysis">
@@ -74,7 +72,7 @@
         <option name="performance-analysis.performance_analysis.criticalThreshold">18</option>
         <option name="performance-analysis.performance_analysis.downTimeEnd">7</option>
         <option name="performance-analysis.performance_analysis.downTimeStart">0</option>
-        <option name="performance-analysis.performance_analysis.granularity">60</option>
+        <option name="performance-analysis.performance_analysis.granularity">180</option>
         <option name="performance-analysis.performance_analysis.noDataColour">#5EBFC6</option>
         <option name="performance-analysis.performance_analysis.okColour">#78B24A</option>
         <option name="performance-analysis.performance_analysis.showLegend">true</option>
