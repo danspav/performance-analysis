@@ -16808,7 +16808,9 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 				var td_image = "";
 				var data_tooltip="";
 				var time_period = "<b>Time Period:</b> " + this.oMoment(this.start_time).format(this.timeFormat) + " to " +  this.oMoment(this.end_time).format(this.timeFormat) + "</span><br />";
-				if (!this.showStatusAsText && !isNaN(this.average_status)){
+				if (this.total==0){
+					td_image = "";
+				}else if (!this.showStatusAsText && !isNaN(this.average_status)){
 					td_image = "<span class=\"status_value\">" + this.average_status + "</span>";
 					data_tooltip="Average value: " + this.average_status;
 				}else if (this.num_amber==0 && this.num_red==0 && this.num_green==0){
@@ -16826,10 +16828,11 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 				}
 				
 				// ---- Values (Background color) ----
+				
 				if (this.average_value >= this.critical_threshold) { css_class += ' critical'; colour = this.criticalColour;}
 				if (this.average_value < this.critical_threshold && this.average_value >= this.warning_threshold) { css_class += ' warning'; colour = this.warningColour;}
 				if (this.average_value < this.warning_threshold) {css_class += ' ok'; colour = this.okColour;}
-				
+				if (this.total==0) {css_class = " nodata"; colour=this.noDataColour;}
 				if(this.isInDownTime) {
 					css_class += ' downtime';
 					data_tooltip += "<br>Downtime was in effect during this period.";
