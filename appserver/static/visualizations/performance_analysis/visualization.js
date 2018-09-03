@@ -1,4 +1,4 @@
-define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(__WEBPACK_EXTERNAL_MODULE_3__, __WEBPACK_EXTERNAL_MODULE_4__) { return /******/ (function(modules) { // webpackBootstrap
+define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(__WEBPACK_EXTERNAL_MODULE_68__, __WEBPACK_EXTERNAL_MODULE_69__) { return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 
@@ -45,12 +45,13 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 /***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;!(__WEBPACK_AMD_DEFINE_ARRAY__ = [
-	            __webpack_require__(1),
-	            __webpack_require__(2),
-	            __webpack_require__(3),
-	            __webpack_require__(4),
-				__webpack_require__(5),
-				__webpack_require__(6)
+	            __webpack_require__(67),
+	            __webpack_require__(189),
+	            __webpack_require__(68),
+	            __webpack_require__(69),
+				__webpack_require__(70),
+				__webpack_require__(71),
+				__webpack_require__(1),
 	        ], __WEBPACK_AMD_DEFINE_RESULT__ = function(
 	            $,
 	            _,
@@ -147,7 +148,11 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 			//this.$el.class="transaction_analysis";
 			
 			//var trans_analysis = require("performance_analysis");
-			const { performance_analysis, item, time_bucket } = __webpack_require__(5);
+			const { performance_analysis, item, time_bucket } = __webpack_require__(70);
+			const Tooltip = __webpack_require__(1);
+			var tip = Tooltip();
+			
+			
 			
 			// Get Config parameters:
 			var granularity = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'granularity']) || 15;
@@ -186,6 +191,6478 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 /***/ }),
 /* 1 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var throttle  = __webpack_require__(2)
+	var targetFn  = __webpack_require__(3)
+	var configure = __webpack_require__(56)
+
+	var mouseenter = __webpack_require__(62)
+	var mouseleave = __webpack_require__(65)
+
+	var contains = __webpack_require__(66)
+
+	var TOOLTIP = function(cfg){
+
+		var config = configure(cfg)
+		var target = targetFn(config)
+		var root   = config.target
+		var t      = config.throttle
+
+		//make the target && protection since it might be destroyed by that time
+	    var onMouseOver = throttle(function(eventTarget){
+	        target && target.set(eventTarget)
+	    }, t)
+
+	    var onMouseOut = throttle(function(eventTarget){
+
+	        target && target.hold()
+	        setTimeout(function(){
+	            if (target && target.onHold()){
+	                target.set(null)
+	            }
+	        }, t)
+
+	    }, t)
+
+	    var removeMouseEnter = mouseenter(root, config.selector, onMouseOver)
+	    var removeMouseLeave = mouseleave(root, config.selector, onMouseOut)
+
+	    var onMouseMove = throttle(function(){
+	        var currentTarget = target.getCurrentTarget()
+
+	        if (currentTarget && !contains(document.documentElement, currentTarget)){
+	            target.set(null)
+	        }
+	    }, 200)
+
+	    root.addEventListener('mousemove', onMouseMove)
+
+	    return {
+	        destroy: function(){
+
+	        	target.destroy()
+
+	            removeMouseEnter()
+	            removeMouseLeave()
+	            root.removeEventListener('mousemove', onMouseMove)
+
+				root   = null
+				target = null
+				config = null
+	        }
+	    }
+	}
+
+	module.exports = TOOLTIP
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	module.exports = function(fn, delay, scope) {
+	    var timeoutId = -1
+	    var self
+	    var args
+
+	    if (delay === undefined){
+	        delay = 0
+	    }
+
+	    if (delay < 0){
+	        return fn
+	    }
+
+	    return function () {
+
+	        self = scope || this
+	        args = arguments
+
+	        if (timeoutId !== -1) {
+	            //the function was called once again in the delay interval
+	        } else {
+	            timeoutId = setTimeout(function () {
+	                fn.apply(self, args)
+
+	                self = null
+	                timeoutId = -1
+	            }, delay)
+	        }
+
+	    }
+
+	}
+
+/***/ }),
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var Region = __webpack_require__(4)
+
+	var assign = __webpack_require__(19);
+	var escape = __webpack_require__(20)
+
+	var setStyle         = __webpack_require__(21)
+	var toOffset         = __webpack_require__(51)
+	var parseAsStyle     = __webpack_require__(52)
+	var tooltipElement   = __webpack_require__(53)
+	var preparePositions = __webpack_require__(54)
+	var mapObject        = __webpack_require__(55)
+
+	function emptyObject(obj){
+	    return mapObject(obj, function(){
+	        return ''
+	    })
+	}
+
+	module.exports = function(config){
+
+	    var prevStyle
+
+	    function showTooltip(target){
+
+	        var tooltip = target.getAttribute(config.attrName)
+
+	        var el = tooltipElement(config)
+	        el.innerHTML = config.escape? escape(tooltip): tooltip
+
+	        var positions    = config.alignPositions
+	        var elRegion     = Region.from(el)
+	        var targetRegion = Region.from(target)
+
+	        var attrPosition = target.getAttribute(config.attrName + '-positions')
+	        var attrStyle    = target.getAttribute(config.attrName + '-style')
+
+	        var style = assign({}, prevStyle, config.style)
+
+	        if (attrStyle){
+	            attrStyle = parseAsStyle(attrStyle)
+	            prevStyle = emptyObject(attrStyle)
+
+	            assign(style, attrStyle)
+	        }
+
+	        if (attrPosition){
+	            positions = preparePositions(attrPosition.split(';'))
+	        }
+
+	        var res = elRegion.alignTo(targetRegion, positions, {
+	            offset: toOffset(config.offset, positions),
+	            constrain: true
+	        })
+
+	        var scrollTop = document.body.scrollTop || 0
+	        var scrollLeft = document.body.scrollLeft || 0
+
+	        setStyle(el, style, config.visibleStyle, {
+	            top : elRegion.top + scrollTop,
+	            left: elRegion.left + scrollLeft
+	        })
+	    }
+
+	    function clearTooltip(){
+	        setStyle(
+	            tooltipElement(config),
+	            config.hiddenStyle
+	        )
+	    }
+
+	    var currentTarget
+
+	    var withTarget = (function(){
+
+	        var prevId
+
+	        return function(target){
+
+	            if (target != currentTarget){
+	                if (prevId){
+	                    clearTimeout(prevId)
+	                    prevId = null
+	                }
+
+	                if (target){
+
+	                    if (config.showDelay){
+
+	                        prevId = setTimeout(function(){
+	                            prevId = null
+	                            showTooltip(target)
+	                        }, config.showDelay)
+	                    } else {
+	                        showTooltip(target)
+	                    }
+
+	                } else {
+	                    clearTooltip()
+	                }
+	            }
+
+	            currentTarget = target
+	        }
+	    })()
+
+	    var setter = (function(){
+	        var lastValue
+	        var PREV_ID
+
+	        return function setter(value){
+
+	            if (value == lastValue){
+	                return
+	            }
+
+	            lastValue = value
+
+	            if (config.hideOnChange){
+
+	                if (PREV_ID || value){
+
+	                    if (PREV_ID){
+	                        clearTimeout(PREV_ID)
+	                    }
+
+	                    PREV_ID = setTimeout(function(){
+	                        PREV_ID = null
+	                        withTarget(lastValue)
+	                    }, config.hideOnChangeDelay)
+	                }
+
+	                value = null
+	            }
+
+	            withTarget(value)
+	        }
+
+	    })()
+
+	    var HOLD = false
+
+	    return {
+
+	        destroy: function(){
+	            tooltipElement.destroy(config)
+	        },
+
+	        hold: function() {
+	            HOLD = true
+	        },
+
+	        onHold: function() {
+	            return HOLD
+	        },
+
+	        set: function(value){
+	            HOLD = false
+	            setter(value)
+	        },
+
+	        getCurrentTarget: function(){
+	            return currentTarget
+	        }
+	    }
+
+	}
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var Region = __webpack_require__(5)
+
+	__webpack_require__(15)
+	__webpack_require__(16)
+
+	var COMPUTE_ALIGN_REGION = __webpack_require__(17)
+
+	/**
+	 * region-align module exposes methods for aligning {@link Element} and {@link Region} instances
+	 *
+	 * The #alignTo method aligns this to the target element/region using the specified positions. See #alignTo for a graphical example.
+	 *
+	 *
+	 *      var div = Element.select('div.first')
+	 *
+	 *      div.alignTo(Element.select('body') , 'br-br')
+	 *
+	 *      //aligns the div to be in the bottom-right corner of the body
+	 *
+	 * Other useful methods
+	 *
+	 *  * {@link #alignRegions} - aligns a given source region to a target region
+	 *  * {@link #COMPUTE_ALIGN_REGION} - given a source region and a target region, and alignment positions, returns a clone of the source region, but aligned to satisfy the given alignments
+	 */
+
+
+	/**
+	 * Aligns sourceRegion to targetRegion. It modifies the sourceRegion in order to perform the correct alignment.
+	 * See #COMPUTE_ALIGN_REGION for details and examples.
+	 *
+	 * This method calls #COMPUTE_ALIGN_REGION passing to it all its arguments. The #COMPUTE_ALIGN_REGION method returns a region that is properly aligned.
+	 * If this returned region position/size differs from sourceRegion, then the sourceRegion is modified to be an exact copy of the aligned region.
+	 *
+	 * @inheritdoc #COMPUTE_ALIGN_REGION
+	 * @return {String} the position used for alignment
+	 */
+	Region.alignRegions = function(sourceRegion, targetRegion, positions, config){
+
+	    var result        = COMPUTE_ALIGN_REGION(sourceRegion, targetRegion, positions, config)
+	    var alignedRegion = result.region
+
+	    if ( !alignedRegion.equals(sourceRegion) ) {
+	        sourceRegion.setRegion(alignedRegion)
+	    }
+
+	    return result.position
+
+	}
+
+	    /**
+	     *
+	     * The #alignTo method aligns this to the given target region, using the specified alignment position(s).
+	     * You can also specify a constrain for the alignment.
+	     *
+	     * Example
+	     *
+	     *      BIG
+	     *      ________________________
+	     *      |  _______              |
+	     *      | |       |             |
+	     *      | |   A   |             |
+	     *      | |       |      _____  |
+	     *      | |_______|     |     | |
+	     *      |               |  B  | |
+	     *      |               |     | |
+	     *      |_______________|_____|_|
+	     *
+	     * Assume the *BIG* outside rectangle is our constrain region, and you want to align the *A* rectangle
+	     * to the *B* rectangle. Ideally, you'll want their tops to be aligned, and *A* to be placed at the right side of *B*
+	     *
+	     *
+	     *      //so we would align them using
+	     *
+	     *      A.alignTo(B, 'tl-tr', { constrain: BIG })
+	     *
+	     * But this would result in
+	     *
+	     *       BIG
+	     *      ________________________
+	     *      |                       |
+	     *      |                       |
+	     *      |                       |
+	     *      |                _____ _|_____
+	     *      |               |     | .     |
+	     *      |               |  B  | . A   |
+	     *      |               |     | .     |
+	     *      |_______________|_____|_._____|
+	     *
+	     *
+	     * Which is not what we want. So we specify an array of options to try
+	     *
+	     *      A.alignTo(B, ['tl-tr', 'tr-tl'], { constrain: BIG })
+	     *
+	     * So by this we mean: try to align A(top,left) with B(top,right) and stick to the BIG constrain. If this is not possible,
+	     * try the next option: align A(top,right) with B(top,left)
+	     *
+	     * So this is what we end up with
+	     *
+	     *      BIG
+	     *      ________________________
+	     *      |                       |
+	     *      |                       |
+	     *      |                       |
+	     *      |        _______ _____  |
+	     *      |       |       |     | |
+	     *      |       |   A   |  B  | |
+	     *      |       |       |     | |
+	     *      |_______|_______|_____|_|
+	     *
+	     *
+	     * Which is a lot better!
+	     *
+	     * @param {Element/Region} target The target to which to align this alignable.
+	     *
+	     * @param {String[]/String} positions The positions for the alignment.
+	     *
+	     * Example:
+	     *
+	     *      'br-tl'
+	     *      ['br-tl','br-tr','cx-tc']
+	     *
+	     * This method will try to align using the first position. But if there is a constrain region, that position might not satisfy the constrain.
+	     * If this is the case, the next positions will be tried. If one of them satifies the constrain, it will be used for aligning and it will be returned from this method.
+	     *
+	     * If no position matches the contrain, the one with the largest intersection of the source region with the constrain will be used, and this alignable will be resized to fit the constrain region.
+	     *
+	     * @param {Object} config A config object with other configuration for this method
+	     *
+	     * @param {Array[]/Object[]/Object} config.offset The offset to use for aligning. If more that one offset is specified, then offset at a given index is used with the position at the same index.
+	     *
+	     * An offset can have the following form:
+	     *
+	     *      [left_offset, top_offset]
+	     *      {left: left_offset, top: top_offset}
+	     *      {x: left_offset, y: top_offset}
+	     *
+	     * You can pass one offset or an array of offsets. In case you pass just one offset,
+	     * it cannot have the array form, so you cannot call
+	     *
+	     *      this.alignTo(target, positions, [10, 20])
+	     *
+	     * If you do, it will not be considered. Instead, please use
+	     *
+	     *      this.alignTo(target, positions, {x: 10, y: 20})
+	     *
+	     * Or
+	     *
+	     *      this.alignTo(target, positions, [[10, 20]] )
+	     *
+	     * @param {Boolean/Element/Region} config.constrain If boolean, target will be constrained to the document region, otherwise,
+	     * getRegion will be called on this argument to determine the region we need to constrain to.
+	     *
+	     * @param {Boolean/Object} config.sync Either boolean or an object with {width, height}. If it is boolean,
+	     * both width and height will be synced. If directions are specified, will only sync the direction which is specified as true
+	     *
+	     * @return {String}
+	     *
+	     */
+	Region.prototype.alignTo = function(target, positions, config){
+
+	    config = config || {}
+
+	    var sourceRegion = this
+	    var targetRegion = Region.from(target)
+
+	    var result = COMPUTE_ALIGN_REGION(sourceRegion, targetRegion, positions, config)
+	    var resultRegion = result.region
+
+	    if (!resultRegion.equalsSize(sourceRegion)){
+	        this.setSize(resultRegion.getSize())
+	    }
+	    if (!resultRegion.equalsPosition(sourceRegion)){
+	        this.setPosition(resultRegion.getPosition(), { absolute: !!config.absolute })
+	    }
+
+	    return result.position
+	}
+
+	module.exports = Region
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	module.exports = __webpack_require__(6)
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var hasOwn    = __webpack_require__(7)
+	var newify    = __webpack_require__(8)
+
+	var assign      = __webpack_require__(10);
+	var EventEmitter = __webpack_require__(11).EventEmitter
+
+	var inherits = __webpack_require__(12)
+	var VALIDATE = __webpack_require__(13)
+
+	var objectToString = Object.prototype.toString
+
+	var isObject = function(value){
+	    return objectToString.apply(value) === '[object Object]'
+	}
+
+	function copyList(source, target, list){
+	    if (source){
+	        list.forEach(function(key){
+	            if (hasOwn(source, key)){
+	                target[key] = source[key]
+	            }
+	        })
+	    }
+
+	    return target
+	}
+
+	/**
+	 * @class Region
+	 *
+	 * The Region is an abstraction that allows the developer to refer to rectangles on the screen,
+	 * and move them around, make diffs and unions, detect intersections, compute areas, etc.
+	 *
+	 * ## Creating a region
+	 *      var region = require('region')({
+	 *          top  : 10,
+	 *          left : 10,
+	 *          bottom: 100,
+	 *          right : 100
+	 *      })
+	 *      //this region is a square, 90x90, starting from (10,10) to (100,100)
+	 *
+	 *      var second = require('region')({ top: 10, left: 100, right: 200, bottom: 60})
+	 *      var union  = region.getUnion(second)
+	 *
+	 *      //the "union" region is a union between "region" and "second"
+	 */
+
+	var POINT_POSITIONS = {
+	        cy: 'YCenter',
+	        cx: 'XCenter',
+	        t : 'Top',
+	        tc: 'TopCenter',
+	        tl: 'TopLeft',
+	        tr: 'TopRight',
+	        b : 'Bottom',
+	        bc: 'BottomCenter',
+	        bl: 'BottomLeft',
+	        br: 'BottomRight',
+	        l : 'Left',
+	        lc: 'LeftCenter',
+	        r : 'Right',
+	        rc: 'RightCenter',
+	        c : 'Center'
+	    }
+
+	/**
+	 * @constructor
+	 *
+	 * Construct a new Region.
+	 *
+	 * Example:
+	 *
+	 *      var r = new Region({ top: 10, left: 20, bottom: 100, right: 200 })
+	 *
+	 *      //or, the same, but with numbers (can be used with new or without)
+	 *
+	 *      r = Region(10, 200, 100, 20)
+	 *
+	 *      //or, with width and height
+	 *
+	 *      r = Region({ top: 10, left: 20, width: 180, height: 90})
+	 *
+	 * @param {Number|Object} top The top pixel position, or an object with top, left, bottom, right properties. If an object is passed,
+	 * instead of having bottom and right, it can have width and height.
+	 *
+	 * @param {Number} right The right pixel position
+	 * @param {Number} bottom The bottom pixel position
+	 * @param {Number} left The left pixel position
+	 *
+	 * @return {Region} this
+	 */
+	var REGION = function(top, right, bottom, left){
+
+	    if (!(this instanceof REGION)){
+	        return newify(REGION, arguments)
+	    }
+
+	    EventEmitter.call(this)
+
+	    if (isObject(top)){
+	        copyList(top, this, ['top','right','bottom','left'])
+
+	        if (top.bottom == null && top.height != null){
+	            this.bottom = this.top + top.height
+	        }
+	        if (top.right == null && top.width != null){
+	            this.right = this.left + top.width
+	        }
+
+	        if (top.emitChangeEvents){
+	            this.emitChangeEvents = top.emitChangeEvents
+	        }
+	    } else {
+	        this.top    = top
+	        this.right  = right
+	        this.bottom = bottom
+	        this.left   = left
+	    }
+
+	    this[0] = this.left
+	    this[1] = this.top
+
+	    VALIDATE(this)
+	}
+
+	inherits(REGION, EventEmitter)
+
+	assign(REGION.prototype, {
+
+	    /**
+	     * @cfg {Boolean} emitChangeEvents If this is set to true, the region
+	     * will emit 'changesize' and 'changeposition' whenever the size or the position changs
+	     */
+	    emitChangeEvents: false,
+
+	    /**
+	     * Returns this region, or a clone of this region
+	     * @param  {Boolean} [clone] If true, this method will return a clone of this region
+	     * @return {Region}       This region, or a clone of this
+	     */
+	    getRegion: function(clone){
+	        return clone?
+	                    this.clone():
+	                    this
+	    },
+
+	    /**
+	     * Sets the properties of this region to those of the given region
+	     * @param {Region/Object} reg The region or object to use for setting properties of this region
+	     * @return {Region} this
+	     */
+	    setRegion: function(reg){
+
+	        if (reg instanceof REGION){
+	            this.set(reg.get())
+	        } else {
+	            this.set(reg)
+	        }
+
+	        return this
+	    },
+
+	    /**
+	     * Returns true if this region is valid, false otherwise
+	     *
+	     * @param  {Region} region The region to check
+	     * @return {Boolean}        True, if the region is valid, false otherwise.
+	     * A region is valid if
+	     *  * left <= right  &&
+	     *  * top  <= bottom
+	     */
+	    validate: function(){
+	        return REGION.validate(this)
+	    },
+
+	    _before: function(){
+	        if (this.emitChangeEvents){
+	            return copyList(this, {}, ['left','top','bottom','right'])
+	        }
+	    },
+
+	    _after: function(before){
+	        if (this.emitChangeEvents){
+
+	            if(this.top != before.top || this.left != before.left) {
+	                this.emitPositionChange()
+	            }
+
+	            if(this.right != before.right || this.bottom != before.bottom) {
+	                this.emitSizeChange()
+	            }
+	        }
+	    },
+
+	    notifyPositionChange: function(){
+	        this.emit('changeposition', this)
+	    },
+
+	    emitPositionChange: function(){
+	        this.notifyPositionChange()
+	    },
+
+	    notifySizeChange: function(){
+	        this.emit('changesize', this)
+	    },
+
+	    emitSizeChange: function(){
+	        this.notifySizeChange()
+	    },
+
+	    /**
+	     * Add the given amounts to each specified side. Example
+	     *
+	     *      region.add({
+	     *          top: 50,    //add 50 px to the top side
+	     *          bottom: -100    //substract 100 px from the bottom side
+	     *      })
+	     *
+	     * @param {Object} directions
+	     * @param {Number} [directions.top]
+	     * @param {Number} [directions.left]
+	     * @param {Number} [directions.bottom]
+	     * @param {Number} [directions.right]
+	     *
+	     * @return {Region} this
+	     */
+	    add: function(directions){
+
+	        var before = this._before()
+	        var direction
+
+	        for (direction in directions) if ( hasOwn(directions, direction) ) {
+	            this[direction] += directions[direction]
+	        }
+
+	        this[0] = this.left
+	        this[1] = this.top
+
+	        this._after(before)
+
+	        return this
+	    },
+
+	    /**
+	     * The same as {@link #add}, but substracts the given values
+	     * @param {Object} directions
+	     * @param {Number} [directions.top]
+	     * @param {Number} [directions.left]
+	     * @param {Number} [directions.bottom]
+	     * @param {Number} [directions.right]
+	     *
+	     * @return {Region} this
+	     */
+	    substract: function(directions){
+
+	        var before = this._before()
+	        var direction
+
+	        for (direction in directions) if (hasOwn(directions, direction) ) {
+	            this[direction] -= directions[direction]
+	        }
+
+	        this[0] = this.left
+	        this[1] = this.top
+
+	        this._after(before)
+
+	        return this
+	    },
+
+	    /**
+	     * Retrieves the size of the region.
+	     * @return {Object} An object with {width, height}, corresponding to the width and height of the region
+	     */
+	    getSize: function(){
+	        return {
+	            width  : this.width,
+	            height : this.height
+	        }
+	    },
+
+	    /**
+	     * Move the region to the given position and keeps the region width and height.
+	     *
+	     * @param {Object} position An object with {top, left} properties. The values in {top,left} are used to move the region by the given amounts.
+	     * @param {Number} [position.left]
+	     * @param {Number} [position.top]
+	     *
+	     * @return {Region} this
+	     */
+	    setPosition: function(position){
+	        var width  = this.width
+	        var height = this.height
+
+	        if (position.left != undefined){
+	            position.right  = position.left + width
+	        }
+
+	        if (position.top != undefined){
+	            position.bottom = position.top  + height
+	        }
+
+	        return this.set(position)
+	    },
+
+	    /**
+	     * Sets both the height and the width of this region to the given size.
+	     *
+	     * @param {Number} size The new size for the region
+	     * @return {Region} this
+	     */
+	    setSize: function(size){
+	        if (size.height != undefined && size.width != undefined){
+	            return this.set({
+	                right  : this.left + size.width,
+	                bottom : this.top  + size.height
+	            })
+	        }
+
+	        if (size.width != undefined){
+	            this.setWidth(size.width)
+	        }
+
+	        if (size.height != undefined){
+	            this.setHeight(size.height)
+	        }
+
+	        return this
+	    },
+
+
+
+	    /**
+	     * @chainable
+	     *
+	     * Sets the width of this region
+	     * @param {Number} width The new width for this region
+	     * @return {Region} this
+	     */
+	    setWidth: function(width){
+	        return this.set({
+	            right: this.left + width
+	        })
+	    },
+
+	    /**
+	     * @chainable
+	     *
+	     * Sets the height of this region
+	     * @param {Number} height The new height for this region
+	     * @return {Region} this
+	     */
+	    setHeight: function(height){
+	        return this.set({
+	            bottom: this.top + height
+	        })
+	    },
+
+	    /**
+	     * Sets the given properties on this region
+	     *
+	     * @param {Object} directions an object containing top, left, and EITHER bottom, right OR width, height
+	     * @param {Number} [directions.top]
+	     * @param {Number} [directions.left]
+	     *
+	     * @param {Number} [directions.bottom]
+	     * @param {Number} [directions.right]
+	     *
+	     * @param {Number} [directions.width]
+	     * @param {Number} [directions.height]
+	     *
+	     *
+	     * @return {Region} this
+	     */
+	    set: function(directions){
+	        var before = this._before()
+
+	        copyList(directions, this, ['left','top','bottom','right'])
+
+	        if (directions.bottom == null && directions.height != null){
+	            this.bottom = this.top + directions.height
+	        }
+	        if (directions.right == null && directions.width != null){
+	            this.right = this.left + directions.width
+	        }
+
+	        this[0] = this.left
+	        this[1] = this.top
+
+	        this._after(before)
+
+	        return this
+	    },
+
+	    /**
+	     * Retrieves the given property from this region. If no property is given, return an object
+	     * with {left, top, right, bottom}
+	     *
+	     * @param {String} [dir] the property to retrieve from this region
+	     * @return {Number/Object}
+	     */
+	    get: function(dir){
+	        return dir? this[dir]:
+	                    copyList(this, {}, ['left','right','top','bottom'])
+	    },
+
+	    /**
+	     * Shifts this region to either top, or left or both.
+	     * Shift is similar to {@link #add} by the fact that it adds the given dimensions to top/left sides, but also adds the given dimensions
+	     * to bottom and right
+	     *
+	     * @param {Object} directions
+	     * @param {Number} [directions.top]
+	     * @param {Number} [directions.left]
+	     *
+	     * @return {Region} this
+	     */
+	    shift: function(directions){
+
+	        var before = this._before()
+
+	        if (directions.top){
+	            this.top    += directions.top
+	            this.bottom += directions.top
+	        }
+
+	        if (directions.left){
+	            this.left  += directions.left
+	            this.right += directions.left
+	        }
+
+	        this[0] = this.left
+	        this[1] = this.top
+
+	        this._after(before)
+
+	        return this
+	    },
+
+	    /**
+	     * Same as {@link #shift}, but substracts the given values
+	     * @chainable
+	     *
+	     * @param {Object} directions
+	     * @param {Number} [directions.top]
+	     * @param {Number} [directions.left]
+	     *
+	     * @return {Region} this
+	     */
+	    unshift: function(directions){
+
+	        if (directions.top){
+	            directions.top *= -1
+	        }
+
+	        if (directions.left){
+	            directions.left *= -1
+	        }
+
+	        return this.shift(directions)
+	    },
+
+	    /**
+	     * Compare this region and the given region. Return true if they have all the same size and position
+	     * @param  {Region} region The region to compare with
+	     * @return {Boolean}       True if this and region have same size and position
+	     */
+	    equals: function(region){
+	        return this.equalsPosition(region) && this.equalsSize(region)
+	    },
+
+	    /**
+	     * Returns true if this region has the same bottom,right properties as the given region
+	     * @param  {Region/Object} size The region to compare against
+	     * @return {Boolean}       true if this region is the same size as the given size
+	     */
+	    equalsSize: function(size){
+	        var isInstance = size instanceof REGION
+
+	        var s = {
+	            width: size.width == null && isInstance?
+	                    size.getWidth():
+	                    size.width,
+
+	            height: size.height == null && isInstance?
+	                    size.getHeight():
+	                    size.height
+	        }
+	        return this.getWidth() == s.width && this.getHeight() == s.height
+	    },
+
+	    /**
+	     * Returns true if this region has the same top,left properties as the given region
+	     * @param  {Region} region The region to compare against
+	     * @return {Boolean}       true if this.top == region.top and this.left == region.left
+	     */
+	    equalsPosition: function(region){
+	        return this.top == region.top && this.left == region.left
+	    },
+
+	    /**
+	     * Adds the given ammount to the left side of this region
+	     * @param {Number} left The ammount to add
+	     * @return {Region} this
+	     */
+	    addLeft: function(left){
+	        var before = this._before()
+
+	        this.left = this[0] = this.left + left
+
+	        this._after(before)
+
+	        return this
+	    },
+
+	    /**
+	     * Adds the given ammount to the top side of this region
+	     * @param {Number} top The ammount to add
+	     * @return {Region} this
+	     */
+	    addTop: function(top){
+	        var before = this._before()
+
+	        this.top = this[1] = this.top + top
+
+	        this._after(before)
+
+	        return this
+	    },
+
+	    /**
+	     * Adds the given ammount to the bottom side of this region
+	     * @param {Number} bottom The ammount to add
+	     * @return {Region} this
+	     */
+	    addBottom: function(bottom){
+	        var before = this._before()
+
+	        this.bottom += bottom
+
+	        this._after(before)
+
+	        return this
+	    },
+
+	    /**
+	     * Adds the given ammount to the right side of this region
+	     * @param {Number} right The ammount to add
+	     * @return {Region} this
+	     */
+	    addRight: function(right){
+	        var before = this._before()
+
+	        this.right += right
+
+	        this._after(before)
+
+	        return this
+	    },
+
+	    /**
+	     * Minimize the top side.
+	     * @return {Region} this
+	     */
+	    minTop: function(){
+	        return this.expand({top: 1})
+	    },
+	    /**
+	     * Minimize the bottom side.
+	     * @return {Region} this
+	     */
+	    maxBottom: function(){
+	        return this.expand({bottom: 1})
+	    },
+	    /**
+	     * Minimize the left side.
+	     * @return {Region} this
+	     */
+	    minLeft: function(){
+	        return this.expand({left: 1})
+	    },
+	    /**
+	     * Maximize the right side.
+	     * @return {Region} this
+	     */
+	    maxRight: function(){
+	        return this.expand({right: 1})
+	    },
+
+	    /**
+	     * Expands this region to the dimensions of the given region, or the document region, if no region is expanded.
+	     * But only expand the given sides (any of the four can be expanded).
+	     *
+	     * @param {Object} directions
+	     * @param {Boolean} [directions.top]
+	     * @param {Boolean} [directions.bottom]
+	     * @param {Boolean} [directions.left]
+	     * @param {Boolean} [directions.right]
+	     *
+	     * @param {Region} [region] the region to expand to, defaults to the document region
+	     * @return {Region} this region
+	     */
+	    expand: function(directions, region){
+	        var docRegion = region || REGION.getDocRegion()
+	        var list      = []
+	        var direction
+	        var before = this._before()
+
+	        for (direction in directions) if ( hasOwn(directions, direction) ) {
+	            list.push(direction)
+	        }
+
+	        copyList(docRegion, this, list)
+
+	        this[0] = this.left
+	        this[1] = this.top
+
+	        this._after(before)
+
+	        return this
+	    },
+
+	    /**
+	     * Returns a clone of this region
+	     * @return {Region} A new region, with the same position and dimension as this region
+	     */
+	    clone: function(){
+	        return new REGION({
+	                    top    : this.top,
+	                    left   : this.left,
+	                    right  : this.right,
+	                    bottom : this.bottom
+	                })
+	    },
+
+	    /**
+	     * Returns true if this region contains the given point
+	     * @param {Number/Object} x the x coordinate of the point
+	     * @param {Number} [y] the y coordinate of the point
+	     *
+	     * @return {Boolean} true if this region constains the given point, false otherwise
+	     */
+	    containsPoint: function(x, y){
+	        if (arguments.length == 1){
+	            y = x.y
+	            x = x.x
+	        }
+
+	        return this.left <= x  &&
+	               x <= this.right &&
+	               this.top <= y   &&
+	               y <= this.bottom
+	    },
+
+	    /**
+	     *
+	     * @param region
+	     *
+	     * @return {Boolean} true if this region contains the given region, false otherwise
+	     */
+	    containsRegion: function(region){
+	        return this.containsPoint(region.left, region.top)    &&
+	               this.containsPoint(region.right, region.bottom)
+	    },
+
+	    /**
+	     * Returns an object with the difference for {top, bottom} positions betwen this and the given region,
+	     *
+	     * See {@link #diff}
+	     * @param  {Region} region The region to use for diff
+	     * @return {Object}        {top,bottom}
+	     */
+	    diffHeight: function(region){
+	        return this.diff(region, {top: true, bottom: true})
+	    },
+
+	    /**
+	     * Returns an object with the difference for {left, right} positions betwen this and the given region,
+	     *
+	     * See {@link #diff}
+	     * @param  {Region} region The region to use for diff
+	     * @return {Object}        {left,right}
+	     */
+	    diffWidth: function(region){
+	        return this.diff(region, {left: true, right: true})
+	    },
+
+	    /**
+	     * Returns an object with the difference in sizes for the given directions, between this and region
+	     *
+	     * @param  {Region} region     The region to use for diff
+	     * @param  {Object} directions An object with the directions to diff. Can have any of the following keys:
+	     *  * left
+	     *  * right
+	     *  * top
+	     *  * bottom
+	     *
+	     * @return {Object} and object with the same keys as the directions object, but the values being the
+	     * differences between this region and the given region
+	     */
+	    diff: function(region, directions){
+	        var result = {}
+	        var dirName
+
+	        for (dirName in directions) if ( hasOwn(directions, dirName) ) {
+	            result[dirName] = this[dirName] - region[dirName]
+	        }
+
+	        return result
+	    },
+
+	    /**
+	     * Returns the position, in {left,top} properties, of this region
+	     *
+	     * @return {Object} {left,top}
+	     */
+	    getPosition: function(){
+	        return {
+	            left: this.left,
+	            top : this.top
+	        }
+	    },
+
+	    /**
+	     * Returns the point at the given position from this region.
+	     *
+	     * @param {String} position Any of:
+	     *
+	     *  * 'cx' - See {@link #getPointXCenter}
+	     *  * 'cy' - See {@link #getPointYCenter}
+	     *  * 'b'  - See {@link #getPointBottom}
+	     *  * 'bc' - See {@link #getPointBottomCenter}
+	     *  * 'l'  - See {@link #getPointLeft}F
+	     *  * 'lc' - See {@link #getPointLeftCenter}
+	     *  * 't'  - See {@link #getPointTop}
+	     *  * 'tc' - See {@link #getPointTopCenter}
+	     *  * 'r'  - See {@link #getPointRight}
+	     *  * 'rc' - See {@link #getPointRightCenter}
+	     *  * 'c'  - See {@link #getPointCenter}
+	     *  * 'tl' - See {@link #getPointTopLeft}
+	     *  * 'bl' - See {@link #getPointBottomLeft}
+	     *  * 'br' - See {@link #getPointBottomRight}
+	     *  * 'tr' - See {@link #getPointTopRight}
+	     *
+	     * @param {Boolean} asLeftTop
+	     *
+	     * @return {Object} either an object with {x,y} or {left,top} if asLeftTop is true
+	     */
+	    getPoint: function(position, asLeftTop){
+
+	        //<debug>
+	        if (!POINT_POSITIONS[position]) {
+	            console.warn('The position ', position, ' could not be found! Available options are tl, bl, tr, br, l, r, t, b.');
+	        }
+	        //</debug>
+
+	        var method = 'getPoint' + POINT_POSITIONS[position],
+	            result = this[method]()
+
+	        if (asLeftTop){
+	            return {
+	                left : result.x,
+	                top  : result.y
+	            }
+	        }
+
+	        return result
+	    },
+
+	    /**
+	     * Returns a point with x = null and y being the middle of the left region segment
+	     * @return {Object} {x,y}
+	     */
+	    getPointYCenter: function(){
+	        return { x: null, y: this.top + this.getHeight() / 2 }
+	    },
+
+	    /**
+	     * Returns a point with y = null and x being the middle of the top region segment
+	     * @return {Object} {x,y}
+	     */
+	    getPointXCenter: function(){
+	        return { x: this.left + this.getWidth() / 2, y: null }
+	    },
+
+	    /**
+	     * Returns a point with x = null and y the region top position on the y axis
+	     * @return {Object} {x,y}
+	     */
+	    getPointTop: function(){
+	        return { x: null, y: this.top }
+	    },
+
+	    /**
+	     * Returns a point that is the middle point of the region top segment
+	     * @return {Object} {x,y}
+	     */
+	    getPointTopCenter: function(){
+	        return { x: this.left + this.getWidth() / 2, y: this.top }
+	    },
+
+	    /**
+	     * Returns a point that is the top-left point of the region
+	     * @return {Object} {x,y}
+	     */
+	    getPointTopLeft: function(){
+	        return { x: this.left, y: this.top}
+	    },
+
+	    /**
+	     * Returns a point that is the top-right point of the region
+	     * @return {Object} {x,y}
+	     */
+	    getPointTopRight: function(){
+	        return { x: this.right, y: this.top}
+	    },
+
+	    /**
+	     * Returns a point with x = null and y the region bottom position on the y axis
+	     * @return {Object} {x,y}
+	     */
+	    getPointBottom: function(){
+	        return { x: null, y: this.bottom }
+	    },
+
+	    /**
+	     * Returns a point that is the middle point of the region bottom segment
+	     * @return {Object} {x,y}
+	     */
+	    getPointBottomCenter: function(){
+	        return { x: this.left + this.getWidth() / 2, y: this.bottom }
+	    },
+
+	    /**
+	     * Returns a point that is the bottom-left point of the region
+	     * @return {Object} {x,y}
+	     */
+	    getPointBottomLeft: function(){
+	        return { x: this.left, y: this.bottom}
+	    },
+
+	    /**
+	     * Returns a point that is the bottom-right point of the region
+	     * @return {Object} {x,y}
+	     */
+	    getPointBottomRight: function(){
+	        return { x: this.right, y: this.bottom}
+	    },
+
+	    /**
+	     * Returns a point with y = null and x the region left position on the x axis
+	     * @return {Object} {x,y}
+	     */
+	    getPointLeft: function(){
+	        return { x: this.left, y: null }
+	    },
+
+	    /**
+	     * Returns a point that is the middle point of the region left segment
+	     * @return {Object} {x,y}
+	     */
+	    getPointLeftCenter: function(){
+	        return { x: this.left, y: this.top + this.getHeight() / 2 }
+	    },
+
+	    /**
+	     * Returns a point with y = null and x the region right position on the x axis
+	     * @return {Object} {x,y}
+	     */
+	    getPointRight: function(){
+	        return { x: this.right, y: null }
+	    },
+
+	    /**
+	     * Returns a point that is the middle point of the region right segment
+	     * @return {Object} {x,y}
+	     */
+	    getPointRightCenter: function(){
+	        return { x: this.right, y: this.top + this.getHeight() / 2 }
+	    },
+
+	    /**
+	     * Returns a point that is the center of the region
+	     * @return {Object} {x,y}
+	     */
+	    getPointCenter: function(){
+	        return { x: this.left + this.getWidth() / 2, y: this.top + this.getHeight() / 2 }
+	    },
+
+	    /**
+	     * @return {Number} returns the height of the region
+	     */
+	    getHeight: function(){
+	        return this.bottom - this.top
+	    },
+
+	    /**
+	     * @return {Number} returns the width of the region
+	     */
+	    getWidth: function(){
+	        return this.right - this.left
+	    },
+
+	    /**
+	     * @return {Number} returns the top property of the region
+	     */
+	    getTop: function(){
+	        return this.top
+	    },
+
+	    /**
+	     * @return {Number} returns the left property of the region
+	     */
+	    getLeft: function(){
+	        return this.left
+	    },
+
+	    /**
+	     * @return {Number} returns the bottom property of the region
+	     */
+	    getBottom: function(){
+	        return this.bottom
+	    },
+
+	    /**
+	     * @return {Number} returns the right property of the region
+	     */
+	    getRight: function(){
+	        return this.right
+	    },
+
+	    /**
+	     * Returns the area of the region
+	     * @return {Number} the computed area
+	     */
+	    getArea: function(){
+	        return this.getWidth() * this.getHeight()
+	    },
+
+	    constrainTo: function(contrain){
+	        var intersect = this.getIntersection(contrain)
+	        var shift
+
+	        if (!intersect || !intersect.equals(this)){
+
+	            var contrainWidth  = contrain.getWidth(),
+	                contrainHeight = contrain.getHeight()
+
+	            if (this.getWidth() > contrainWidth){
+	                this.left = contrain.left
+	                this.setWidth(contrainWidth)
+	            }
+
+	            if (this.getHeight() > contrainHeight){
+	                this.top = contrain.top
+	                this.setHeight(contrainHeight)
+	            }
+
+	            shift = {}
+
+	            if (this.right > contrain.right){
+	                shift.left = contrain.right - this.right
+	            }
+
+	            if (this.bottom > contrain.bottom){
+	                shift.top = contrain.bottom - this.bottom
+	            }
+
+	            if (this.left < contrain.left){
+	                shift.left = contrain.left - this.left
+	            }
+
+	            if (this.top < contrain.top){
+	                shift.top = contrain.top - this.top
+	            }
+
+	            this.shift(shift)
+
+	            return true
+	        }
+
+	        return false
+	    },
+
+	    __IS_REGION: true
+
+	    /**
+	     * @property {Number} top
+	     */
+
+	    /**
+	     * @property {Number} right
+	     */
+
+	    /**
+	     * @property {Number} bottom
+	     */
+
+	    /**
+	     * @property {Number} left
+	     */
+
+	    /**
+	     * @property {Number} [0] the top property
+	     */
+
+	    /**
+	     * @property {Number} [1] the left property
+	     */
+
+	    /**
+	     * @method getIntersection
+	     * Returns a region that is the intersection of this region and the given region
+	     * @param  {Region} region The region to intersect with
+	     * @return {Region}        The intersection region
+	     */
+
+	    /**
+	     * @method getUnion
+	     * Returns a region that is the union of this region with the given region
+	     * @param  {Region} region  The region to make union with
+	     * @return {Region}        The union region. The smallest region that contains both this and the given region.
+	     */
+
+	})
+
+	Object.defineProperties(REGION.prototype, {
+	    width: {
+	        get: function(){
+	            return this.getWidth()
+	        },
+	        set: function(width){
+	            return this.setWidth(width)
+	        }
+	    },
+	    height: {
+	        get: function(){
+	            return this.getHeight()
+	        },
+	        set: function(height){
+	            return this.setHeight(height)
+	        }
+	    }
+	})
+
+	__webpack_require__(14)(REGION)
+
+	module.exports = REGION
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports) {
+
+	'use strict'
+
+	var hasOwn = Object.prototype.hasOwnProperty
+
+	function curry(fn, n){
+
+	    if (typeof n !== 'number'){
+	        n = fn.length
+	    }
+
+	    function getCurryClosure(prevArgs){
+
+	        function curryClosure() {
+
+	            var len  = arguments.length
+	            var args = [].concat(prevArgs)
+
+	            if (len){
+	                args.push.apply(args, arguments)
+	            }
+
+	            if (args.length < n){
+	                return getCurryClosure(args)
+	            }
+
+	            return fn.apply(this, args)
+	        }
+
+	        return curryClosure
+	    }
+
+	    return getCurryClosure([])
+	}
+
+
+	module.exports = curry(function(object, property){
+	    return hasOwn.call(object, property)
+	})
+
+/***/ }),
+/* 8 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var getInstantiatorFunction = __webpack_require__(9)
+
+	module.exports = function(fn, args){
+		return getInstantiatorFunction(args.length)(fn, args)
+	}
+
+/***/ }),
+/* 9 */
+/***/ (function(module, exports) {
+
+	module.exports = function(){
+
+	    'use strict';
+
+	    var fns = {}
+
+	    return function(len){
+
+	        if ( ! fns [len ] ) {
+
+	            var args = []
+	            var i    = 0
+
+	            for (; i < len; i++ ) {
+	                args.push( 'a[' + i + ']')
+	            }
+
+	            fns[len] = new Function(
+	                            'c',
+	                            'a',
+	                            'return new c(' + args.join(',') + ')'
+	                        )
+	        }
+
+	        return fns[len]
+	    }
+
+	}()
+
+/***/ }),
+/* 10 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	function ToObject(val) {
+		if (val == null) {
+			throw new TypeError('Object.assign cannot be called with null or undefined');
+		}
+
+		return Object(val);
+	}
+
+	module.exports = Object.assign || function (target, source) {
+		var from;
+		var keys;
+		var to = ToObject(target);
+
+		for (var s = 1; s < arguments.length; s++) {
+			from = arguments[s];
+			keys = Object.keys(Object(from));
+
+			for (var i = 0; i < keys.length; i++) {
+				to[keys[i]] = from[keys[i]];
+			}
+		}
+
+		return to;
+	};
+
+
+/***/ }),
+/* 11 */
+/***/ (function(module, exports) {
+
+	// Copyright Joyent, Inc. and other Node contributors.
+	//
+	// Permission is hereby granted, free of charge, to any person obtaining a
+	// copy of this software and associated documentation files (the
+	// "Software"), to deal in the Software without restriction, including
+	// without limitation the rights to use, copy, modify, merge, publish,
+	// distribute, sublicense, and/or sell copies of the Software, and to permit
+	// persons to whom the Software is furnished to do so, subject to the
+	// following conditions:
+	//
+	// The above copyright notice and this permission notice shall be included
+	// in all copies or substantial portions of the Software.
+	//
+	// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+	// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+	// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+	// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+	// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+	// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+	// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+	function EventEmitter() {
+	  this._events = this._events || {};
+	  this._maxListeners = this._maxListeners || undefined;
+	}
+	module.exports = EventEmitter;
+
+	// Backwards-compat with node 0.10.x
+	EventEmitter.EventEmitter = EventEmitter;
+
+	EventEmitter.prototype._events = undefined;
+	EventEmitter.prototype._maxListeners = undefined;
+
+	// By default EventEmitters will print a warning if more than 10 listeners are
+	// added to it. This is a useful default which helps finding memory leaks.
+	EventEmitter.defaultMaxListeners = 10;
+
+	// Obviously not all Emitters should be limited to 10. This function allows
+	// that to be increased. Set to zero for unlimited.
+	EventEmitter.prototype.setMaxListeners = function(n) {
+	  if (!isNumber(n) || n < 0 || isNaN(n))
+	    throw TypeError('n must be a positive number');
+	  this._maxListeners = n;
+	  return this;
+	};
+
+	EventEmitter.prototype.emit = function(type) {
+	  var er, handler, len, args, i, listeners;
+
+	  if (!this._events)
+	    this._events = {};
+
+	  // If there is no 'error' event listener then throw.
+	  if (type === 'error') {
+	    if (!this._events.error ||
+	        (isObject(this._events.error) && !this._events.error.length)) {
+	      er = arguments[1];
+	      if (er instanceof Error) {
+	        throw er; // Unhandled 'error' event
+	      } else {
+	        // At least give some kind of context to the user
+	        var err = new Error('Uncaught, unspecified "error" event. (' + er + ')');
+	        err.context = er;
+	        throw err;
+	      }
+	    }
+	  }
+
+	  handler = this._events[type];
+
+	  if (isUndefined(handler))
+	    return false;
+
+	  if (isFunction(handler)) {
+	    switch (arguments.length) {
+	      // fast cases
+	      case 1:
+	        handler.call(this);
+	        break;
+	      case 2:
+	        handler.call(this, arguments[1]);
+	        break;
+	      case 3:
+	        handler.call(this, arguments[1], arguments[2]);
+	        break;
+	      // slower
+	      default:
+	        args = Array.prototype.slice.call(arguments, 1);
+	        handler.apply(this, args);
+	    }
+	  } else if (isObject(handler)) {
+	    args = Array.prototype.slice.call(arguments, 1);
+	    listeners = handler.slice();
+	    len = listeners.length;
+	    for (i = 0; i < len; i++)
+	      listeners[i].apply(this, args);
+	  }
+
+	  return true;
+	};
+
+	EventEmitter.prototype.addListener = function(type, listener) {
+	  var m;
+
+	  if (!isFunction(listener))
+	    throw TypeError('listener must be a function');
+
+	  if (!this._events)
+	    this._events = {};
+
+	  // To avoid recursion in the case that type === "newListener"! Before
+	  // adding it to the listeners, first emit "newListener".
+	  if (this._events.newListener)
+	    this.emit('newListener', type,
+	              isFunction(listener.listener) ?
+	              listener.listener : listener);
+
+	  if (!this._events[type])
+	    // Optimize the case of one listener. Don't need the extra array object.
+	    this._events[type] = listener;
+	  else if (isObject(this._events[type]))
+	    // If we've already got an array, just append.
+	    this._events[type].push(listener);
+	  else
+	    // Adding the second element, need to change to array.
+	    this._events[type] = [this._events[type], listener];
+
+	  // Check for listener leak
+	  if (isObject(this._events[type]) && !this._events[type].warned) {
+	    if (!isUndefined(this._maxListeners)) {
+	      m = this._maxListeners;
+	    } else {
+	      m = EventEmitter.defaultMaxListeners;
+	    }
+
+	    if (m && m > 0 && this._events[type].length > m) {
+	      this._events[type].warned = true;
+	      console.error('(node) warning: possible EventEmitter memory ' +
+	                    'leak detected. %d listeners added. ' +
+	                    'Use emitter.setMaxListeners() to increase limit.',
+	                    this._events[type].length);
+	      if (typeof console.trace === 'function') {
+	        // not supported in IE 10
+	        console.trace();
+	      }
+	    }
+	  }
+
+	  return this;
+	};
+
+	EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+	EventEmitter.prototype.once = function(type, listener) {
+	  if (!isFunction(listener))
+	    throw TypeError('listener must be a function');
+
+	  var fired = false;
+
+	  function g() {
+	    this.removeListener(type, g);
+
+	    if (!fired) {
+	      fired = true;
+	      listener.apply(this, arguments);
+	    }
+	  }
+
+	  g.listener = listener;
+	  this.on(type, g);
+
+	  return this;
+	};
+
+	// emits a 'removeListener' event iff the listener was removed
+	EventEmitter.prototype.removeListener = function(type, listener) {
+	  var list, position, length, i;
+
+	  if (!isFunction(listener))
+	    throw TypeError('listener must be a function');
+
+	  if (!this._events || !this._events[type])
+	    return this;
+
+	  list = this._events[type];
+	  length = list.length;
+	  position = -1;
+
+	  if (list === listener ||
+	      (isFunction(list.listener) && list.listener === listener)) {
+	    delete this._events[type];
+	    if (this._events.removeListener)
+	      this.emit('removeListener', type, listener);
+
+	  } else if (isObject(list)) {
+	    for (i = length; i-- > 0;) {
+	      if (list[i] === listener ||
+	          (list[i].listener && list[i].listener === listener)) {
+	        position = i;
+	        break;
+	      }
+	    }
+
+	    if (position < 0)
+	      return this;
+
+	    if (list.length === 1) {
+	      list.length = 0;
+	      delete this._events[type];
+	    } else {
+	      list.splice(position, 1);
+	    }
+
+	    if (this._events.removeListener)
+	      this.emit('removeListener', type, listener);
+	  }
+
+	  return this;
+	};
+
+	EventEmitter.prototype.removeAllListeners = function(type) {
+	  var key, listeners;
+
+	  if (!this._events)
+	    return this;
+
+	  // not listening for removeListener, no need to emit
+	  if (!this._events.removeListener) {
+	    if (arguments.length === 0)
+	      this._events = {};
+	    else if (this._events[type])
+	      delete this._events[type];
+	    return this;
+	  }
+
+	  // emit removeListener for all listeners on all events
+	  if (arguments.length === 0) {
+	    for (key in this._events) {
+	      if (key === 'removeListener') continue;
+	      this.removeAllListeners(key);
+	    }
+	    this.removeAllListeners('removeListener');
+	    this._events = {};
+	    return this;
+	  }
+
+	  listeners = this._events[type];
+
+	  if (isFunction(listeners)) {
+	    this.removeListener(type, listeners);
+	  } else if (listeners) {
+	    // LIFO order
+	    while (listeners.length)
+	      this.removeListener(type, listeners[listeners.length - 1]);
+	  }
+	  delete this._events[type];
+
+	  return this;
+	};
+
+	EventEmitter.prototype.listeners = function(type) {
+	  var ret;
+	  if (!this._events || !this._events[type])
+	    ret = [];
+	  else if (isFunction(this._events[type]))
+	    ret = [this._events[type]];
+	  else
+	    ret = this._events[type].slice();
+	  return ret;
+	};
+
+	EventEmitter.prototype.listenerCount = function(type) {
+	  if (this._events) {
+	    var evlistener = this._events[type];
+
+	    if (isFunction(evlistener))
+	      return 1;
+	    else if (evlistener)
+	      return evlistener.length;
+	  }
+	  return 0;
+	};
+
+	EventEmitter.listenerCount = function(emitter, type) {
+	  return emitter.listenerCount(type);
+	};
+
+	function isFunction(arg) {
+	  return typeof arg === 'function';
+	}
+
+	function isNumber(arg) {
+	  return typeof arg === 'number';
+	}
+
+	function isObject(arg) {
+	  return typeof arg === 'object' && arg !== null;
+	}
+
+	function isUndefined(arg) {
+	  return arg === void 0;
+	}
+
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	module.exports = function(ctor, superCtor) {
+	    ctor.super_ = superCtor
+	    ctor.prototype = Object.create(superCtor.prototype, {
+	        constructor: {
+	            value       : ctor,
+	            enumerable  : false,
+	            writable    : true,
+	            configurable: true
+	        }
+	    })
+	}
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	/**
+	 * @static
+	 * Returns true if the given region is valid, false otherwise.
+	 * @param  {Region} region The region to check
+	 * @return {Boolean}        True, if the region is valid, false otherwise.
+	 * A region is valid if
+	 *  * left <= right  &&
+	 *  * top  <= bottom
+	 */
+	module.exports = function validate(region){
+
+	    var isValid = true
+
+	    if (region.right < region.left){
+	        isValid = false
+	        region.right = region.left
+	    }
+
+	    if (region.bottom < region.top){
+	        isValid = false
+	        region.bottom = region.top
+	    }
+
+	    return isValid
+	}
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var hasOwn   = __webpack_require__(7)
+	var VALIDATE = __webpack_require__(13)
+
+	module.exports = function(REGION){
+
+	    var MAX = Math.max
+	    var MIN = Math.min
+
+	    var statics = {
+	        init: function(){
+	            var exportAsNonStatic = {
+	                getIntersection      : true,
+	                getIntersectionArea  : true,
+	                getIntersectionHeight: true,
+	                getIntersectionWidth : true,
+	                getUnion             : true
+	            }
+	            var thisProto = REGION.prototype
+	            var newName
+
+	            var exportHasOwn = hasOwn(exportAsNonStatic)
+	            var methodName
+
+	            for (methodName in exportAsNonStatic) if (exportHasOwn(methodName)) {
+	                newName = exportAsNonStatic[methodName]
+	                if (typeof newName != 'string'){
+	                    newName = methodName
+	                }
+
+	                ;(function(proto, methodName, protoMethodName){
+
+	                    proto[methodName] = function(region){
+	                        //<debug>
+	                        if (!REGION[protoMethodName]){
+	                            console.warn('cannot find method ', protoMethodName,' on ', REGION)
+	                        }
+	                        //</debug>
+	                        return REGION[protoMethodName](this, region)
+	                    }
+
+	                })(thisProto, newName, methodName);
+	            }
+	        },
+
+	        validate: VALIDATE,
+
+	        /**
+	         * Returns the region corresponding to the documentElement
+	         * @return {Region} The region corresponding to the documentElement. This region is the maximum region visible on the screen.
+	         */
+	        getDocRegion: function(){
+	            return REGION.fromDOM(document.documentElement)
+	        },
+
+	        from: function(reg){
+	            if (reg.__IS_REGION){
+	                return reg
+	            }
+
+	            if (typeof document != 'undefined'){
+	                if (typeof HTMLElement != 'undefined' && reg instanceof HTMLElement){
+	                    return REGION.fromDOM(reg)
+	                }
+
+	                if (reg.type && typeof reg.pageX !== 'undefined' && typeof reg.pageY !== 'undefined'){
+	                    return REGION.fromEvent(reg)
+	                }
+	            }
+
+	            return REGION(reg)
+	        },
+
+	        fromEvent: function(event){
+	            return REGION.fromPoint({
+	                x: event.pageX,
+	                y: event.pageY
+	            })
+	        },
+
+	        fromDOM: function(dom){
+	            var rect = dom.getBoundingClientRect()
+	            // var docElem = document.documentElement
+	            // var win     = window
+
+	            // var top  = rect.top + win.pageYOffset - docElem.clientTop
+	            // var left = rect.left + win.pageXOffset - docElem.clientLeft
+
+	            return new REGION({
+	                top   : rect.top,
+	                left  : rect.left,
+	                bottom: rect.bottom,
+	                right : rect.right
+	            })
+	        },
+
+	        /**
+	         * @static
+	         * Returns a region that is the intersection of the given two regions
+	         * @param  {Region} first  The first region
+	         * @param  {Region} second The second region
+	         * @return {Region/Boolean}        The intersection region or false if no intersection found
+	         */
+	        getIntersection: function(first, second){
+
+	            var area = this.getIntersectionArea(first, second)
+
+	            if (area){
+	                return new REGION(area)
+	            }
+
+	            return false
+	        },
+
+	        getIntersectionWidth: function(first, second){
+	            var minRight  = MIN(first.right, second.right)
+	            var maxLeft   = MAX(first.left,  second.left)
+
+	            if (maxLeft < minRight){
+	                return minRight  - maxLeft
+	            }
+
+	            return 0
+	        },
+
+	        getIntersectionHeight: function(first, second){
+	            var maxTop    = MAX(first.top,   second.top)
+	            var minBottom = MIN(first.bottom,second.bottom)
+
+	            if (maxTop  < minBottom){
+	                return minBottom - maxTop
+	            }
+
+	            return 0
+	        },
+
+	        getIntersectionArea: function(first, second){
+	            var maxTop    = MAX(first.top,   second.top)
+	            var minRight  = MIN(first.right, second.right)
+	            var minBottom = MIN(first.bottom,second.bottom)
+	            var maxLeft   = MAX(first.left,  second.left)
+
+	            if (
+	                    maxTop  < minBottom &&
+	                    maxLeft < minRight
+	                ){
+	                return {
+	                    top    : maxTop,
+	                    right  : minRight,
+	                    bottom : minBottom,
+	                    left   : maxLeft,
+
+	                    width  : minRight  - maxLeft,
+	                    height : minBottom - maxTop
+	                }
+	            }
+
+	            return false
+	        },
+
+	        /**
+	         * @static
+	         * Returns a region that is the union of the given two regions
+	         * @param  {Region} first  The first region
+	         * @param  {Region} second The second region
+	         * @return {Region}        The union region. The smallest region that contains both given regions.
+	         */
+	        getUnion: function(first, second){
+	            var top    = MIN(first.top,   second.top)
+	            var right  = MAX(first.right, second.right)
+	            var bottom = MAX(first.bottom,second.bottom)
+	            var left   = MIN(first.left,  second.left)
+
+	            return new REGION(top, right, bottom, left)
+	        },
+
+	        /**
+	         * @static
+	         * Returns a region. If the reg argument is a region, returns it, otherwise return a new region built from the reg object.
+	         *
+	         * @param  {Region} reg A region or an object with either top, left, bottom, right or
+	         * with top, left, width, height
+	         * @return {Region} A region
+	         */
+	        getRegion: function(reg){
+	            return REGION.from(reg)
+	        },
+
+	        /**
+	         * Creates a region that corresponds to a point.
+	         *
+	         * @param  {Object} xy The point
+	         * @param  {Number} xy.x
+	         * @param  {Number} xy.y
+	         *
+	         * @return {Region}    The new region, with top==xy.y, bottom = xy.y and left==xy.x, right==xy.x
+	         */
+	        fromPoint: function(xy){
+	            return new REGION({
+	                        top    : xy.y,
+	                        bottom : xy.y,
+	                        left   : xy.x,
+	                        right  : xy.x
+	                    })
+	        }
+	    }
+
+	    Object.keys(statics).forEach(function(key){
+	        REGION[key] = statics[key]
+	    })
+
+	    REGION.init()
+	}
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict'
+
+	var Region = __webpack_require__(5)
+
+	/**
+	 * @static
+	 * Aligns the source region to the target region, so as to correspond to the given alignment.
+	 *
+	 * NOTE that this method makes changes on the sourceRegion in order for it to be aligned as specified.
+	 *
+	 * @param {Region} sourceRegion
+	 * @param {Region} targetRegion
+	 *
+	 * @param {String} align A string with 2 valid align positions, eg: 'tr-bl'.
+	 * For valid positions, see {@link Region#getPoint}
+	 *
+	 * Having 2 regions, we need to be able to align them as we wish:
+	 *
+	 * for example, if we have
+	 *
+	 *       source    target
+	 *       ________________
+	 *       ____
+	 *      |    |     ________
+	 *      |____|    |        |
+	 *                |        |
+	 *                |________|
+	 *
+	 * and we align 't-t', we get:
+	 *
+	 *       source    target
+	 *       _________________
+	 *
+	 *       ____      ________
+	 *      |    |    |        |
+	 *      |____|    |        |
+	 *                |________|
+	 *
+	 *  In this case, the source was moved down to be aligned to the top of the target
+	 *
+	 *
+	 * and if we align 'tc-tc' we get
+	 *
+	 *       source     target
+	 *       __________________
+	 *
+	 *                 ________
+	 *                | |    | |
+	 *                | |____| |
+	 *                |________|
+	 *
+	 *  Since the source was moved to have the top-center point to be the same with target top-center
+	 *
+	 *
+	 *
+	 * @return {RegionClass} The Region class
+	 */
+	Region.align = function(sourceRegion, targetRegion, align){
+
+	    targetRegion = Region.from(targetRegion)
+
+	    align = (align || 'c-c').split('-')
+
+	    //<debug>
+	    if (align.length != 2){
+	        console.warn('Incorrect region alignment! The align parameter need to be in the form \'br-c\', that is, a - separated string!', align)
+	    }
+	    //</debug>
+
+	    return Region.alignToPoint(sourceRegion, targetRegion.getPoint(align[1]), align[0])
+	}
+
+	/**
+	 * Modifies the given region to be aligned to the point, as specified by anchor
+	 *
+	 * @param {Region} region The region to align to the point
+	 * @param {Object} point The point to be used as a reference
+	 * @param {Number} point.x
+	 * @param {Number} point.y
+	 * @param {String} anchor The position where to anchor the region to the point. See {@link #getPoint} for available options/
+	 *
+	 * @return {Region} the given region
+	 */
+	Region.alignToPoint = function(region, point, anchor){
+
+	    region = Region.from(region)
+
+	    var sourcePoint = region.getPoint(anchor)
+	    var count       = 0
+	    var shiftObj    = {}
+
+	    if (
+	            sourcePoint.x != null &&
+	            point.x != null
+	        ){
+
+	            count++
+	            shiftObj.left = point.x - sourcePoint.x
+	    }
+
+	    if (
+	            sourcePoint.y != null &&
+	            point.y != null
+	        ){
+	            count++
+	            shiftObj.top = point.y - sourcePoint.y
+	    }
+
+	    if (count){
+
+	        region.shift(shiftObj)
+
+	    }
+
+	    return region
+	}
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var Region = __webpack_require__(5)
+
+	/**
+	 *
+	 * Aligns this region to the given region
+	 * @param {Region} region
+	 * @param {String} alignPositions For available positions, see {@link #getPoint}
+	 *
+	 *     eg: 'tr-bl'
+	 *
+	 * @return this
+	 */
+	Region.prototype.alignToRegion = function(region, alignPositions){
+	    Region.align(this, region, alignPositions)
+
+	    return this
+	}
+
+	/**
+	 * Aligns this region to the given point, in the anchor position
+	 * @param {Object} point eg: {x: 20, y: 600}
+	 * @param {Number} point.x
+	 * @param {Number} point.y
+	 *
+	 * @param {String} anchor For available positions, see {@link #getPoint}
+	 *
+	 *     eg: 'bl'
+	 *
+	 * @return this
+	 */
+	 Region.prototype.alignToPoint = function(point, anchor){
+	    Region.alignToPoint(this, point, anchor)
+
+	    return this
+	}
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict'
+
+	var ALIGN_TO_NORMALIZED = __webpack_require__(18)
+
+	var Region = __webpack_require__(5)
+
+	/**
+	 * @localdoc Given source and target regions, and the given alignments required, returns a region that is the resulting allignment.
+	 * Does not modify the sourceRegion.
+	 *
+	 * Example
+	 *
+	 *      var sourceRegion = zippy.getInstance({
+	 *          alias  : 'z.region',
+	 *          top    : 10,
+	 *          left   : 10,
+	 *          bottom : 40,
+	 *          right  : 100
+	 *      })
+	 *
+	 *      var targetRegion = zippy.getInstance({
+	 *          alias  : 'z.region',
+	 *          top    : 10,
+	 *          left   : 10,
+	 *          bottom : 40,
+	 *          right  : 100
+	 *      })
+	 *      //has top-left at (10,10)
+	 *      //and bottom-right at (40, 100)
+	 *
+	 *      var alignRegion = alignable.COMPUTE_ALIGN_REGION(sourceRegion, targetRegion, 'tl-br')
+	 *
+	 *      //alignRegion will be a clone of sourceRegion, but will have the
+	 *      //top-left corner aligned with bottom-right of targetRegion
+	 *
+	 *      alignRegion.get() // => { top: 40, left: 100, bottom: 70, right: 190 }
+	 *
+	 * @param  {Region} sourceRegion The source region to align to targetRegion
+	 * @param  {Region} targetRegion The target region to which to align the sourceRegion
+	 * @param  {String/String[]} positions    A string ( delimited by "-" characters ) or an array of strings with the position to try, in the order of their priority.
+	 * See Region#getPoint for a list of available positions. They can be combined in any way.
+	 * @param  {Object} config      A config object with other configuration for the alignment
+	 * @param  {Object/Object[]} config.offset      Optional offsets. Either an object or an array with a different offset for each position
+	 * @param  {Element/Region/Boolean} config.constrain  The constrain to region or element. If the boolean true, Region.getDocRegion() will be used
+	 * @param  {Object/Boolean} config.sync   A boolean object that indicates whether to sync sourceRegion and targetRegion sizes (width/height or both). Can be
+	 *
+	 *  * true - in order to sync both width and height
+	 *  * { width: true }  - to only sync width
+	 *  * { height: true } - to only sync height
+	 *  * { size: true }   - to sync both width and height
+	 *
+	 * @return {Object} an object with the following keys:
+	 *
+	 *  * position - the position where the alignment was made. One of the given positions
+	 *  * region   - the region where the alignment is in place
+	 *  * positionChanged - boolean value indicating if the position of the returned region is different from the position of sourceRegion
+	 *  * widthChanged    - boolean value indicating if the width of the returned region is different from the width of sourceRegion
+	 *  * heightChanged   - boolean value indicating if the height of the returned region is different from the height of sourceRegion
+	 */
+	function COMPUTE_ALIGN_REGION(sourceRegion, targetRegion, positions, config){
+	    sourceRegion = Region.from(sourceRegion)
+
+	    var sourceClone = sourceRegion.clone()
+	    var position    = ALIGN_TO_NORMALIZED(sourceClone, targetRegion, positions, config)
+
+	    return {
+	        position        : position,
+	        region          : sourceClone,
+	        widthChanged    : sourceClone.getWidth() != sourceRegion.getWidth(),
+	        heightChanged   : sourceClone.getHeight() != sourceRegion.getHeight(),
+	        positionChanged : sourceClone.equalsPosition(sourceRegion)
+	    }
+	}
+
+
+	module.exports = COMPUTE_ALIGN_REGION
+
+/***/ }),
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict'
+
+	var Region = __webpack_require__(5)
+
+	/**
+	 *
+	 * This method is trying to align the sourceRegion to the targetRegion, given the alignment positions
+	 * and the offsets. It only modifies the sourceRegion
+	 *
+	 * This is all well and easy, but if there is a constrainTo region, the algorithm has to take it into account.
+	 * In this case, it works as follows.
+	 *
+	 *  * start with the first alignment position. Aligns the region, adds the offset and then check for the constraint.
+	 *  * if the constraint condition is ok, return the position.
+	 *  * otherwise, remember the intersection area, if the regions are intersecting.
+	 *  * then go to the next specified align position, and so on, computing the maximum intersection area.
+	 *
+	 * If no alignment fits the constrainRegion, the sourceRegion will be resized to match it,
+	 * using the position with the maximum intersection area.
+	 *
+	 * Since we have computed the index of the position with the max intersection area, take that position,
+	 * and align the sourceRegion accordingly. Then resize the sourceRegion to the intersection, and reposition
+	 * it again, since resizing it might have destroyed the alignment.
+	 *
+	 * Return the position.
+	 *
+	 * @param {Region} sourceRegion
+	 * @param {Region} targetRegion
+	 * @param {String[]} positions
+	 * @param {Object} config
+	 * @param {Array} config.offset
+	 * @param {Region} config.constrain
+	 * @param {Boolean/Object} config.sync
+	 *
+	 * @return {String/Undefined} the chosen position for the alignment, or undefined if no position found
+	 */
+	function ALIGN_TO_NORMALIZED(sourceRegion, targetRegion, positions, config){
+
+	    targetRegion = Region.from(targetRegion)
+
+	    config = config  || {}
+
+	    var constrainTo = config.constrain,
+	        syncOption  = config.sync,
+	        offsets     = config.offset || [],
+	        syncWidth   = false,
+	        syncHeight  = false,
+	        sourceClone = sourceRegion.clone()
+
+	    /*
+	     * Prepare the method arguments: positions, offsets, constrain and sync options
+	     */
+	    if (!Array.isArray(positions)){
+	        positions = positions? [positions]: []
+	    }
+
+	    if (!Array.isArray(offsets)){
+	        offsets = offsets? [offsets]: []
+	    }
+
+	    if (constrainTo){
+	        constrainTo = constrainTo === true?
+	                                Region.getDocRegion():
+	                                constrainTo.getRegion()
+	    }
+
+	    if (syncOption){
+
+	        if (syncOption.size){
+	            syncWidth  = true
+	            syncHeight = true
+	        } else {
+	            syncWidth  = syncOption === true?
+	                            true:
+	                            syncOption.width || false
+
+	            syncHeight = syncOption === true?
+	                            true:
+	                            syncOption.height || false
+	        }
+	    }
+
+	    if (syncWidth){
+	        sourceClone.setWidth(targetRegion.getWidth())
+	    }
+	    if (syncHeight){
+	        sourceClone.setHeight(targetRegion.getHeight())
+
+	    }
+
+	    var offset,
+	        i = 0,
+	        len = positions.length,
+	        pos,
+	        intersection,
+	        itArea,
+	        maxArea = -1,
+	        maxAreaIndex = -1
+
+	    for (; i < len; i++){
+	        pos     = positions[i]
+	        offset  = offsets[i]
+
+	        sourceClone.alignToRegion(targetRegion, pos)
+
+	        if (offset){
+	            if (!Array.isArray(offset)){
+	                offset = offsets[i] = [offset.x || offset.left, offset.y || offset.top]
+	            }
+
+	            sourceClone.shift({
+	                left: offset[0],
+	                top : offset[1]
+	            })
+	        }
+
+	        //the source region is already aligned in the correct position
+
+	        if (constrainTo){
+	            //if we have a constrain region, test for the constrain
+	            intersection = sourceClone.getIntersection(constrainTo)
+
+	            if ( intersection && intersection.equals(sourceClone) ) {
+	                //constrain respected, so return (the aligned position)
+
+	                sourceRegion.set(sourceClone)
+	                return pos
+	            } else {
+
+	                //the constrain was not respected, so continue trying
+	                if (intersection && ((itArea = intersection.getArea()) > maxArea)){
+	                    maxArea      = itArea
+	                    maxAreaIndex = i
+	                }
+	            }
+
+	        } else {
+	            sourceRegion.set(sourceClone)
+	            return pos
+	        }
+	    }
+
+	    //no alignment respected the constraints
+	    if (~maxAreaIndex){
+	        pos     = positions[maxAreaIndex]
+	        offset  = offsets[maxAreaIndex]
+
+	        sourceClone.alignToRegion(targetRegion, pos)
+
+	        if (offset){
+	            sourceClone.shift({
+	                left: offset[0],
+	                top : offset[1]
+	            })
+	        }
+
+	        //we are sure an intersection exists, because of the way the maxAreaIndex was computed
+	        intersection = sourceClone.getIntersection(constrainTo)
+
+	        sourceClone.setRegion(intersection)
+	        sourceClone.alignToRegion(targetRegion, pos)
+
+	        if (offset){
+	            sourceClone.shift({
+	                left: offset[0],
+	                top : offset[1]
+	            })
+	        }
+
+	        sourceRegion.set(sourceClone)
+
+	        return pos
+	    }
+
+	}
+
+	module.exports = ALIGN_TO_NORMALIZED
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports) {
+
+	'use strict';
+	var propIsEnumerable = Object.prototype.propertyIsEnumerable;
+
+	function ToObject(val) {
+		if (val == null) {
+			throw new TypeError('Object.assign cannot be called with null or undefined');
+		}
+
+		return Object(val);
+	}
+
+	function ownEnumerableKeys(obj) {
+		var keys = Object.getOwnPropertyNames(obj);
+
+		if (Object.getOwnPropertySymbols) {
+			keys = keys.concat(Object.getOwnPropertySymbols(obj));
+		}
+
+		return keys.filter(function (key) {
+			return propIsEnumerable.call(obj, key);
+		});
+	}
+
+	module.exports = Object.assign || function (target, source) {
+		var from;
+		var keys;
+		var to = ToObject(target);
+
+		for (var s = 1; s < arguments.length; s++) {
+			from = arguments[s];
+			keys = ownEnumerableKeys(Object(from));
+
+			for (var i = 0; i < keys.length; i++) {
+				to[keys[i]] = from[keys[i]];
+			}
+		}
+
+		return to;
+	};
+
+
+/***/ }),
+/* 20 */
+/***/ (function(module, exports) {
+
+	/*!
+	 * escape-html
+	 * Copyright(c) 2012-2013 TJ Holowaychuk
+	 * Copyright(c) 2015 Andreas Lubbe
+	 * Copyright(c) 2015 Tiancheng "Timothy" Gu
+	 * MIT Licensed
+	 */
+
+	'use strict';
+
+	/**
+	 * Module variables.
+	 * @private
+	 */
+
+	var matchHtmlRegExp = /["'&<>]/;
+
+	/**
+	 * Module exports.
+	 * @public
+	 */
+
+	module.exports = escapeHtml;
+
+	/**
+	 * Escape special characters in the given string of html.
+	 *
+	 * @param  {string} string The string to escape for inserting into HTML
+	 * @return {string}
+	 * @public
+	 */
+
+	function escapeHtml(string) {
+	  var str = '' + string;
+	  var match = matchHtmlRegExp.exec(str);
+
+	  if (!match) {
+	    return str;
+	  }
+
+	  var escape;
+	  var html = '';
+	  var index = 0;
+	  var lastIndex = 0;
+
+	  for (index = match.index; index < str.length; index++) {
+	    switch (str.charCodeAt(index)) {
+	      case 34: // "
+	        escape = '&quot;';
+	        break;
+	      case 38: // &
+	        escape = '&amp;';
+	        break;
+	      case 39: // '
+	        escape = '&#39;';
+	        break;
+	      case 60: // <
+	        escape = '&lt;';
+	        break;
+	      case 62: // >
+	        escape = '&gt;';
+	        break;
+	      default:
+	        continue;
+	    }
+
+	    if (lastIndex !== index) {
+	      html += str.substring(lastIndex, index);
+	    }
+
+	    lastIndex = index + 1;
+	    html += escape;
+	  }
+
+	  return lastIndex !== index
+	    ? html + str.substring(lastIndex, index)
+	    : html;
+	}
+
+
+/***/ }),
+/* 21 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var toStyleObject = __webpack_require__(22).object
+	var normalize     = __webpack_require__(39)
+	var assign = __webpack_require__(19)
+
+	function toStyle(style){
+		return toStyleObject(normalize(style))
+	}
+
+	function setStyle(element, style){
+
+		style = toStyle(style)
+
+		Object.keys(style).forEach(function(key){
+		    element.style[key] = style[key]
+		})
+
+		return element
+	}
+
+	module.exports = function(element, style /*, style2 */){
+
+		var args = [].slice.call(arguments, 1)
+
+		var styles = [{}].concat(args).map(toStyle)
+
+		var style = assign.apply(null, styles)
+
+		setStyle(element, style)
+
+		return element
+	}
+
+/***/ }),
+/* 22 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict'
+
+	module.exports = {
+	   prefixProperties: __webpack_require__(23) ,
+	   cssUnitless: __webpack_require__(24) ,
+	   object: __webpack_require__(25),
+	   string: __webpack_require__(38)
+	}
+
+/***/ }),
+/* 23 */
+/***/ (function(module, exports) {
+
+	module.exports = {
+	    'border-radius'              : 1,
+	    'border-top-left-radius'     : 1,
+	    'border-top-right-radius'    : 1,
+	    'border-bottom-left-radius'  : 1,
+	    'border-bottom-right-radius' : 1,
+	    'box-shadow'                 : 1,
+	    'order'                      : 1,
+	    'flex'                       : function(name, prefix){
+	        return [prefix + 'box-flex']
+	    },
+	    'box-flex'                   : 1,
+	    'box-align'                  : 1,
+	    'animation'                  : 1,
+	    'animation-duration'         : 1,
+	    'animation-name'             : 1,
+	    'transition'                 : 1,
+	    'transition-duration'        : 1,
+	    'transform'                  : 1,
+	    'transform-style'            : 1,
+	    'transform-origin'           : 1,
+	    'backface-visibility'        : 1,
+	    'perspective'                : 1,
+	    'box-pack'                   : 1
+	}
+
+/***/ }),
+/* 24 */
+/***/ (function(module, exports) {
+
+	'use exports'
+
+	//make sure properties are in hyphenated form
+
+	module.exports = {
+	    'animation'    : 1,
+	    'column-count' : 1,
+	    'columns'      : 1,
+	    'font-weight'  : 1,
+	    'opacity'      : 1,
+	    'order  '      : 1,
+	    'z-index'      : 1,
+	    'zoom'         : 1,
+	    'flex'         : 1,
+	    'box-flex'     : 1,
+	    'transform'    : 1,
+	    'perspective'  : 1,
+	    'box-pack'     : 1,
+	    'box-align'    : 1,
+	    'colspan'      : 1,
+	    'rowspan'      : 1
+	}
+
+/***/ }),
+/* 25 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict'
+
+	var prefixInfo  = __webpack_require__(26)
+	var cssPrefixFn = __webpack_require__(28)
+
+	var HYPHENATE   = __webpack_require__(32)
+	var CAMELIZE   = __webpack_require__(30)
+	var HAS_OWN     = __webpack_require__(35)
+	var IS_OBJECT   = __webpack_require__(36)
+	var IS_FUNCTION = __webpack_require__(37)
+
+	var applyPrefix = function(target, property, value, normalizeFn){
+	    cssPrefixFn(property).forEach(function(p){
+	        target[normalizeFn? normalizeFn(p): p] = value
+	    })
+	}
+
+	var toObject = function(str){
+	    str = (str || '').split(';')
+
+	    var result = {}
+
+	    str.forEach(function(item){
+	        var split = item.split(':')
+
+	        if (split.length == 2){
+	            result[split[0].trim()] = split[1].trim()
+	        }
+	    })
+
+	    return result
+	}
+
+	var CONFIG = {
+	    cssUnitless: __webpack_require__(24)
+	}
+
+	/**
+	 * @ignore
+	 * @method toStyleObject
+	 *
+	 * @param  {Object} styles The object to convert to a style object.
+	 * @param  {Object} [config]
+	 * @param  {Boolean} [config.addUnits=true] True if you want to add units when numerical values are encountered.
+	 * @param  {Object}  config.cssUnitless An object whose keys represent css numerical property names that will not be appended with units.
+	 * @param  {Object}  config.prefixProperties An object whose keys represent css property names that should be prefixed
+	 * @param  {String}  config.cssUnit='px' The css unit to append to numerical values. Defaults to 'px'
+	 * @param  {String}  config.normalizeName A function that normalizes a name to a valid css property name
+	 * @param  {String}  config.scope
+	 *
+	 * @return {Object} The object, normalized with css style names
+	 */
+	var TO_STYLE_OBJECT = function(styles, config, prepend, result){
+
+	    if (typeof styles == 'string'){
+	        styles = toObject(styles)
+	    }
+
+	    config = config || CONFIG
+
+	    config.cssUnitless = config.cssUnitless || CONFIG.cssUnitless
+
+	    result = result || {}
+
+	    var scope    = config.scope || {},
+
+	        //configs
+	        addUnits = config.addUnits != null?
+	                            config.addUnits:
+	                            scope && scope.addUnits != null?
+	                                scope.addUnits:
+	                                true,
+
+	        cssUnitless      = (config.cssUnitless != null?
+	                                config.cssUnitless:
+	                                scope?
+	                                    scope.cssUnitless:
+	                                    null) || {},
+	        cssUnit          = (config.cssUnit || scope? scope.cssUnit: null) || 'px',
+	        prefixProperties = (config.prefixProperties || (scope? scope.prefixProperties: null)) || {},
+
+	        camelize    = config.camelize,
+	        normalizeFn = camelize? CAMELIZE: HYPHENATE
+
+	    // Object.keys(cssUnitless).forEach(function(key){
+	    //     cssUnitless[normalizeFn(key)] = 1
+	    // })
+
+	    var processed,
+	        styleName,
+
+	        propName,
+	        propValue,
+	        propCssUnit,
+	        propType,
+	        propIsNumber,
+
+	        fnPropValue,
+	        prefix
+
+	    for (propName in styles) if (HAS_OWN(styles, propName)) {
+
+	        propValue = styles[ propName ]
+
+	        //the hyphenated style name (css property name)
+	        styleName = HYPHENATE(prepend? prepend + propName: propName)
+
+	        processed = false
+	        prefix    = false
+
+	        if (IS_FUNCTION(propValue)) {
+
+	            //a function can either return a css value
+	            //or an object with { value, prefix, name }
+	            fnPropValue = propValue.call(scope || styles, propValue, propName, styleName, styles)
+
+	            if (IS_OBJECT(fnPropValue) && fnPropValue.value != null){
+
+	                propValue = fnPropValue.value
+	                prefix    = fnPropValue.prefix
+	                styleName = fnPropValue.name?
+	                                HYPHENATE(fnPropValue.name):
+	                                styleName
+
+	            } else {
+	                propValue = fnPropValue
+	            }
+	        }
+
+	        propType     = typeof propValue
+	        propIsNumber = propType == 'number' || (propType == 'string' && propValue != '' && propValue * 1 == propValue)
+
+	        if (propValue == null || styleName == null || styleName === ''){
+	            continue
+	        }
+
+	        if (propIsNumber || propType == 'string'){
+	           processed = true
+	        }
+
+	        if (!processed && propValue.value != null && propValue.prefix){
+	           processed = true
+	           prefix    = propValue.prefix
+	           propValue = propValue.value
+	        }
+
+	        // hyphenStyleName = camelize? HYPHENATE(styleName): styleName
+
+	        if (processed){
+
+	            prefix = prefix || !!prefixProperties[styleName]
+
+	            if (propIsNumber){
+	                propValue = addUnits && !(styleName in cssUnitless) ?
+	                                propValue + cssUnit:
+	                                propValue + ''//change it to a string, so that jquery does not append px or other units
+	            }
+
+	            //special border treatment
+	            if (
+	                    (
+	                     styleName == 'border' ||
+	                    (!styleName.indexOf('border')
+	                        &&
+	                        !~styleName.indexOf('radius')
+	                        &&
+	                        !~styleName.indexOf('width'))
+	                    ) &&
+	                    propIsNumber
+	                ){
+
+	                styleName = styleName + '-width'
+	            }
+
+	            //special border radius treatment
+	            if (!styleName.indexOf('border-radius-')){
+	                styleName.replace(/border(-radius)(-(.*))/, function(str, radius, theRest){
+	                    var positions = {
+	                        '-top'    : ['-top-left',      '-top-right' ],
+	                        '-left'   : ['-top-left',    '-bottom-left' ],
+	                        '-right'  : ['-top-right',   '-bottom-right'],
+	                        '-bottom' : ['-bottom-left', '-bottom-right']
+	                    }
+
+	                    if (theRest in positions){
+	                        styleName = []
+
+	                        positions[theRest].forEach(function(pos){
+	                            styleName.push('border' + pos + radius)
+	                        })
+	                    } else {
+	                        styleName = 'border'+ theRest + radius
+	                    }
+
+	                })
+
+	                if (Array.isArray(styleName)){
+	                    styleName.forEach(function(styleName){
+	                        if (prefix){
+	                            applyPrefix(result, styleName, propValue, normalizeFn)
+	                        } else {
+	                            result[normalizeFn(styleName)] = propValue
+	                        }
+	                    })
+
+	                    continue
+	                }
+	            }
+
+	            if (prefix){
+	                applyPrefix(result, styleName, propValue, normalizeFn)
+	            } else {
+	                result[normalizeFn(styleName)] = propValue
+	            }
+
+	        } else {
+	            //the propValue must be an object, so go down the hierarchy
+	            TO_STYLE_OBJECT(propValue, config, styleName + '-', result)
+	        }
+	    }
+
+	    return result
+	}
+
+	module.exports = TO_STYLE_OBJECT
+
+/***/ }),
+/* 26 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var toUpperFirst = __webpack_require__(27)
+
+	var re         = /^(Moz|Webkit|Khtml|O|ms|Icab)(?=[A-Z])/
+
+	var docStyle   = typeof document == 'undefined'?
+	                    {}:
+	                    document.documentElement.style
+
+	var prefixInfo = (function(){
+
+	    var prefix = (function(){
+
+	            for (var prop in docStyle) {
+	                if( re.test(prop) ) {
+	                    // test is faster than match, so it's better to perform
+	                    // that on the lot and match only when necessary
+	                    return  prop.match(re)[0]
+	                }
+	            }
+
+	            // Nothing found so far? Webkit does not enumerate over the CSS properties of the style object.
+	            // However (prop in style) returns the correct value, so we'll have to test for
+	            // the precence of a specific property
+	            if ('WebkitOpacity' in docStyle){
+	                return 'Webkit'
+	            }
+
+	            if ('KhtmlOpacity' in docStyle) {
+	                return 'Khtml'
+	            }
+
+	            return ''
+	        })(),
+
+	    lower = prefix.toLowerCase()
+
+	    return {
+	        style       : prefix,
+	        css       : '-' + lower + '-',
+	        dom       : ({
+	            Webkit: 'WebKit',
+	            ms    : 'MS',
+	            o     : 'WebKit'
+	        })[prefix] || toUpperFirst(prefix)
+	    }
+
+	})()
+
+	module.exports = prefixInfo
+
+/***/ }),
+/* 27 */
+/***/ (function(module, exports) {
+
+	'use strict'
+
+	module.exports = function(value){
+	    return value.length?
+	                value.charAt(0).toUpperCase() + value.substring(1):
+	                value
+	}
+
+/***/ }),
+/* 28 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	module.exports = __webpack_require__(29)()
+
+/***/ }),
+/* 29 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict'
+
+	var camelize     = __webpack_require__(30)
+	var hyphenate    = __webpack_require__(32)
+	var toLowerFirst = __webpack_require__(34)
+	var toUpperFirst = __webpack_require__(27)
+
+	var prefixInfo = __webpack_require__(26)
+	var prefixProperties = __webpack_require__(23)
+
+	var docStyle = typeof document == 'undefined'?
+	                {}:
+	                document.documentElement.style
+
+	module.exports = function(asStylePrefix){
+
+	    return function(name, config){
+	        config = config || {}
+
+	        var styleName = toLowerFirst(camelize(name)),
+	            cssName   = hyphenate(name),
+
+	            theName   = asStylePrefix?
+	                            styleName:
+	                            cssName,
+
+	            thePrefix = prefixInfo.style?
+	                            asStylePrefix?
+	                                prefixInfo.style:
+	                                prefixInfo.css
+	                            :
+	                            ''
+
+	        if ( styleName in docStyle ) {
+	            return config.asString?
+	                              theName :
+	                            [ theName ]
+	        }
+
+	        //not a valid style name, so we'll return the value with a prefix
+
+	        var upperCased     = theName,
+	            prefixProperty = prefixProperties[cssName],
+	            result         = []
+
+	        if (asStylePrefix){
+	            upperCased = toUpperFirst(theName)
+	        }
+
+	        if (typeof prefixProperty == 'function'){
+	            var prefixedCss = prefixProperty(theName, thePrefix) || []
+	            if (prefixedCss && !Array.isArray(prefixedCss)){
+	                prefixedCss = [prefixedCss]
+	            }
+
+	            if (prefixedCss.length){
+	                prefixedCss = prefixedCss.map(function(property){
+	                    return asStylePrefix?
+	                                toLowerFirst(camelize(property)):
+	                                hyphenate(property)
+
+	                })
+	            }
+
+	            result = result.concat(prefixedCss)
+	        }
+
+	        if (thePrefix){
+	            result.push(thePrefix + upperCased)
+	        }
+
+	        result.push(theName)
+
+	        if (config.asString || result.length == 1){
+	            return result[0]
+	        }
+
+	        return result
+	    }
+	}
+
+/***/ }),
+/* 30 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict'
+
+	var toCamelFn = function(str, letter){
+	       return letter ? letter.toUpperCase(): ''
+	   }
+
+	var hyphenRe = __webpack_require__(31)
+
+	module.exports = function(str){
+	   return str?
+	          str.replace(hyphenRe, toCamelFn):
+	          ''
+	}
+
+/***/ }),
+/* 31 */
+/***/ (function(module, exports) {
+
+	module.exports = /[-\s]+(.)?/g
+
+/***/ }),
+/* 32 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict'
+
+	var separate = __webpack_require__(33)
+
+	module.exports = function(name){
+	   return separate(name).toLowerCase()
+	}
+
+/***/ }),
+/* 33 */
+/***/ (function(module, exports) {
+
+	'use strict'
+
+	var doubleColonRe      = /::/g
+	var upperToLowerRe     = /([A-Z]+)([A-Z][a-z])/g
+	var lowerToUpperRe     = /([a-z\d])([A-Z])/g
+	var underscoreToDashRe = /_/g
+
+	module.exports = function(name, separator){
+
+	   return name?
+	           name.replace(doubleColonRe, '/')
+	                .replace(upperToLowerRe, '$1_$2')
+	                .replace(lowerToUpperRe, '$1_$2')
+	                .replace(underscoreToDashRe, separator || '-')
+	            :
+	            ''
+	}
+
+/***/ }),
+/* 34 */
+/***/ (function(module, exports) {
+
+	'use strict'
+
+	module.exports = function(value){
+	    return value.length?
+	                value.charAt(0).toLowerCase() + value.substring(1):
+	                value
+	}
+
+/***/ }),
+/* 35 */
+/***/ (function(module, exports) {
+
+	'use strict'
+
+	var objectHasOwn = Object.prototype.hasOwnProperty
+
+	module.exports = function(object, propertyName){
+	    return objectHasOwn.call(object, propertyName)
+	}
+
+/***/ }),
+/* 36 */
+/***/ (function(module, exports) {
+
+	'use strict'
+
+	var objectToString = Object.prototype.toString
+
+	module.exports = function(v){
+	    return !!v && objectToString.call(v) === '[object Object]'
+	}
+
+
+
+/***/ }),
+/* 37 */
+/***/ (function(module, exports) {
+
+	'use strict'
+
+	var objectToString = Object.prototype.toString
+
+	module.exports = function(v) {
+	    return objectToString.apply(v) === '[object Function]'
+	}
+
+
+/***/ }),
+/* 38 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict'
+
+	var toStyleObject = __webpack_require__(25)
+	var hasOwn        = __webpack_require__(35)
+
+	/**
+	 * @ignore
+	 * @method toStyleString
+	 *
+	 * @param  {Object} styles The object to convert to a style string.
+	 * @param  {Object} config
+	 * @param  {Boolean} config.addUnits=true True if you want to add units when numerical values are encountered. Defaults to true
+	 * @param  {Object}  config.cssUnitless An object whose keys represent css numerical property names that will not be appended with units.
+	 * @param  {Object}  config.prefixProperties An object whose keys represent css property names that should be prefixed
+	 * @param  {String}  config.cssUnit='px' The css unit to append to numerical values. Defaults to 'px'
+	 * @param  {String}  config.scope
+	 *
+	 * @return {Object} The object, normalized with css style names
+	 */
+	module.exports = function(styles, config){
+	    styles = toStyleObject(styles, config)
+
+	    var result = []
+	    var prop
+
+	    for(prop in styles) if (hasOwn(styles, prop)){
+	        result.push(prop + ': ' + styles[prop])
+	    }
+
+	    return result.join('; ')
+	}
+
+/***/ }),
+/* 39 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var hasOwn      = __webpack_require__(40)
+	var getPrefixed = __webpack_require__(41)
+
+	var map      = __webpack_require__(47)
+	var plugable = __webpack_require__(48)
+
+	function plugins(key, value){
+
+		var result = {
+			key  : key,
+			value: value
+		}
+
+		;(RESULT.plugins || []).forEach(function(fn){
+
+			var tmp = map(function(res){
+				return fn(key, value, res)
+			}, result)
+
+			if (tmp){
+				result = tmp
+			}
+		})
+
+		return result
+	}
+
+	function normalize(key, value){
+
+		var result = plugins(key, value)
+
+		return map(function(result){
+			return {
+				key  : getPrefixed(result.key, result.value),
+				value: result.value
+			}
+		}, result)
+
+		return result
+	}
+
+	var RESULT = function(style){
+
+		var k
+		var item
+		var result = {}
+
+		for (k in style) if (hasOwn(style, k)){
+			item = normalize(k, style[k])
+
+			if (!item){
+				continue
+			}
+
+			map(function(item){
+				result[item.key] = item.value
+			}, item)
+		}
+
+		return result
+	}
+
+	module.exports = plugable(RESULT)
+
+/***/ }),
+/* 40 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	module.exports = function(obj, prop){
+		return Object.prototype.hasOwnProperty.call(obj, prop)
+	}
+
+
+/***/ }),
+/* 41 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var getStylePrefixed = __webpack_require__(42)
+	var properties       = __webpack_require__(46)
+
+	module.exports = function(key, value){
+
+		if (!properties[key]){
+			return key
+		}
+
+		return getStylePrefixed(key, value)
+	}
+
+/***/ }),
+/* 42 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var toUpperFirst = __webpack_require__(43)
+	var getPrefix    = __webpack_require__(44)
+	var el           = __webpack_require__(45)
+
+	var MEMORY = {}
+	var STYLE
+	var ELEMENT
+
+	var PREFIX
+
+	module.exports = function(key, value){
+
+	    ELEMENT = ELEMENT || el()
+	    STYLE   = STYLE   || ELEMENT.style
+
+	    var k = key// + ': ' + value
+
+	    if (MEMORY[k]){
+	        return MEMORY[k]
+	    }
+
+	    var prefix
+	    var prefixed
+
+	    if (!(key in STYLE)){//we have to prefix
+
+	        // if (PREFIX){
+	        //     prefix = PREFIX
+	        // } else {
+	            prefix = getPrefix('appearance')
+
+	        //     if (prefix){
+	        //         prefix = PREFIX = prefix.toLowerCase()
+	        //     }
+	        // }
+
+	        if (prefix){
+	            prefixed = prefix + toUpperFirst(key)
+
+	            if (prefixed in STYLE){
+	                key = prefixed
+	            }
+	        }
+	    }
+
+	    MEMORY[k] = key
+
+	    return key
+	}
+
+/***/ }),
+/* 43 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	module.exports = function(str){
+		return str?
+				str.charAt(0).toUpperCase() + str.slice(1):
+				''
+	}
+
+/***/ }),
+/* 44 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var toUpperFirst = __webpack_require__(43)
+	var prefixes     = ["ms", "Moz", "Webkit", "O"]
+
+	var el = __webpack_require__(45)
+
+	var ELEMENT
+	var PREFIX
+
+	module.exports = function(key){
+
+		if (PREFIX !== undefined){
+			return PREFIX
+		}
+
+		ELEMENT = ELEMENT || el()
+
+		var i = 0
+		var len = prefixes.length
+		var tmp
+		var prefix
+
+		for (; i < len; i++){
+			prefix = prefixes[i]
+			tmp = prefix + toUpperFirst(key)
+
+			if (typeof ELEMENT.style[tmp] != 'undefined'){
+				return PREFIX = prefix
+			}
+		}
+
+		return PREFIX
+	}
+
+/***/ }),
+/* 45 */
+/***/ (function(module, exports) {
+
+	/* WEBPACK VAR INJECTION */(function(global) {'use strict';
+
+	var el
+
+	module.exports = function(){
+
+		if(!el && !!global.document){
+		  	el = global.document.createElement('div')
+		}
+
+		if (!el){
+			el = {style: {}}
+		}
+
+		return el
+	}
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ }),
+/* 46 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	module.exports = {
+	  'alignItems': 1,
+	  'justifyContent': 1,
+	  'flex': 1,
+	  'flexFlow': 1,
+	  'flexGrow': 1,
+	  'flexShrink': 1,
+	  'flexBasis': 1,
+	  'flexDirection': 1,
+	  'flexWrap': 1,
+	  'alignContent': 1,
+	  'alignSelf': 1,
+
+	  'userSelect': 1,
+	  'transform': 1,
+	  'transition': 1,
+	  'transformOrigin': 1,
+	  'transformStyle': 1,
+	  'transitionProperty': 1,
+	  'transitionDuration': 1,
+	  'transitionTimingFunction': 1,
+	  'transitionDelay': 1,
+	  'borderImage': 1,
+	  'borderImageSlice': 1,
+	  'boxShadow': 1,
+	  'backgroundClip': 1,
+	  'backfaceVisibility': 1,
+	  'perspective': 1,
+	  'perspectiveOrigin': 1,
+	  'animation': 1,
+	  'animationDuration': 1,
+	  'animationName': 1,
+	  'animationDelay': 1,
+	  'animationDirection': 1,
+	  'animationIterationCount': 1,
+	  'animationTimingFunction': 1,
+	  'animationPlayState': 1,
+	  'animationFillMode': 1,
+	  'appearance': 1
+	}
+
+
+/***/ }),
+/* 47 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	module.exports = function(fn, item){
+
+		if (!item){
+			return
+		}
+
+		if (Array.isArray(item)){
+			return item.map(fn).filter(function(x){
+				return !!x
+			})
+		} else {
+			return fn(item)
+		}
+	}
+
+/***/ }),
+/* 48 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var getCssPrefixedValue = __webpack_require__(49)
+
+	module.exports = function(target){
+		target.plugins = target.plugins || [
+			(function(){
+				var values = {
+					'flex':1,
+					'inline-flex':1
+				}
+
+				return function(key, value){
+					if (key === 'display' && value in values){
+						return {
+							key  : key,
+							value: getCssPrefixedValue(key, value, true)
+						}
+					}
+				}
+			})()
+		]
+
+		target.plugin = function(fn){
+			target.plugins = target.plugins || []
+
+			target.plugins.push(fn)
+		}
+
+		return target
+	}
+
+/***/ }),
+/* 49 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var getPrefix     = __webpack_require__(44)
+	var forcePrefixed = __webpack_require__(50)
+	var el            = __webpack_require__(45)
+
+	var MEMORY = {}
+	var STYLE
+	var ELEMENT
+
+	module.exports = function(key, value, force){
+
+	    ELEMENT = ELEMENT || el()
+	    STYLE   = STYLE   ||  ELEMENT.style
+
+	    var k = key + ': ' + value
+
+	    if (MEMORY[k]){
+	        return MEMORY[k]
+	    }
+
+	    var prefix
+	    var prefixed
+	    var prefixedValue
+
+	    if (force || !(key in STYLE)){
+
+	        prefix = getPrefix('appearance')
+
+	        if (prefix){
+	            prefixed = forcePrefixed(key, value)
+
+	            prefixedValue = '-' + prefix.toLowerCase() + '-' + value
+
+	            if (prefixed in STYLE){
+	                ELEMENT.style[prefixed] = ''
+	                ELEMENT.style[prefixed] = prefixedValue
+
+	                if (ELEMENT.style[prefixed] !== ''){
+	                    value = prefixedValue
+	                }
+	            }
+	        }
+	    }
+
+	    MEMORY[k] = value
+
+	    return value
+	}
+
+/***/ }),
+/* 50 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var toUpperFirst = __webpack_require__(43)
+	var getPrefix    = __webpack_require__(44)
+	var properties   = __webpack_require__(46)
+
+	/**
+	 * Returns the given key prefixed, if the property is found in the prefixProps map.
+	 *
+	 * Does not test if the property supports the given value unprefixed.
+	 * If you need this, use './getPrefixed' instead
+	 */
+	module.exports = function(key, value){
+
+		if (!properties[key]){
+			return key
+		}
+
+		var prefix = getPrefix(key)
+
+		return prefix?
+					prefix + toUpperFirst(key):
+					key
+	}
+
+/***/ }),
+/* 51 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	var signs = {
+		t: { 
+			x: 1,
+			y: 1
+		},
+		l: {
+			x: 1,
+			y: 1
+		},
+		b: {
+			x: 1,
+			y: -1
+		},
+		r: {
+			x: -1,
+			y: 1
+		}
+	}
+
+	/**
+	 * Given the offset (x,y, or left,top or array), returns an array of offsets, for each given position
+	 *
+	 * For example, if we align br-tl, it means we align br of tooltip to tl of target,
+	 * so for this position we should return an offset of {-x,-y} of the original offset
+	 * 
+	 * @param  {Object}
+	 * @param  {Array}
+	 * @return {Array}
+	 */
+	module.exports = function(offset, positions){
+
+		if (!offset){
+			return
+		}
+
+		var array
+
+		if (Array.isArray(offset)){
+			array = offset
+		}
+
+		array = offset.x != undefined?
+				[offset.x, offset.y]:
+				[offset.left, offset.top]
+
+		var x = array[0]
+		var y = array[1]
+
+		return positions.map(function(pos){
+			var parts = pos.split('-')
+
+			var first = parts[0]
+
+			var side1 = first[0]
+			var side2 = first[1]
+
+			var sign1 = signs[side1]
+			var sign2 = signs[side2]
+
+			var xSign = 1
+			var ySign = 1
+
+			if (sign1){
+				xSign *= sign1.x
+				ySign *= sign1.y
+			}
+			if (sign2){
+				xSign *= sign2.x
+				ySign *= sign2.y
+			}
+
+			return [x * xSign, y * ySign]
+		})
+	}
+
+/***/ }),
+/* 52 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	module.exports = function(str){
+
+		var result = {}
+
+		str.split(';').forEach(function(style){
+			var parts = style.split(':')
+
+			if (parts.length){
+				result[parts[0].trim()] = parts[1].trim()
+			}
+		})
+
+		return result
+	}
+
+/***/ }),
+/* 53 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var setStyle = __webpack_require__(21)
+	var map      = {}
+
+	var result = function(config){
+
+	    var element = map[config.id]
+
+	    if (!element){
+	        element = setStyle(document.createElement('div'), config.style || {})
+	        element.className = config.className
+
+	        if (config.appendTooltip){
+	            config.appendTooltip(element)
+	        } else {
+	            document.body.appendChild(element)
+	        }
+	        map[config.id] = element
+	    }
+
+	    return element
+	}
+
+	result.destroy = function(config){
+		var element = map[config.id]
+
+		if (element){
+			var parent = element.parentNode
+			parent && parent.removeChild(element)
+		}
+	}
+
+	module.exports = result
+
+/***/ }),
+/* 54 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	var TRANSLATE_POS = {
+	    top: 'bc-tc',
+	    bottom: 'tc-bc',
+	    left: 'rc-lc',
+	    right: 'lc-rc',
+	    topleft: 'br-tl',
+	    topright: 'bl-tr',
+	    bottomleft: 'tr-bl',
+	    bottomright: 'tl-br'
+	}
+
+	module.exports = function preparePositions(positions){
+	    positions = positions || [
+	        'topleft',
+	        'topright',
+	        'bottomleft',
+	        'bottomright',
+	        'top',
+	        'bottom'
+	    ]
+
+	    return positions.map(function(pos){
+	        pos = pos.trim()
+	        return TRANSLATE_POS[pos] || pos
+	    }).filter(function(pos){
+	        return !!pos
+	    })
+	}
+
+/***/ }),
+/* 55 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	module.exports = function mapObject(obj, fn){
+
+	    var result = {}
+
+	    Object.keys(obj).forEach(function(key){
+	        result[key] = fn(obj[key])
+	    })
+
+	    return result
+	}
+
+/***/ }),
+/* 56 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var assign = __webpack_require__(19)
+	var clone  = __webpack_require__(57)
+
+	var DEFAULT = {
+	    attrName: 'data-tooltip',
+	    throttle: 10,
+	    showDelay: 500,
+	    offset: {
+	        x: 5,
+	        y: 5
+	    },
+	    hideOnChange: true,
+	    hideOnChangeDelay: 500,
+	    className: 'tooltip',
+	    style: {
+	        padding: 5,
+	        border: '1px solid gray',
+	        background: 'white',
+
+	    	boxSizing    : 'border-box',
+	    	pointerEvents: 'none',
+	    	position     : 'absolute',
+	    	visibility   : 'hidden',
+	    	display      : 'inline-block',
+	        transform    : 'translate3d(0px, 0px, 0px)',
+	    	transition   : 'opacity 0.3s'//, top 0.2s, left 0.2s'
+	    },
+	    visibleStyle: {
+	        opacity:1,
+	        visibility: 'visible'
+	    },
+	    hiddenStyle : {
+	        opacity: 0
+	    },
+	    alignPositions: null
+	}
+
+	var preparePositions = __webpack_require__(54)
+
+	var id = 0
+
+	module.exports = function(values){
+	    values = values || {}
+
+	    var style        = assign({}, DEFAULT.style, values.style)
+	    var visibleStyle = assign({}, DEFAULT.visibleStyle, values.visibleStyle)
+	    var hiddenStyle  = assign({}, DEFAULT.hiddenStyle, values.hiddenStyle)
+
+	    var config = clone(assign({}, DEFAULT, values))
+
+	    config.style        = style
+	    config.visibleStyle = visibleStyle
+	    config.hiddenStyle  = hiddenStyle
+
+	    config.selector = '[' + config.attrName + ']'
+
+	    config.alignPositions = preparePositions(config.alignPositions)
+	    config.target = config.target || document.documentElement
+
+	    config.id = id++
+
+	    return config
+	}
+
+/***/ }),
+/* 57 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(Buffer) {var clone = (function() {
+	'use strict';
+
+	/**
+	 * Clones (copies) an Object using deep copying.
+	 *
+	 * This function supports circular references by default, but if you are certain
+	 * there are no circular references in your object, you can save some CPU time
+	 * by calling clone(obj, false).
+	 *
+	 * Caution: if `circular` is false and `parent` contains circular references,
+	 * your program may enter an infinite loop and crash.
+	 *
+	 * @param `parent` - the object to be cloned
+	 * @param `circular` - set to true if the object to be cloned may contain
+	 *    circular references. (optional - true by default)
+	 * @param `depth` - set to a number if the object is only to be cloned to
+	 *    a particular depth. (optional - defaults to Infinity)
+	 * @param `prototype` - sets the prototype to be used when cloning an object.
+	 *    (optional - defaults to parent prototype).
+	*/
+	function clone(parent, circular, depth, prototype) {
+	  var filter;
+	  if (typeof circular === 'object') {
+	    depth = circular.depth;
+	    prototype = circular.prototype;
+	    filter = circular.filter;
+	    circular = circular.circular
+	  }
+	  // maintain two arrays for circular references, where corresponding parents
+	  // and children have the same index
+	  var allParents = [];
+	  var allChildren = [];
+
+	  var useBuffer = typeof Buffer != 'undefined';
+
+	  if (typeof circular == 'undefined')
+	    circular = true;
+
+	  if (typeof depth == 'undefined')
+	    depth = Infinity;
+
+	  // recurse this function so we don't reset allParents and allChildren
+	  function _clone(parent, depth) {
+	    // cloning null always returns null
+	    if (parent === null)
+	      return null;
+
+	    if (depth == 0)
+	      return parent;
+
+	    var child;
+	    var proto;
+	    if (typeof parent != 'object') {
+	      return parent;
+	    }
+
+	    if (clone.__isArray(parent)) {
+	      child = [];
+	    } else if (clone.__isRegExp(parent)) {
+	      child = new RegExp(parent.source, __getRegExpFlags(parent));
+	      if (parent.lastIndex) child.lastIndex = parent.lastIndex;
+	    } else if (clone.__isDate(parent)) {
+	      child = new Date(parent.getTime());
+	    } else if (useBuffer && Buffer.isBuffer(parent)) {
+	      child = new Buffer(parent.length);
+	      parent.copy(child);
+	      return child;
+	    } else {
+	      if (typeof prototype == 'undefined') {
+	        proto = Object.getPrototypeOf(parent);
+	        child = Object.create(proto);
+	      }
+	      else {
+	        child = Object.create(prototype);
+	        proto = prototype;
+	      }
+	    }
+
+	    if (circular) {
+	      var index = allParents.indexOf(parent);
+
+	      if (index != -1) {
+	        return allChildren[index];
+	      }
+	      allParents.push(parent);
+	      allChildren.push(child);
+	    }
+
+	    for (var i in parent) {
+	      var attrs;
+	      if (proto) {
+	        attrs = Object.getOwnPropertyDescriptor(proto, i);
+	      }
+
+	      if (attrs && attrs.set == null) {
+	        continue;
+	      }
+	      child[i] = _clone(parent[i], depth - 1);
+	    }
+
+	    return child;
+	  }
+
+	  return _clone(parent, depth);
+	}
+
+	/**
+	 * Simple flat clone using prototype, accepts only objects, usefull for property
+	 * override on FLAT configuration object (no nested props).
+	 *
+	 * USE WITH CAUTION! This may not behave as you wish if you do not know how this
+	 * works.
+	 */
+	clone.clonePrototype = function clonePrototype(parent) {
+	  if (parent === null)
+	    return null;
+
+	  var c = function () {};
+	  c.prototype = parent;
+	  return new c();
+	};
+
+	// private utility functions
+
+	function __objToStr(o) {
+	  return Object.prototype.toString.call(o);
+	};
+	clone.__objToStr = __objToStr;
+
+	function __isDate(o) {
+	  return typeof o === 'object' && __objToStr(o) === '[object Date]';
+	};
+	clone.__isDate = __isDate;
+
+	function __isArray(o) {
+	  return typeof o === 'object' && __objToStr(o) === '[object Array]';
+	};
+	clone.__isArray = __isArray;
+
+	function __isRegExp(o) {
+	  return typeof o === 'object' && __objToStr(o) === '[object RegExp]';
+	};
+	clone.__isRegExp = __isRegExp;
+
+	function __getRegExpFlags(re) {
+	  var flags = '';
+	  if (re.global) flags += 'g';
+	  if (re.ignoreCase) flags += 'i';
+	  if (re.multiline) flags += 'm';
+	  return flags;
+	};
+	clone.__getRegExpFlags = __getRegExpFlags;
+
+	return clone;
+	})();
+
+	if (typeof module === 'object' && module.exports) {
+	  module.exports = clone;
+	}
+
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(58).Buffer))
+
+/***/ }),
+/* 58 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(global) {/*!
+	 * The buffer module from node.js, for the browser.
+	 *
+	 * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
+	 * @license  MIT
+	 */
+	/* eslint-disable no-proto */
+
+	'use strict'
+
+	var base64 = __webpack_require__(59)
+	var ieee754 = __webpack_require__(60)
+	var isArray = __webpack_require__(61)
+
+	exports.Buffer = Buffer
+	exports.SlowBuffer = SlowBuffer
+	exports.INSPECT_MAX_BYTES = 50
+
+	/**
+	 * If `Buffer.TYPED_ARRAY_SUPPORT`:
+	 *   === true    Use Uint8Array implementation (fastest)
+	 *   === false   Use Object implementation (most compatible, even IE6)
+	 *
+	 * Browsers that support typed arrays are IE 10+, Firefox 4+, Chrome 7+, Safari 5.1+,
+	 * Opera 11.6+, iOS 4.2+.
+	 *
+	 * Due to various browser bugs, sometimes the Object implementation will be used even
+	 * when the browser supports typed arrays.
+	 *
+	 * Note:
+	 *
+	 *   - Firefox 4-29 lacks support for adding new properties to `Uint8Array` instances,
+	 *     See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438.
+	 *
+	 *   - Chrome 9-10 is missing the `TypedArray.prototype.subarray` function.
+	 *
+	 *   - IE10 has a broken `TypedArray.prototype.subarray` function which returns arrays of
+	 *     incorrect length in some situations.
+
+	 * We detect these buggy browsers and set `Buffer.TYPED_ARRAY_SUPPORT` to `false` so they
+	 * get the Object implementation, which is slower but behaves correctly.
+	 */
+	Buffer.TYPED_ARRAY_SUPPORT = global.TYPED_ARRAY_SUPPORT !== undefined
+	  ? global.TYPED_ARRAY_SUPPORT
+	  : typedArraySupport()
+
+	/*
+	 * Export kMaxLength after typed array support is determined.
+	 */
+	exports.kMaxLength = kMaxLength()
+
+	function typedArraySupport () {
+	  try {
+	    var arr = new Uint8Array(1)
+	    arr.__proto__ = {__proto__: Uint8Array.prototype, foo: function () { return 42 }}
+	    return arr.foo() === 42 && // typed array instances can be augmented
+	        typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
+	        arr.subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
+	  } catch (e) {
+	    return false
+	  }
+	}
+
+	function kMaxLength () {
+	  return Buffer.TYPED_ARRAY_SUPPORT
+	    ? 0x7fffffff
+	    : 0x3fffffff
+	}
+
+	function createBuffer (that, length) {
+	  if (kMaxLength() < length) {
+	    throw new RangeError('Invalid typed array length')
+	  }
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    // Return an augmented `Uint8Array` instance, for best performance
+	    that = new Uint8Array(length)
+	    that.__proto__ = Buffer.prototype
+	  } else {
+	    // Fallback: Return an object instance of the Buffer class
+	    if (that === null) {
+	      that = new Buffer(length)
+	    }
+	    that.length = length
+	  }
+
+	  return that
+	}
+
+	/**
+	 * The Buffer constructor returns instances of `Uint8Array` that have their
+	 * prototype changed to `Buffer.prototype`. Furthermore, `Buffer` is a subclass of
+	 * `Uint8Array`, so the returned instances will have all the node `Buffer` methods
+	 * and the `Uint8Array` methods. Square bracket notation works as expected -- it
+	 * returns a single octet.
+	 *
+	 * The `Uint8Array` prototype remains unmodified.
+	 */
+
+	function Buffer (arg, encodingOrOffset, length) {
+	  if (!Buffer.TYPED_ARRAY_SUPPORT && !(this instanceof Buffer)) {
+	    return new Buffer(arg, encodingOrOffset, length)
+	  }
+
+	  // Common case.
+	  if (typeof arg === 'number') {
+	    if (typeof encodingOrOffset === 'string') {
+	      throw new Error(
+	        'If encoding is specified then the first argument must be a string'
+	      )
+	    }
+	    return allocUnsafe(this, arg)
+	  }
+	  return from(this, arg, encodingOrOffset, length)
+	}
+
+	Buffer.poolSize = 8192 // not used by this implementation
+
+	// TODO: Legacy, not needed anymore. Remove in next major version.
+	Buffer._augment = function (arr) {
+	  arr.__proto__ = Buffer.prototype
+	  return arr
+	}
+
+	function from (that, value, encodingOrOffset, length) {
+	  if (typeof value === 'number') {
+	    throw new TypeError('"value" argument must not be a number')
+	  }
+
+	  if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
+	    return fromArrayBuffer(that, value, encodingOrOffset, length)
+	  }
+
+	  if (typeof value === 'string') {
+	    return fromString(that, value, encodingOrOffset)
+	  }
+
+	  return fromObject(that, value)
+	}
+
+	/**
+	 * Functionally equivalent to Buffer(arg, encoding) but throws a TypeError
+	 * if value is a number.
+	 * Buffer.from(str[, encoding])
+	 * Buffer.from(array)
+	 * Buffer.from(buffer)
+	 * Buffer.from(arrayBuffer[, byteOffset[, length]])
+	 **/
+	Buffer.from = function (value, encodingOrOffset, length) {
+	  return from(null, value, encodingOrOffset, length)
+	}
+
+	if (Buffer.TYPED_ARRAY_SUPPORT) {
+	  Buffer.prototype.__proto__ = Uint8Array.prototype
+	  Buffer.__proto__ = Uint8Array
+	  if (typeof Symbol !== 'undefined' && Symbol.species &&
+	      Buffer[Symbol.species] === Buffer) {
+	    // Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
+	    Object.defineProperty(Buffer, Symbol.species, {
+	      value: null,
+	      configurable: true
+	    })
+	  }
+	}
+
+	function assertSize (size) {
+	  if (typeof size !== 'number') {
+	    throw new TypeError('"size" argument must be a number')
+	  } else if (size < 0) {
+	    throw new RangeError('"size" argument must not be negative')
+	  }
+	}
+
+	function alloc (that, size, fill, encoding) {
+	  assertSize(size)
+	  if (size <= 0) {
+	    return createBuffer(that, size)
+	  }
+	  if (fill !== undefined) {
+	    // Only pay attention to encoding if it's a string. This
+	    // prevents accidentally sending in a number that would
+	    // be interpretted as a start offset.
+	    return typeof encoding === 'string'
+	      ? createBuffer(that, size).fill(fill, encoding)
+	      : createBuffer(that, size).fill(fill)
+	  }
+	  return createBuffer(that, size)
+	}
+
+	/**
+	 * Creates a new filled Buffer instance.
+	 * alloc(size[, fill[, encoding]])
+	 **/
+	Buffer.alloc = function (size, fill, encoding) {
+	  return alloc(null, size, fill, encoding)
+	}
+
+	function allocUnsafe (that, size) {
+	  assertSize(size)
+	  that = createBuffer(that, size < 0 ? 0 : checked(size) | 0)
+	  if (!Buffer.TYPED_ARRAY_SUPPORT) {
+	    for (var i = 0; i < size; ++i) {
+	      that[i] = 0
+	    }
+	  }
+	  return that
+	}
+
+	/**
+	 * Equivalent to Buffer(num), by default creates a non-zero-filled Buffer instance.
+	 * */
+	Buffer.allocUnsafe = function (size) {
+	  return allocUnsafe(null, size)
+	}
+	/**
+	 * Equivalent to SlowBuffer(num), by default creates a non-zero-filled Buffer instance.
+	 */
+	Buffer.allocUnsafeSlow = function (size) {
+	  return allocUnsafe(null, size)
+	}
+
+	function fromString (that, string, encoding) {
+	  if (typeof encoding !== 'string' || encoding === '') {
+	    encoding = 'utf8'
+	  }
+
+	  if (!Buffer.isEncoding(encoding)) {
+	    throw new TypeError('"encoding" must be a valid string encoding')
+	  }
+
+	  var length = byteLength(string, encoding) | 0
+	  that = createBuffer(that, length)
+
+	  var actual = that.write(string, encoding)
+
+	  if (actual !== length) {
+	    // Writing a hex string, for example, that contains invalid characters will
+	    // cause everything after the first invalid character to be ignored. (e.g.
+	    // 'abxxcd' will be treated as 'ab')
+	    that = that.slice(0, actual)
+	  }
+
+	  return that
+	}
+
+	function fromArrayLike (that, array) {
+	  var length = array.length < 0 ? 0 : checked(array.length) | 0
+	  that = createBuffer(that, length)
+	  for (var i = 0; i < length; i += 1) {
+	    that[i] = array[i] & 255
+	  }
+	  return that
+	}
+
+	function fromArrayBuffer (that, array, byteOffset, length) {
+	  array.byteLength // this throws if `array` is not a valid ArrayBuffer
+
+	  if (byteOffset < 0 || array.byteLength < byteOffset) {
+	    throw new RangeError('\'offset\' is out of bounds')
+	  }
+
+	  if (array.byteLength < byteOffset + (length || 0)) {
+	    throw new RangeError('\'length\' is out of bounds')
+	  }
+
+	  if (byteOffset === undefined && length === undefined) {
+	    array = new Uint8Array(array)
+	  } else if (length === undefined) {
+	    array = new Uint8Array(array, byteOffset)
+	  } else {
+	    array = new Uint8Array(array, byteOffset, length)
+	  }
+
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    // Return an augmented `Uint8Array` instance, for best performance
+	    that = array
+	    that.__proto__ = Buffer.prototype
+	  } else {
+	    // Fallback: Return an object instance of the Buffer class
+	    that = fromArrayLike(that, array)
+	  }
+	  return that
+	}
+
+	function fromObject (that, obj) {
+	  if (Buffer.isBuffer(obj)) {
+	    var len = checked(obj.length) | 0
+	    that = createBuffer(that, len)
+
+	    if (that.length === 0) {
+	      return that
+	    }
+
+	    obj.copy(that, 0, 0, len)
+	    return that
+	  }
+
+	  if (obj) {
+	    if ((typeof ArrayBuffer !== 'undefined' &&
+	        obj.buffer instanceof ArrayBuffer) || 'length' in obj) {
+	      if (typeof obj.length !== 'number' || isnan(obj.length)) {
+	        return createBuffer(that, 0)
+	      }
+	      return fromArrayLike(that, obj)
+	    }
+
+	    if (obj.type === 'Buffer' && isArray(obj.data)) {
+	      return fromArrayLike(that, obj.data)
+	    }
+	  }
+
+	  throw new TypeError('First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.')
+	}
+
+	function checked (length) {
+	  // Note: cannot use `length < kMaxLength()` here because that fails when
+	  // length is NaN (which is otherwise coerced to zero.)
+	  if (length >= kMaxLength()) {
+	    throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
+	                         'size: 0x' + kMaxLength().toString(16) + ' bytes')
+	  }
+	  return length | 0
+	}
+
+	function SlowBuffer (length) {
+	  if (+length != length) { // eslint-disable-line eqeqeq
+	    length = 0
+	  }
+	  return Buffer.alloc(+length)
+	}
+
+	Buffer.isBuffer = function isBuffer (b) {
+	  return !!(b != null && b._isBuffer)
+	}
+
+	Buffer.compare = function compare (a, b) {
+	  if (!Buffer.isBuffer(a) || !Buffer.isBuffer(b)) {
+	    throw new TypeError('Arguments must be Buffers')
+	  }
+
+	  if (a === b) return 0
+
+	  var x = a.length
+	  var y = b.length
+
+	  for (var i = 0, len = Math.min(x, y); i < len; ++i) {
+	    if (a[i] !== b[i]) {
+	      x = a[i]
+	      y = b[i]
+	      break
+	    }
+	  }
+
+	  if (x < y) return -1
+	  if (y < x) return 1
+	  return 0
+	}
+
+	Buffer.isEncoding = function isEncoding (encoding) {
+	  switch (String(encoding).toLowerCase()) {
+	    case 'hex':
+	    case 'utf8':
+	    case 'utf-8':
+	    case 'ascii':
+	    case 'latin1':
+	    case 'binary':
+	    case 'base64':
+	    case 'ucs2':
+	    case 'ucs-2':
+	    case 'utf16le':
+	    case 'utf-16le':
+	      return true
+	    default:
+	      return false
+	  }
+	}
+
+	Buffer.concat = function concat (list, length) {
+	  if (!isArray(list)) {
+	    throw new TypeError('"list" argument must be an Array of Buffers')
+	  }
+
+	  if (list.length === 0) {
+	    return Buffer.alloc(0)
+	  }
+
+	  var i
+	  if (length === undefined) {
+	    length = 0
+	    for (i = 0; i < list.length; ++i) {
+	      length += list[i].length
+	    }
+	  }
+
+	  var buffer = Buffer.allocUnsafe(length)
+	  var pos = 0
+	  for (i = 0; i < list.length; ++i) {
+	    var buf = list[i]
+	    if (!Buffer.isBuffer(buf)) {
+	      throw new TypeError('"list" argument must be an Array of Buffers')
+	    }
+	    buf.copy(buffer, pos)
+	    pos += buf.length
+	  }
+	  return buffer
+	}
+
+	function byteLength (string, encoding) {
+	  if (Buffer.isBuffer(string)) {
+	    return string.length
+	  }
+	  if (typeof ArrayBuffer !== 'undefined' && typeof ArrayBuffer.isView === 'function' &&
+	      (ArrayBuffer.isView(string) || string instanceof ArrayBuffer)) {
+	    return string.byteLength
+	  }
+	  if (typeof string !== 'string') {
+	    string = '' + string
+	  }
+
+	  var len = string.length
+	  if (len === 0) return 0
+
+	  // Use a for loop to avoid recursion
+	  var loweredCase = false
+	  for (;;) {
+	    switch (encoding) {
+	      case 'ascii':
+	      case 'latin1':
+	      case 'binary':
+	        return len
+	      case 'utf8':
+	      case 'utf-8':
+	      case undefined:
+	        return utf8ToBytes(string).length
+	      case 'ucs2':
+	      case 'ucs-2':
+	      case 'utf16le':
+	      case 'utf-16le':
+	        return len * 2
+	      case 'hex':
+	        return len >>> 1
+	      case 'base64':
+	        return base64ToBytes(string).length
+	      default:
+	        if (loweredCase) return utf8ToBytes(string).length // assume utf8
+	        encoding = ('' + encoding).toLowerCase()
+	        loweredCase = true
+	    }
+	  }
+	}
+	Buffer.byteLength = byteLength
+
+	function slowToString (encoding, start, end) {
+	  var loweredCase = false
+
+	  // No need to verify that "this.length <= MAX_UINT32" since it's a read-only
+	  // property of a typed array.
+
+	  // This behaves neither like String nor Uint8Array in that we set start/end
+	  // to their upper/lower bounds if the value passed is out of range.
+	  // undefined is handled specially as per ECMA-262 6th Edition,
+	  // Section 13.3.3.7 Runtime Semantics: KeyedBindingInitialization.
+	  if (start === undefined || start < 0) {
+	    start = 0
+	  }
+	  // Return early if start > this.length. Done here to prevent potential uint32
+	  // coercion fail below.
+	  if (start > this.length) {
+	    return ''
+	  }
+
+	  if (end === undefined || end > this.length) {
+	    end = this.length
+	  }
+
+	  if (end <= 0) {
+	    return ''
+	  }
+
+	  // Force coersion to uint32. This will also coerce falsey/NaN values to 0.
+	  end >>>= 0
+	  start >>>= 0
+
+	  if (end <= start) {
+	    return ''
+	  }
+
+	  if (!encoding) encoding = 'utf8'
+
+	  while (true) {
+	    switch (encoding) {
+	      case 'hex':
+	        return hexSlice(this, start, end)
+
+	      case 'utf8':
+	      case 'utf-8':
+	        return utf8Slice(this, start, end)
+
+	      case 'ascii':
+	        return asciiSlice(this, start, end)
+
+	      case 'latin1':
+	      case 'binary':
+	        return latin1Slice(this, start, end)
+
+	      case 'base64':
+	        return base64Slice(this, start, end)
+
+	      case 'ucs2':
+	      case 'ucs-2':
+	      case 'utf16le':
+	      case 'utf-16le':
+	        return utf16leSlice(this, start, end)
+
+	      default:
+	        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
+	        encoding = (encoding + '').toLowerCase()
+	        loweredCase = true
+	    }
+	  }
+	}
+
+	// The property is used by `Buffer.isBuffer` and `is-buffer` (in Safari 5-7) to detect
+	// Buffer instances.
+	Buffer.prototype._isBuffer = true
+
+	function swap (b, n, m) {
+	  var i = b[n]
+	  b[n] = b[m]
+	  b[m] = i
+	}
+
+	Buffer.prototype.swap16 = function swap16 () {
+	  var len = this.length
+	  if (len % 2 !== 0) {
+	    throw new RangeError('Buffer size must be a multiple of 16-bits')
+	  }
+	  for (var i = 0; i < len; i += 2) {
+	    swap(this, i, i + 1)
+	  }
+	  return this
+	}
+
+	Buffer.prototype.swap32 = function swap32 () {
+	  var len = this.length
+	  if (len % 4 !== 0) {
+	    throw new RangeError('Buffer size must be a multiple of 32-bits')
+	  }
+	  for (var i = 0; i < len; i += 4) {
+	    swap(this, i, i + 3)
+	    swap(this, i + 1, i + 2)
+	  }
+	  return this
+	}
+
+	Buffer.prototype.swap64 = function swap64 () {
+	  var len = this.length
+	  if (len % 8 !== 0) {
+	    throw new RangeError('Buffer size must be a multiple of 64-bits')
+	  }
+	  for (var i = 0; i < len; i += 8) {
+	    swap(this, i, i + 7)
+	    swap(this, i + 1, i + 6)
+	    swap(this, i + 2, i + 5)
+	    swap(this, i + 3, i + 4)
+	  }
+	  return this
+	}
+
+	Buffer.prototype.toString = function toString () {
+	  var length = this.length | 0
+	  if (length === 0) return ''
+	  if (arguments.length === 0) return utf8Slice(this, 0, length)
+	  return slowToString.apply(this, arguments)
+	}
+
+	Buffer.prototype.equals = function equals (b) {
+	  if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
+	  if (this === b) return true
+	  return Buffer.compare(this, b) === 0
+	}
+
+	Buffer.prototype.inspect = function inspect () {
+	  var str = ''
+	  var max = exports.INSPECT_MAX_BYTES
+	  if (this.length > 0) {
+	    str = this.toString('hex', 0, max).match(/.{2}/g).join(' ')
+	    if (this.length > max) str += ' ... '
+	  }
+	  return '<Buffer ' + str + '>'
+	}
+
+	Buffer.prototype.compare = function compare (target, start, end, thisStart, thisEnd) {
+	  if (!Buffer.isBuffer(target)) {
+	    throw new TypeError('Argument must be a Buffer')
+	  }
+
+	  if (start === undefined) {
+	    start = 0
+	  }
+	  if (end === undefined) {
+	    end = target ? target.length : 0
+	  }
+	  if (thisStart === undefined) {
+	    thisStart = 0
+	  }
+	  if (thisEnd === undefined) {
+	    thisEnd = this.length
+	  }
+
+	  if (start < 0 || end > target.length || thisStart < 0 || thisEnd > this.length) {
+	    throw new RangeError('out of range index')
+	  }
+
+	  if (thisStart >= thisEnd && start >= end) {
+	    return 0
+	  }
+	  if (thisStart >= thisEnd) {
+	    return -1
+	  }
+	  if (start >= end) {
+	    return 1
+	  }
+
+	  start >>>= 0
+	  end >>>= 0
+	  thisStart >>>= 0
+	  thisEnd >>>= 0
+
+	  if (this === target) return 0
+
+	  var x = thisEnd - thisStart
+	  var y = end - start
+	  var len = Math.min(x, y)
+
+	  var thisCopy = this.slice(thisStart, thisEnd)
+	  var targetCopy = target.slice(start, end)
+
+	  for (var i = 0; i < len; ++i) {
+	    if (thisCopy[i] !== targetCopy[i]) {
+	      x = thisCopy[i]
+	      y = targetCopy[i]
+	      break
+	    }
+	  }
+
+	  if (x < y) return -1
+	  if (y < x) return 1
+	  return 0
+	}
+
+	// Finds either the first index of `val` in `buffer` at offset >= `byteOffset`,
+	// OR the last index of `val` in `buffer` at offset <= `byteOffset`.
+	//
+	// Arguments:
+	// - buffer - a Buffer to search
+	// - val - a string, Buffer, or number
+	// - byteOffset - an index into `buffer`; will be clamped to an int32
+	// - encoding - an optional encoding, relevant is val is a string
+	// - dir - true for indexOf, false for lastIndexOf
+	function bidirectionalIndexOf (buffer, val, byteOffset, encoding, dir) {
+	  // Empty buffer means no match
+	  if (buffer.length === 0) return -1
+
+	  // Normalize byteOffset
+	  if (typeof byteOffset === 'string') {
+	    encoding = byteOffset
+	    byteOffset = 0
+	  } else if (byteOffset > 0x7fffffff) {
+	    byteOffset = 0x7fffffff
+	  } else if (byteOffset < -0x80000000) {
+	    byteOffset = -0x80000000
+	  }
+	  byteOffset = +byteOffset  // Coerce to Number.
+	  if (isNaN(byteOffset)) {
+	    // byteOffset: it it's undefined, null, NaN, "foo", etc, search whole buffer
+	    byteOffset = dir ? 0 : (buffer.length - 1)
+	  }
+
+	  // Normalize byteOffset: negative offsets start from the end of the buffer
+	  if (byteOffset < 0) byteOffset = buffer.length + byteOffset
+	  if (byteOffset >= buffer.length) {
+	    if (dir) return -1
+	    else byteOffset = buffer.length - 1
+	  } else if (byteOffset < 0) {
+	    if (dir) byteOffset = 0
+	    else return -1
+	  }
+
+	  // Normalize val
+	  if (typeof val === 'string') {
+	    val = Buffer.from(val, encoding)
+	  }
+
+	  // Finally, search either indexOf (if dir is true) or lastIndexOf
+	  if (Buffer.isBuffer(val)) {
+	    // Special case: looking for empty string/buffer always fails
+	    if (val.length === 0) {
+	      return -1
+	    }
+	    return arrayIndexOf(buffer, val, byteOffset, encoding, dir)
+	  } else if (typeof val === 'number') {
+	    val = val & 0xFF // Search for a byte value [0-255]
+	    if (Buffer.TYPED_ARRAY_SUPPORT &&
+	        typeof Uint8Array.prototype.indexOf === 'function') {
+	      if (dir) {
+	        return Uint8Array.prototype.indexOf.call(buffer, val, byteOffset)
+	      } else {
+	        return Uint8Array.prototype.lastIndexOf.call(buffer, val, byteOffset)
+	      }
+	    }
+	    return arrayIndexOf(buffer, [ val ], byteOffset, encoding, dir)
+	  }
+
+	  throw new TypeError('val must be string, number or Buffer')
+	}
+
+	function arrayIndexOf (arr, val, byteOffset, encoding, dir) {
+	  var indexSize = 1
+	  var arrLength = arr.length
+	  var valLength = val.length
+
+	  if (encoding !== undefined) {
+	    encoding = String(encoding).toLowerCase()
+	    if (encoding === 'ucs2' || encoding === 'ucs-2' ||
+	        encoding === 'utf16le' || encoding === 'utf-16le') {
+	      if (arr.length < 2 || val.length < 2) {
+	        return -1
+	      }
+	      indexSize = 2
+	      arrLength /= 2
+	      valLength /= 2
+	      byteOffset /= 2
+	    }
+	  }
+
+	  function read (buf, i) {
+	    if (indexSize === 1) {
+	      return buf[i]
+	    } else {
+	      return buf.readUInt16BE(i * indexSize)
+	    }
+	  }
+
+	  var i
+	  if (dir) {
+	    var foundIndex = -1
+	    for (i = byteOffset; i < arrLength; i++) {
+	      if (read(arr, i) === read(val, foundIndex === -1 ? 0 : i - foundIndex)) {
+	        if (foundIndex === -1) foundIndex = i
+	        if (i - foundIndex + 1 === valLength) return foundIndex * indexSize
+	      } else {
+	        if (foundIndex !== -1) i -= i - foundIndex
+	        foundIndex = -1
+	      }
+	    }
+	  } else {
+	    if (byteOffset + valLength > arrLength) byteOffset = arrLength - valLength
+	    for (i = byteOffset; i >= 0; i--) {
+	      var found = true
+	      for (var j = 0; j < valLength; j++) {
+	        if (read(arr, i + j) !== read(val, j)) {
+	          found = false
+	          break
+	        }
+	      }
+	      if (found) return i
+	    }
+	  }
+
+	  return -1
+	}
+
+	Buffer.prototype.includes = function includes (val, byteOffset, encoding) {
+	  return this.indexOf(val, byteOffset, encoding) !== -1
+	}
+
+	Buffer.prototype.indexOf = function indexOf (val, byteOffset, encoding) {
+	  return bidirectionalIndexOf(this, val, byteOffset, encoding, true)
+	}
+
+	Buffer.prototype.lastIndexOf = function lastIndexOf (val, byteOffset, encoding) {
+	  return bidirectionalIndexOf(this, val, byteOffset, encoding, false)
+	}
+
+	function hexWrite (buf, string, offset, length) {
+	  offset = Number(offset) || 0
+	  var remaining = buf.length - offset
+	  if (!length) {
+	    length = remaining
+	  } else {
+	    length = Number(length)
+	    if (length > remaining) {
+	      length = remaining
+	    }
+	  }
+
+	  // must be an even number of digits
+	  var strLen = string.length
+	  if (strLen % 2 !== 0) throw new TypeError('Invalid hex string')
+
+	  if (length > strLen / 2) {
+	    length = strLen / 2
+	  }
+	  for (var i = 0; i < length; ++i) {
+	    var parsed = parseInt(string.substr(i * 2, 2), 16)
+	    if (isNaN(parsed)) return i
+	    buf[offset + i] = parsed
+	  }
+	  return i
+	}
+
+	function utf8Write (buf, string, offset, length) {
+	  return blitBuffer(utf8ToBytes(string, buf.length - offset), buf, offset, length)
+	}
+
+	function asciiWrite (buf, string, offset, length) {
+	  return blitBuffer(asciiToBytes(string), buf, offset, length)
+	}
+
+	function latin1Write (buf, string, offset, length) {
+	  return asciiWrite(buf, string, offset, length)
+	}
+
+	function base64Write (buf, string, offset, length) {
+	  return blitBuffer(base64ToBytes(string), buf, offset, length)
+	}
+
+	function ucs2Write (buf, string, offset, length) {
+	  return blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length)
+	}
+
+	Buffer.prototype.write = function write (string, offset, length, encoding) {
+	  // Buffer#write(string)
+	  if (offset === undefined) {
+	    encoding = 'utf8'
+	    length = this.length
+	    offset = 0
+	  // Buffer#write(string, encoding)
+	  } else if (length === undefined && typeof offset === 'string') {
+	    encoding = offset
+	    length = this.length
+	    offset = 0
+	  // Buffer#write(string, offset[, length][, encoding])
+	  } else if (isFinite(offset)) {
+	    offset = offset | 0
+	    if (isFinite(length)) {
+	      length = length | 0
+	      if (encoding === undefined) encoding = 'utf8'
+	    } else {
+	      encoding = length
+	      length = undefined
+	    }
+	  // legacy write(string, encoding, offset, length) - remove in v0.13
+	  } else {
+	    throw new Error(
+	      'Buffer.write(string, encoding, offset[, length]) is no longer supported'
+	    )
+	  }
+
+	  var remaining = this.length - offset
+	  if (length === undefined || length > remaining) length = remaining
+
+	  if ((string.length > 0 && (length < 0 || offset < 0)) || offset > this.length) {
+	    throw new RangeError('Attempt to write outside buffer bounds')
+	  }
+
+	  if (!encoding) encoding = 'utf8'
+
+	  var loweredCase = false
+	  for (;;) {
+	    switch (encoding) {
+	      case 'hex':
+	        return hexWrite(this, string, offset, length)
+
+	      case 'utf8':
+	      case 'utf-8':
+	        return utf8Write(this, string, offset, length)
+
+	      case 'ascii':
+	        return asciiWrite(this, string, offset, length)
+
+	      case 'latin1':
+	      case 'binary':
+	        return latin1Write(this, string, offset, length)
+
+	      case 'base64':
+	        // Warning: maxLength not taken into account in base64Write
+	        return base64Write(this, string, offset, length)
+
+	      case 'ucs2':
+	      case 'ucs-2':
+	      case 'utf16le':
+	      case 'utf-16le':
+	        return ucs2Write(this, string, offset, length)
+
+	      default:
+	        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
+	        encoding = ('' + encoding).toLowerCase()
+	        loweredCase = true
+	    }
+	  }
+	}
+
+	Buffer.prototype.toJSON = function toJSON () {
+	  return {
+	    type: 'Buffer',
+	    data: Array.prototype.slice.call(this._arr || this, 0)
+	  }
+	}
+
+	function base64Slice (buf, start, end) {
+	  if (start === 0 && end === buf.length) {
+	    return base64.fromByteArray(buf)
+	  } else {
+	    return base64.fromByteArray(buf.slice(start, end))
+	  }
+	}
+
+	function utf8Slice (buf, start, end) {
+	  end = Math.min(buf.length, end)
+	  var res = []
+
+	  var i = start
+	  while (i < end) {
+	    var firstByte = buf[i]
+	    var codePoint = null
+	    var bytesPerSequence = (firstByte > 0xEF) ? 4
+	      : (firstByte > 0xDF) ? 3
+	      : (firstByte > 0xBF) ? 2
+	      : 1
+
+	    if (i + bytesPerSequence <= end) {
+	      var secondByte, thirdByte, fourthByte, tempCodePoint
+
+	      switch (bytesPerSequence) {
+	        case 1:
+	          if (firstByte < 0x80) {
+	            codePoint = firstByte
+	          }
+	          break
+	        case 2:
+	          secondByte = buf[i + 1]
+	          if ((secondByte & 0xC0) === 0x80) {
+	            tempCodePoint = (firstByte & 0x1F) << 0x6 | (secondByte & 0x3F)
+	            if (tempCodePoint > 0x7F) {
+	              codePoint = tempCodePoint
+	            }
+	          }
+	          break
+	        case 3:
+	          secondByte = buf[i + 1]
+	          thirdByte = buf[i + 2]
+	          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80) {
+	            tempCodePoint = (firstByte & 0xF) << 0xC | (secondByte & 0x3F) << 0x6 | (thirdByte & 0x3F)
+	            if (tempCodePoint > 0x7FF && (tempCodePoint < 0xD800 || tempCodePoint > 0xDFFF)) {
+	              codePoint = tempCodePoint
+	            }
+	          }
+	          break
+	        case 4:
+	          secondByte = buf[i + 1]
+	          thirdByte = buf[i + 2]
+	          fourthByte = buf[i + 3]
+	          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80 && (fourthByte & 0xC0) === 0x80) {
+	            tempCodePoint = (firstByte & 0xF) << 0x12 | (secondByte & 0x3F) << 0xC | (thirdByte & 0x3F) << 0x6 | (fourthByte & 0x3F)
+	            if (tempCodePoint > 0xFFFF && tempCodePoint < 0x110000) {
+	              codePoint = tempCodePoint
+	            }
+	          }
+	      }
+	    }
+
+	    if (codePoint === null) {
+	      // we did not generate a valid codePoint so insert a
+	      // replacement char (U+FFFD) and advance only 1 byte
+	      codePoint = 0xFFFD
+	      bytesPerSequence = 1
+	    } else if (codePoint > 0xFFFF) {
+	      // encode to utf16 (surrogate pair dance)
+	      codePoint -= 0x10000
+	      res.push(codePoint >>> 10 & 0x3FF | 0xD800)
+	      codePoint = 0xDC00 | codePoint & 0x3FF
+	    }
+
+	    res.push(codePoint)
+	    i += bytesPerSequence
+	  }
+
+	  return decodeCodePointsArray(res)
+	}
+
+	// Based on http://stackoverflow.com/a/22747272/680742, the browser with
+	// the lowest limit is Chrome, with 0x10000 args.
+	// We go 1 magnitude less, for safety
+	var MAX_ARGUMENTS_LENGTH = 0x1000
+
+	function decodeCodePointsArray (codePoints) {
+	  var len = codePoints.length
+	  if (len <= MAX_ARGUMENTS_LENGTH) {
+	    return String.fromCharCode.apply(String, codePoints) // avoid extra slice()
+	  }
+
+	  // Decode in chunks to avoid "call stack size exceeded".
+	  var res = ''
+	  var i = 0
+	  while (i < len) {
+	    res += String.fromCharCode.apply(
+	      String,
+	      codePoints.slice(i, i += MAX_ARGUMENTS_LENGTH)
+	    )
+	  }
+	  return res
+	}
+
+	function asciiSlice (buf, start, end) {
+	  var ret = ''
+	  end = Math.min(buf.length, end)
+
+	  for (var i = start; i < end; ++i) {
+	    ret += String.fromCharCode(buf[i] & 0x7F)
+	  }
+	  return ret
+	}
+
+	function latin1Slice (buf, start, end) {
+	  var ret = ''
+	  end = Math.min(buf.length, end)
+
+	  for (var i = start; i < end; ++i) {
+	    ret += String.fromCharCode(buf[i])
+	  }
+	  return ret
+	}
+
+	function hexSlice (buf, start, end) {
+	  var len = buf.length
+
+	  if (!start || start < 0) start = 0
+	  if (!end || end < 0 || end > len) end = len
+
+	  var out = ''
+	  for (var i = start; i < end; ++i) {
+	    out += toHex(buf[i])
+	  }
+	  return out
+	}
+
+	function utf16leSlice (buf, start, end) {
+	  var bytes = buf.slice(start, end)
+	  var res = ''
+	  for (var i = 0; i < bytes.length; i += 2) {
+	    res += String.fromCharCode(bytes[i] + bytes[i + 1] * 256)
+	  }
+	  return res
+	}
+
+	Buffer.prototype.slice = function slice (start, end) {
+	  var len = this.length
+	  start = ~~start
+	  end = end === undefined ? len : ~~end
+
+	  if (start < 0) {
+	    start += len
+	    if (start < 0) start = 0
+	  } else if (start > len) {
+	    start = len
+	  }
+
+	  if (end < 0) {
+	    end += len
+	    if (end < 0) end = 0
+	  } else if (end > len) {
+	    end = len
+	  }
+
+	  if (end < start) end = start
+
+	  var newBuf
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    newBuf = this.subarray(start, end)
+	    newBuf.__proto__ = Buffer.prototype
+	  } else {
+	    var sliceLen = end - start
+	    newBuf = new Buffer(sliceLen, undefined)
+	    for (var i = 0; i < sliceLen; ++i) {
+	      newBuf[i] = this[i + start]
+	    }
+	  }
+
+	  return newBuf
+	}
+
+	/*
+	 * Need to make sure that buffer isn't trying to write out of bounds.
+	 */
+	function checkOffset (offset, ext, length) {
+	  if ((offset % 1) !== 0 || offset < 0) throw new RangeError('offset is not uint')
+	  if (offset + ext > length) throw new RangeError('Trying to access beyond buffer length')
+	}
+
+	Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert) {
+	  offset = offset | 0
+	  byteLength = byteLength | 0
+	  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+	  var val = this[offset]
+	  var mul = 1
+	  var i = 0
+	  while (++i < byteLength && (mul *= 0x100)) {
+	    val += this[offset + i] * mul
+	  }
+
+	  return val
+	}
+
+	Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert) {
+	  offset = offset | 0
+	  byteLength = byteLength | 0
+	  if (!noAssert) {
+	    checkOffset(offset, byteLength, this.length)
+	  }
+
+	  var val = this[offset + --byteLength]
+	  var mul = 1
+	  while (byteLength > 0 && (mul *= 0x100)) {
+	    val += this[offset + --byteLength] * mul
+	  }
+
+	  return val
+	}
+
+	Buffer.prototype.readUInt8 = function readUInt8 (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 1, this.length)
+	  return this[offset]
+	}
+
+	Buffer.prototype.readUInt16LE = function readUInt16LE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 2, this.length)
+	  return this[offset] | (this[offset + 1] << 8)
+	}
+
+	Buffer.prototype.readUInt16BE = function readUInt16BE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 2, this.length)
+	  return (this[offset] << 8) | this[offset + 1]
+	}
+
+	Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 4, this.length)
+
+	  return ((this[offset]) |
+	      (this[offset + 1] << 8) |
+	      (this[offset + 2] << 16)) +
+	      (this[offset + 3] * 0x1000000)
+	}
+
+	Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 4, this.length)
+
+	  return (this[offset] * 0x1000000) +
+	    ((this[offset + 1] << 16) |
+	    (this[offset + 2] << 8) |
+	    this[offset + 3])
+	}
+
+	Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
+	  offset = offset | 0
+	  byteLength = byteLength | 0
+	  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+	  var val = this[offset]
+	  var mul = 1
+	  var i = 0
+	  while (++i < byteLength && (mul *= 0x100)) {
+	    val += this[offset + i] * mul
+	  }
+	  mul *= 0x80
+
+	  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
+
+	  return val
+	}
+
+	Buffer.prototype.readIntBE = function readIntBE (offset, byteLength, noAssert) {
+	  offset = offset | 0
+	  byteLength = byteLength | 0
+	  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+	  var i = byteLength
+	  var mul = 1
+	  var val = this[offset + --i]
+	  while (i > 0 && (mul *= 0x100)) {
+	    val += this[offset + --i] * mul
+	  }
+	  mul *= 0x80
+
+	  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
+
+	  return val
+	}
+
+	Buffer.prototype.readInt8 = function readInt8 (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 1, this.length)
+	  if (!(this[offset] & 0x80)) return (this[offset])
+	  return ((0xff - this[offset] + 1) * -1)
+	}
+
+	Buffer.prototype.readInt16LE = function readInt16LE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 2, this.length)
+	  var val = this[offset] | (this[offset + 1] << 8)
+	  return (val & 0x8000) ? val | 0xFFFF0000 : val
+	}
+
+	Buffer.prototype.readInt16BE = function readInt16BE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 2, this.length)
+	  var val = this[offset + 1] | (this[offset] << 8)
+	  return (val & 0x8000) ? val | 0xFFFF0000 : val
+	}
+
+	Buffer.prototype.readInt32LE = function readInt32LE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 4, this.length)
+
+	  return (this[offset]) |
+	    (this[offset + 1] << 8) |
+	    (this[offset + 2] << 16) |
+	    (this[offset + 3] << 24)
+	}
+
+	Buffer.prototype.readInt32BE = function readInt32BE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 4, this.length)
+
+	  return (this[offset] << 24) |
+	    (this[offset + 1] << 16) |
+	    (this[offset + 2] << 8) |
+	    (this[offset + 3])
+	}
+
+	Buffer.prototype.readFloatLE = function readFloatLE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 4, this.length)
+	  return ieee754.read(this, offset, true, 23, 4)
+	}
+
+	Buffer.prototype.readFloatBE = function readFloatBE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 4, this.length)
+	  return ieee754.read(this, offset, false, 23, 4)
+	}
+
+	Buffer.prototype.readDoubleLE = function readDoubleLE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 8, this.length)
+	  return ieee754.read(this, offset, true, 52, 8)
+	}
+
+	Buffer.prototype.readDoubleBE = function readDoubleBE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 8, this.length)
+	  return ieee754.read(this, offset, false, 52, 8)
+	}
+
+	function checkInt (buf, value, offset, ext, max, min) {
+	  if (!Buffer.isBuffer(buf)) throw new TypeError('"buffer" argument must be a Buffer instance')
+	  if (value > max || value < min) throw new RangeError('"value" argument is out of bounds')
+	  if (offset + ext > buf.length) throw new RangeError('Index out of range')
+	}
+
+	Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  byteLength = byteLength | 0
+	  if (!noAssert) {
+	    var maxBytes = Math.pow(2, 8 * byteLength) - 1
+	    checkInt(this, value, offset, byteLength, maxBytes, 0)
+	  }
+
+	  var mul = 1
+	  var i = 0
+	  this[offset] = value & 0xFF
+	  while (++i < byteLength && (mul *= 0x100)) {
+	    this[offset + i] = (value / mul) & 0xFF
+	  }
+
+	  return offset + byteLength
+	}
+
+	Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  byteLength = byteLength | 0
+	  if (!noAssert) {
+	    var maxBytes = Math.pow(2, 8 * byteLength) - 1
+	    checkInt(this, value, offset, byteLength, maxBytes, 0)
+	  }
+
+	  var i = byteLength - 1
+	  var mul = 1
+	  this[offset + i] = value & 0xFF
+	  while (--i >= 0 && (mul *= 0x100)) {
+	    this[offset + i] = (value / mul) & 0xFF
+	  }
+
+	  return offset + byteLength
+	}
+
+	Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0)
+	  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
+	  this[offset] = (value & 0xff)
+	  return offset + 1
+	}
+
+	function objectWriteUInt16 (buf, value, offset, littleEndian) {
+	  if (value < 0) value = 0xffff + value + 1
+	  for (var i = 0, j = Math.min(buf.length - offset, 2); i < j; ++i) {
+	    buf[offset + i] = (value & (0xff << (8 * (littleEndian ? i : 1 - i)))) >>>
+	      (littleEndian ? i : 1 - i) * 8
+	  }
+	}
+
+	Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    this[offset] = (value & 0xff)
+	    this[offset + 1] = (value >>> 8)
+	  } else {
+	    objectWriteUInt16(this, value, offset, true)
+	  }
+	  return offset + 2
+	}
+
+	Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    this[offset] = (value >>> 8)
+	    this[offset + 1] = (value & 0xff)
+	  } else {
+	    objectWriteUInt16(this, value, offset, false)
+	  }
+	  return offset + 2
+	}
+
+	function objectWriteUInt32 (buf, value, offset, littleEndian) {
+	  if (value < 0) value = 0xffffffff + value + 1
+	  for (var i = 0, j = Math.min(buf.length - offset, 4); i < j; ++i) {
+	    buf[offset + i] = (value >>> (littleEndian ? i : 3 - i) * 8) & 0xff
+	  }
+	}
+
+	Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    this[offset + 3] = (value >>> 24)
+	    this[offset + 2] = (value >>> 16)
+	    this[offset + 1] = (value >>> 8)
+	    this[offset] = (value & 0xff)
+	  } else {
+	    objectWriteUInt32(this, value, offset, true)
+	  }
+	  return offset + 4
+	}
+
+	Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    this[offset] = (value >>> 24)
+	    this[offset + 1] = (value >>> 16)
+	    this[offset + 2] = (value >>> 8)
+	    this[offset + 3] = (value & 0xff)
+	  } else {
+	    objectWriteUInt32(this, value, offset, false)
+	  }
+	  return offset + 4
+	}
+
+	Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) {
+	    var limit = Math.pow(2, 8 * byteLength - 1)
+
+	    checkInt(this, value, offset, byteLength, limit - 1, -limit)
+	  }
+
+	  var i = 0
+	  var mul = 1
+	  var sub = 0
+	  this[offset] = value & 0xFF
+	  while (++i < byteLength && (mul *= 0x100)) {
+	    if (value < 0 && sub === 0 && this[offset + i - 1] !== 0) {
+	      sub = 1
+	    }
+	    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
+	  }
+
+	  return offset + byteLength
+	}
+
+	Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) {
+	    var limit = Math.pow(2, 8 * byteLength - 1)
+
+	    checkInt(this, value, offset, byteLength, limit - 1, -limit)
+	  }
+
+	  var i = byteLength - 1
+	  var mul = 1
+	  var sub = 0
+	  this[offset + i] = value & 0xFF
+	  while (--i >= 0 && (mul *= 0x100)) {
+	    if (value < 0 && sub === 0 && this[offset + i + 1] !== 0) {
+	      sub = 1
+	    }
+	    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
+	  }
+
+	  return offset + byteLength
+	}
+
+	Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80)
+	  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
+	  if (value < 0) value = 0xff + value + 1
+	  this[offset] = (value & 0xff)
+	  return offset + 1
+	}
+
+	Buffer.prototype.writeInt16LE = function writeInt16LE (value, offset, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    this[offset] = (value & 0xff)
+	    this[offset + 1] = (value >>> 8)
+	  } else {
+	    objectWriteUInt16(this, value, offset, true)
+	  }
+	  return offset + 2
+	}
+
+	Buffer.prototype.writeInt16BE = function writeInt16BE (value, offset, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    this[offset] = (value >>> 8)
+	    this[offset + 1] = (value & 0xff)
+	  } else {
+	    objectWriteUInt16(this, value, offset, false)
+	  }
+	  return offset + 2
+	}
+
+	Buffer.prototype.writeInt32LE = function writeInt32LE (value, offset, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    this[offset] = (value & 0xff)
+	    this[offset + 1] = (value >>> 8)
+	    this[offset + 2] = (value >>> 16)
+	    this[offset + 3] = (value >>> 24)
+	  } else {
+	    objectWriteUInt32(this, value, offset, true)
+	  }
+	  return offset + 4
+	}
+
+	Buffer.prototype.writeInt32BE = function writeInt32BE (value, offset, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
+	  if (value < 0) value = 0xffffffff + value + 1
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    this[offset] = (value >>> 24)
+	    this[offset + 1] = (value >>> 16)
+	    this[offset + 2] = (value >>> 8)
+	    this[offset + 3] = (value & 0xff)
+	  } else {
+	    objectWriteUInt32(this, value, offset, false)
+	  }
+	  return offset + 4
+	}
+
+	function checkIEEE754 (buf, value, offset, ext, max, min) {
+	  if (offset + ext > buf.length) throw new RangeError('Index out of range')
+	  if (offset < 0) throw new RangeError('Index out of range')
+	}
+
+	function writeFloat (buf, value, offset, littleEndian, noAssert) {
+	  if (!noAssert) {
+	    checkIEEE754(buf, value, offset, 4, 3.4028234663852886e+38, -3.4028234663852886e+38)
+	  }
+	  ieee754.write(buf, value, offset, littleEndian, 23, 4)
+	  return offset + 4
+	}
+
+	Buffer.prototype.writeFloatLE = function writeFloatLE (value, offset, noAssert) {
+	  return writeFloat(this, value, offset, true, noAssert)
+	}
+
+	Buffer.prototype.writeFloatBE = function writeFloatBE (value, offset, noAssert) {
+	  return writeFloat(this, value, offset, false, noAssert)
+	}
+
+	function writeDouble (buf, value, offset, littleEndian, noAssert) {
+	  if (!noAssert) {
+	    checkIEEE754(buf, value, offset, 8, 1.7976931348623157E+308, -1.7976931348623157E+308)
+	  }
+	  ieee754.write(buf, value, offset, littleEndian, 52, 8)
+	  return offset + 8
+	}
+
+	Buffer.prototype.writeDoubleLE = function writeDoubleLE (value, offset, noAssert) {
+	  return writeDouble(this, value, offset, true, noAssert)
+	}
+
+	Buffer.prototype.writeDoubleBE = function writeDoubleBE (value, offset, noAssert) {
+	  return writeDouble(this, value, offset, false, noAssert)
+	}
+
+	// copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
+	Buffer.prototype.copy = function copy (target, targetStart, start, end) {
+	  if (!start) start = 0
+	  if (!end && end !== 0) end = this.length
+	  if (targetStart >= target.length) targetStart = target.length
+	  if (!targetStart) targetStart = 0
+	  if (end > 0 && end < start) end = start
+
+	  // Copy 0 bytes; we're done
+	  if (end === start) return 0
+	  if (target.length === 0 || this.length === 0) return 0
+
+	  // Fatal error conditions
+	  if (targetStart < 0) {
+	    throw new RangeError('targetStart out of bounds')
+	  }
+	  if (start < 0 || start >= this.length) throw new RangeError('sourceStart out of bounds')
+	  if (end < 0) throw new RangeError('sourceEnd out of bounds')
+
+	  // Are we oob?
+	  if (end > this.length) end = this.length
+	  if (target.length - targetStart < end - start) {
+	    end = target.length - targetStart + start
+	  }
+
+	  var len = end - start
+	  var i
+
+	  if (this === target && start < targetStart && targetStart < end) {
+	    // descending copy from end
+	    for (i = len - 1; i >= 0; --i) {
+	      target[i + targetStart] = this[i + start]
+	    }
+	  } else if (len < 1000 || !Buffer.TYPED_ARRAY_SUPPORT) {
+	    // ascending copy from start
+	    for (i = 0; i < len; ++i) {
+	      target[i + targetStart] = this[i + start]
+	    }
+	  } else {
+	    Uint8Array.prototype.set.call(
+	      target,
+	      this.subarray(start, start + len),
+	      targetStart
+	    )
+	  }
+
+	  return len
+	}
+
+	// Usage:
+	//    buffer.fill(number[, offset[, end]])
+	//    buffer.fill(buffer[, offset[, end]])
+	//    buffer.fill(string[, offset[, end]][, encoding])
+	Buffer.prototype.fill = function fill (val, start, end, encoding) {
+	  // Handle string cases:
+	  if (typeof val === 'string') {
+	    if (typeof start === 'string') {
+	      encoding = start
+	      start = 0
+	      end = this.length
+	    } else if (typeof end === 'string') {
+	      encoding = end
+	      end = this.length
+	    }
+	    if (val.length === 1) {
+	      var code = val.charCodeAt(0)
+	      if (code < 256) {
+	        val = code
+	      }
+	    }
+	    if (encoding !== undefined && typeof encoding !== 'string') {
+	      throw new TypeError('encoding must be a string')
+	    }
+	    if (typeof encoding === 'string' && !Buffer.isEncoding(encoding)) {
+	      throw new TypeError('Unknown encoding: ' + encoding)
+	    }
+	  } else if (typeof val === 'number') {
+	    val = val & 255
+	  }
+
+	  // Invalid ranges are not set to a default, so can range check early.
+	  if (start < 0 || this.length < start || this.length < end) {
+	    throw new RangeError('Out of range index')
+	  }
+
+	  if (end <= start) {
+	    return this
+	  }
+
+	  start = start >>> 0
+	  end = end === undefined ? this.length : end >>> 0
+
+	  if (!val) val = 0
+
+	  var i
+	  if (typeof val === 'number') {
+	    for (i = start; i < end; ++i) {
+	      this[i] = val
+	    }
+	  } else {
+	    var bytes = Buffer.isBuffer(val)
+	      ? val
+	      : utf8ToBytes(new Buffer(val, encoding).toString())
+	    var len = bytes.length
+	    for (i = 0; i < end - start; ++i) {
+	      this[i + start] = bytes[i % len]
+	    }
+	  }
+
+	  return this
+	}
+
+	// HELPER FUNCTIONS
+	// ================
+
+	var INVALID_BASE64_RE = /[^+\/0-9A-Za-z-_]/g
+
+	function base64clean (str) {
+	  // Node strips out invalid characters like \n and \t from the string, base64-js does not
+	  str = stringtrim(str).replace(INVALID_BASE64_RE, '')
+	  // Node converts strings with length < 2 to ''
+	  if (str.length < 2) return ''
+	  // Node allows for non-padded base64 strings (missing trailing ===), base64-js does not
+	  while (str.length % 4 !== 0) {
+	    str = str + '='
+	  }
+	  return str
+	}
+
+	function stringtrim (str) {
+	  if (str.trim) return str.trim()
+	  return str.replace(/^\s+|\s+$/g, '')
+	}
+
+	function toHex (n) {
+	  if (n < 16) return '0' + n.toString(16)
+	  return n.toString(16)
+	}
+
+	function utf8ToBytes (string, units) {
+	  units = units || Infinity
+	  var codePoint
+	  var length = string.length
+	  var leadSurrogate = null
+	  var bytes = []
+
+	  for (var i = 0; i < length; ++i) {
+	    codePoint = string.charCodeAt(i)
+
+	    // is surrogate component
+	    if (codePoint > 0xD7FF && codePoint < 0xE000) {
+	      // last char was a lead
+	      if (!leadSurrogate) {
+	        // no lead yet
+	        if (codePoint > 0xDBFF) {
+	          // unexpected trail
+	          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+	          continue
+	        } else if (i + 1 === length) {
+	          // unpaired lead
+	          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+	          continue
+	        }
+
+	        // valid lead
+	        leadSurrogate = codePoint
+
+	        continue
+	      }
+
+	      // 2 leads in a row
+	      if (codePoint < 0xDC00) {
+	        if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+	        leadSurrogate = codePoint
+	        continue
+	      }
+
+	      // valid surrogate pair
+	      codePoint = (leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00) + 0x10000
+	    } else if (leadSurrogate) {
+	      // valid bmp char, but last char was a lead
+	      if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+	    }
+
+	    leadSurrogate = null
+
+	    // encode utf8
+	    if (codePoint < 0x80) {
+	      if ((units -= 1) < 0) break
+	      bytes.push(codePoint)
+	    } else if (codePoint < 0x800) {
+	      if ((units -= 2) < 0) break
+	      bytes.push(
+	        codePoint >> 0x6 | 0xC0,
+	        codePoint & 0x3F | 0x80
+	      )
+	    } else if (codePoint < 0x10000) {
+	      if ((units -= 3) < 0) break
+	      bytes.push(
+	        codePoint >> 0xC | 0xE0,
+	        codePoint >> 0x6 & 0x3F | 0x80,
+	        codePoint & 0x3F | 0x80
+	      )
+	    } else if (codePoint < 0x110000) {
+	      if ((units -= 4) < 0) break
+	      bytes.push(
+	        codePoint >> 0x12 | 0xF0,
+	        codePoint >> 0xC & 0x3F | 0x80,
+	        codePoint >> 0x6 & 0x3F | 0x80,
+	        codePoint & 0x3F | 0x80
+	      )
+	    } else {
+	      throw new Error('Invalid code point')
+	    }
+	  }
+
+	  return bytes
+	}
+
+	function asciiToBytes (str) {
+	  var byteArray = []
+	  for (var i = 0; i < str.length; ++i) {
+	    // Node's code seems to be doing this and not & 0x7F..
+	    byteArray.push(str.charCodeAt(i) & 0xFF)
+	  }
+	  return byteArray
+	}
+
+	function utf16leToBytes (str, units) {
+	  var c, hi, lo
+	  var byteArray = []
+	  for (var i = 0; i < str.length; ++i) {
+	    if ((units -= 2) < 0) break
+
+	    c = str.charCodeAt(i)
+	    hi = c >> 8
+	    lo = c % 256
+	    byteArray.push(lo)
+	    byteArray.push(hi)
+	  }
+
+	  return byteArray
+	}
+
+	function base64ToBytes (str) {
+	  return base64.toByteArray(base64clean(str))
+	}
+
+	function blitBuffer (src, dst, offset, length) {
+	  for (var i = 0; i < length; ++i) {
+	    if ((i + offset >= dst.length) || (i >= src.length)) break
+	    dst[i + offset] = src[i]
+	  }
+	  return i
+	}
+
+	function isnan (val) {
+	  return val !== val // eslint-disable-line no-self-compare
+	}
+
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ }),
+/* 59 */
+/***/ (function(module, exports) {
+
+	'use strict'
+
+	exports.byteLength = byteLength
+	exports.toByteArray = toByteArray
+	exports.fromByteArray = fromByteArray
+
+	var lookup = []
+	var revLookup = []
+	var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
+
+	var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+	for (var i = 0, len = code.length; i < len; ++i) {
+	  lookup[i] = code[i]
+	  revLookup[code.charCodeAt(i)] = i
+	}
+
+	revLookup['-'.charCodeAt(0)] = 62
+	revLookup['_'.charCodeAt(0)] = 63
+
+	function placeHoldersCount (b64) {
+	  var len = b64.length
+	  if (len % 4 > 0) {
+	    throw new Error('Invalid string. Length must be a multiple of 4')
+	  }
+
+	  // the number of equal signs (place holders)
+	  // if there are two placeholders, than the two characters before it
+	  // represent one byte
+	  // if there is only one, then the three characters before it represent 2 bytes
+	  // this is just a cheap hack to not do indexOf twice
+	  return b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
+	}
+
+	function byteLength (b64) {
+	  // base64 is 4/3 + up to two characters of the original data
+	  return (b64.length * 3 / 4) - placeHoldersCount(b64)
+	}
+
+	function toByteArray (b64) {
+	  var i, l, tmp, placeHolders, arr
+	  var len = b64.length
+	  placeHolders = placeHoldersCount(b64)
+
+	  arr = new Arr((len * 3 / 4) - placeHolders)
+
+	  // if there are placeholders, only get up to the last complete 4 chars
+	  l = placeHolders > 0 ? len - 4 : len
+
+	  var L = 0
+
+	  for (i = 0; i < l; i += 4) {
+	    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)]
+	    arr[L++] = (tmp >> 16) & 0xFF
+	    arr[L++] = (tmp >> 8) & 0xFF
+	    arr[L++] = tmp & 0xFF
+	  }
+
+	  if (placeHolders === 2) {
+	    tmp = (revLookup[b64.charCodeAt(i)] << 2) | (revLookup[b64.charCodeAt(i + 1)] >> 4)
+	    arr[L++] = tmp & 0xFF
+	  } else if (placeHolders === 1) {
+	    tmp = (revLookup[b64.charCodeAt(i)] << 10) | (revLookup[b64.charCodeAt(i + 1)] << 4) | (revLookup[b64.charCodeAt(i + 2)] >> 2)
+	    arr[L++] = (tmp >> 8) & 0xFF
+	    arr[L++] = tmp & 0xFF
+	  }
+
+	  return arr
+	}
+
+	function tripletToBase64 (num) {
+	  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
+	}
+
+	function encodeChunk (uint8, start, end) {
+	  var tmp
+	  var output = []
+	  for (var i = start; i < end; i += 3) {
+	    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
+	    output.push(tripletToBase64(tmp))
+	  }
+	  return output.join('')
+	}
+
+	function fromByteArray (uint8) {
+	  var tmp
+	  var len = uint8.length
+	  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
+	  var output = ''
+	  var parts = []
+	  var maxChunkLength = 16383 // must be multiple of 3
+
+	  // go through the array every three bytes, we'll deal with trailing stuff later
+	  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
+	    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
+	  }
+
+	  // pad the end with zeros, but make sure to not forget the extra bytes
+	  if (extraBytes === 1) {
+	    tmp = uint8[len - 1]
+	    output += lookup[tmp >> 2]
+	    output += lookup[(tmp << 4) & 0x3F]
+	    output += '=='
+	  } else if (extraBytes === 2) {
+	    tmp = (uint8[len - 2] << 8) + (uint8[len - 1])
+	    output += lookup[tmp >> 10]
+	    output += lookup[(tmp >> 4) & 0x3F]
+	    output += lookup[(tmp << 2) & 0x3F]
+	    output += '='
+	  }
+
+	  parts.push(output)
+
+	  return parts.join('')
+	}
+
+
+/***/ }),
+/* 60 */
+/***/ (function(module, exports) {
+
+	exports.read = function (buffer, offset, isLE, mLen, nBytes) {
+	  var e, m
+	  var eLen = nBytes * 8 - mLen - 1
+	  var eMax = (1 << eLen) - 1
+	  var eBias = eMax >> 1
+	  var nBits = -7
+	  var i = isLE ? (nBytes - 1) : 0
+	  var d = isLE ? -1 : 1
+	  var s = buffer[offset + i]
+
+	  i += d
+
+	  e = s & ((1 << (-nBits)) - 1)
+	  s >>= (-nBits)
+	  nBits += eLen
+	  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+
+	  m = e & ((1 << (-nBits)) - 1)
+	  e >>= (-nBits)
+	  nBits += mLen
+	  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+
+	  if (e === 0) {
+	    e = 1 - eBias
+	  } else if (e === eMax) {
+	    return m ? NaN : ((s ? -1 : 1) * Infinity)
+	  } else {
+	    m = m + Math.pow(2, mLen)
+	    e = e - eBias
+	  }
+	  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
+	}
+
+	exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
+	  var e, m, c
+	  var eLen = nBytes * 8 - mLen - 1
+	  var eMax = (1 << eLen) - 1
+	  var eBias = eMax >> 1
+	  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
+	  var i = isLE ? 0 : (nBytes - 1)
+	  var d = isLE ? 1 : -1
+	  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
+
+	  value = Math.abs(value)
+
+	  if (isNaN(value) || value === Infinity) {
+	    m = isNaN(value) ? 1 : 0
+	    e = eMax
+	  } else {
+	    e = Math.floor(Math.log(value) / Math.LN2)
+	    if (value * (c = Math.pow(2, -e)) < 1) {
+	      e--
+	      c *= 2
+	    }
+	    if (e + eBias >= 1) {
+	      value += rt / c
+	    } else {
+	      value += rt * Math.pow(2, 1 - eBias)
+	    }
+	    if (value * c >= 2) {
+	      e++
+	      c /= 2
+	    }
+
+	    if (e + eBias >= eMax) {
+	      m = 0
+	      e = eMax
+	    } else if (e + eBias >= 1) {
+	      m = (value * c - 1) * Math.pow(2, mLen)
+	      e = e + eBias
+	    } else {
+	      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
+	      e = 0
+	    }
+	  }
+
+	  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
+
+	  e = (e << mLen) | m
+	  eLen += mLen
+	  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
+
+	  buffer[offset + i - d] |= s * 128
+	}
+
+
+/***/ }),
+/* 61 */
+/***/ (function(module, exports) {
+
+	var toString = {}.toString;
+
+	module.exports = Array.isArray || function (arr) {
+	  return toString.call(arr) == '[object Array]';
+	};
+
+
+/***/ }),
+/* 62 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var testEventMatches = __webpack_require__(63);
+
+	function returnTrue(){
+	    return true
+	}
+
+	function contains(haystack, needle) {
+	    var targ = needle
+	    while (targ && targ !== haystack) {
+	        targ = targ.parentNode
+	    }
+	    return targ !== haystack
+	}
+
+	module.exports = function(el, selector, fn, config){
+
+	    var eventMatches = testEventMatches(el, selector)
+
+	    var onMouseOver = function(event){
+	        var target = event.target
+	        var related = event.relatedTarget
+
+	        // console.log(event.target, event.relatedTarget)
+
+	        // has() returns true if we move into target from related,
+	        // where related is a child of target
+
+	        var match
+
+	        // if (!related || (related !== target && has(target, related))){
+	            if (match = eventMatches(event)){
+	                fn(match, event)
+	            }
+	        // }
+	    }
+
+	    el.addEventListener('mouseover', onMouseOver)
+
+	    return function(){
+	        el.removeEventListener('mouseover', onMouseOver)
+	    }
+	}
+
+
+/***/ }),
+/* 63 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var matches = __webpack_require__(64)
+
+	module.exports = function(root, selector){
+
+		return function(event){
+
+		    var target = event.target
+
+		    while (target) {
+		    	if (matches(target, selector)){
+		    		return target
+		    	}
+
+		    	if (target == root){
+		    		return
+		    	}
+
+		        target = target.parentNode
+		    }
+
+		}
+	}
+
+/***/ }),
+/* 64 */
+/***/ (function(module, exports) {
+
+	'use strict';
+
+	var proto = typeof Element !== 'undefined' ? Element.prototype : {};
+	var vendor = proto.matches
+	  || proto.matchesSelector
+	  || proto.webkitMatchesSelector
+	  || proto.mozMatchesSelector
+	  || proto.msMatchesSelector
+	  || proto.oMatchesSelector;
+
+	module.exports = match;
+
+	/**
+	 * Match `el` to `selector`.
+	 *
+	 * @param {Element} el
+	 * @param {String} selector
+	 * @return {Boolean}
+	 * @api public
+	 */
+
+	function match(el, selector) {
+	  if (!el || el.nodeType !== 1) return false;
+	  if (vendor) return vendor.call(el, selector);
+	  var nodes = el.parentNode.querySelectorAll(selector);
+	  for (var i = 0; i < nodes.length; i++) {
+	    if (nodes[i] == el) return true;
+	  }
+	  return false;
+	}
+
+
+/***/ }),
+/* 65 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var testEventMatches = __webpack_require__(63);
+
+	function returnTrue(){
+	    return true
+	}
+
+	function contains(haystack, needle) {
+	    var targ = needle
+	    while (targ && targ !== haystack) {
+	        targ = targ.parentNode
+	    }
+	    return targ !== haystack
+	}
+
+	module.exports = function(el, selector, fn, config){
+
+	    var has = config && config.allowNested?
+	                returnTrue:
+	                contains
+
+	    var eventMatches = testEventMatches(el, selector)
+
+	    var onMouseOut = function(event){
+	        var target = event.target
+	        var related = event.relatedTarget
+
+	        // console.log(event.target, event.relatedTarget)
+
+	        // has() returns true if we move into target from related, 
+	        // where related is a child of target
+
+	        var match
+
+	        if (!related || (related !== target && has(target, related))){
+	            if (match = eventMatches(event)){
+	                fn(match, event)
+	            }
+	        }
+	    }
+
+	    el.addEventListener('mouseout', onMouseOut)
+
+	    return function(){
+	        el.removeEventListener('mouseout', onMouseOut)
+	    }
+	}
+
+
+/***/ }),
+/* 66 */
+/***/ (function(module, exports) {
+
+	var DOCUMENT_POSITION_CONTAINED_BY = 16
+
+	module.exports = contains
+
+	function contains(container, elem) {
+	    if (container.contains) {
+	        return container.contains(elem)
+	    }
+
+	    var comparison = container.compareDocumentPosition(elem)
+
+	    return comparison === 0 || comparison & DOCUMENT_POSITION_CONTAINED_BY
+	}
+
+
+/***/ }),
+/* 67 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
@@ -10005,1573 +16482,19 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 2 */
-/***/ (function(module, exports, __webpack_require__) {
-
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscore.js 1.8.3
-	//     http://underscorejs.org
-	//     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
-	//     Underscore may be freely distributed under the MIT license.
-
-	(function() {
-
-	  // Baseline setup
-	  // --------------
-
-	  // Establish the root object, `window` in the browser, or `exports` on the server.
-	  var root = this;
-
-	  // Save the previous value of the `_` variable.
-	  var previousUnderscore = root._;
-
-	  // Save bytes in the minified (but not gzipped) version:
-	  var ArrayProto = Array.prototype, ObjProto = Object.prototype, FuncProto = Function.prototype;
-
-	  // Create quick reference variables for speed access to core prototypes.
-	  var
-	    push             = ArrayProto.push,
-	    slice            = ArrayProto.slice,
-	    toString         = ObjProto.toString,
-	    hasOwnProperty   = ObjProto.hasOwnProperty;
-
-	  // All **ECMAScript 5** native function implementations that we hope to use
-	  // are declared here.
-	  var
-	    nativeIsArray      = Array.isArray,
-	    nativeKeys         = Object.keys,
-	    nativeBind         = FuncProto.bind,
-	    nativeCreate       = Object.create;
-
-	  // Naked function reference for surrogate-prototype-swapping.
-	  var Ctor = function(){};
-
-	  // Create a safe reference to the Underscore object for use below.
-	  var _ = function(obj) {
-	    if (obj instanceof _) return obj;
-	    if (!(this instanceof _)) return new _(obj);
-	    this._wrapped = obj;
-	  };
-
-	  // Export the Underscore object for **Node.js**, with
-	  // backwards-compatibility for the old `require()` API. If we're in
-	  // the browser, add `_` as a global object.
-	  if (true) {
-	    if (typeof module !== 'undefined' && module.exports) {
-	      exports = module.exports = _;
-	    }
-	    exports._ = _;
-	  } else {
-	    root._ = _;
-	  }
-
-	  // Current version.
-	  _.VERSION = '1.8.3';
-
-	  // Internal function that returns an efficient (for current engines) version
-	  // of the passed-in callback, to be repeatedly applied in other Underscore
-	  // functions.
-	  var optimizeCb = function(func, context, argCount) {
-	    if (context === void 0) return func;
-	    switch (argCount == null ? 3 : argCount) {
-	      case 1: return function(value) {
-	        return func.call(context, value);
-	      };
-	      case 2: return function(value, other) {
-	        return func.call(context, value, other);
-	      };
-	      case 3: return function(value, index, collection) {
-	        return func.call(context, value, index, collection);
-	      };
-	      case 4: return function(accumulator, value, index, collection) {
-	        return func.call(context, accumulator, value, index, collection);
-	      };
-	    }
-	    return function() {
-	      return func.apply(context, arguments);
-	    };
-	  };
-
-	  // A mostly-internal function to generate callbacks that can be applied
-	  // to each element in a collection, returning the desired result — either
-	  // identity, an arbitrary callback, a property matcher, or a property accessor.
-	  var cb = function(value, context, argCount) {
-	    if (value == null) return _.identity;
-	    if (_.isFunction(value)) return optimizeCb(value, context, argCount);
-	    if (_.isObject(value)) return _.matcher(value);
-	    return _.property(value);
-	  };
-	  _.iteratee = function(value, context) {
-	    return cb(value, context, Infinity);
-	  };
-
-	  // An internal function for creating assigner functions.
-	  var createAssigner = function(keysFunc, undefinedOnly) {
-	    return function(obj) {
-	      var length = arguments.length;
-	      if (length < 2 || obj == null) return obj;
-	      for (var index = 1; index < length; index++) {
-	        var source = arguments[index],
-	            keys = keysFunc(source),
-	            l = keys.length;
-	        for (var i = 0; i < l; i++) {
-	          var key = keys[i];
-	          if (!undefinedOnly || obj[key] === void 0) obj[key] = source[key];
-	        }
-	      }
-	      return obj;
-	    };
-	  };
-
-	  // An internal function for creating a new object that inherits from another.
-	  var baseCreate = function(prototype) {
-	    if (!_.isObject(prototype)) return {};
-	    if (nativeCreate) return nativeCreate(prototype);
-	    Ctor.prototype = prototype;
-	    var result = new Ctor;
-	    Ctor.prototype = null;
-	    return result;
-	  };
-
-	  var property = function(key) {
-	    return function(obj) {
-	      return obj == null ? void 0 : obj[key];
-	    };
-	  };
-
-	  // Helper for collection methods to determine whether a collection
-	  // should be iterated as an array or as an object
-	  // Related: http://people.mozilla.org/~jorendorff/es6-draft.html#sec-tolength
-	  // Avoids a very nasty iOS 8 JIT bug on ARM-64. #2094
-	  var MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
-	  var getLength = property('length');
-	  var isArrayLike = function(collection) {
-	    var length = getLength(collection);
-	    return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX;
-	  };
-
-	  // Collection Functions
-	  // --------------------
-
-	  // The cornerstone, an `each` implementation, aka `forEach`.
-	  // Handles raw objects in addition to array-likes. Treats all
-	  // sparse array-likes as if they were dense.
-	  _.each = _.forEach = function(obj, iteratee, context) {
-	    iteratee = optimizeCb(iteratee, context);
-	    var i, length;
-	    if (isArrayLike(obj)) {
-	      for (i = 0, length = obj.length; i < length; i++) {
-	        iteratee(obj[i], i, obj);
-	      }
-	    } else {
-	      var keys = _.keys(obj);
-	      for (i = 0, length = keys.length; i < length; i++) {
-	        iteratee(obj[keys[i]], keys[i], obj);
-	      }
-	    }
-	    return obj;
-	  };
-
-	  // Return the results of applying the iteratee to each element.
-	  _.map = _.collect = function(obj, iteratee, context) {
-	    iteratee = cb(iteratee, context);
-	    var keys = !isArrayLike(obj) && _.keys(obj),
-	        length = (keys || obj).length,
-	        results = Array(length);
-	    for (var index = 0; index < length; index++) {
-	      var currentKey = keys ? keys[index] : index;
-	      results[index] = iteratee(obj[currentKey], currentKey, obj);
-	    }
-	    return results;
-	  };
-
-	  // Create a reducing function iterating left or right.
-	  function createReduce(dir) {
-	    // Optimized iterator function as using arguments.length
-	    // in the main function will deoptimize the, see #1991.
-	    function iterator(obj, iteratee, memo, keys, index, length) {
-	      for (; index >= 0 && index < length; index += dir) {
-	        var currentKey = keys ? keys[index] : index;
-	        memo = iteratee(memo, obj[currentKey], currentKey, obj);
-	      }
-	      return memo;
-	    }
-
-	    return function(obj, iteratee, memo, context) {
-	      iteratee = optimizeCb(iteratee, context, 4);
-	      var keys = !isArrayLike(obj) && _.keys(obj),
-	          length = (keys || obj).length,
-	          index = dir > 0 ? 0 : length - 1;
-	      // Determine the initial value if none is provided.
-	      if (arguments.length < 3) {
-	        memo = obj[keys ? keys[index] : index];
-	        index += dir;
-	      }
-	      return iterator(obj, iteratee, memo, keys, index, length);
-	    };
-	  }
-
-	  // **Reduce** builds up a single result from a list of values, aka `inject`,
-	  // or `foldl`.
-	  _.reduce = _.foldl = _.inject = createReduce(1);
-
-	  // The right-associative version of reduce, also known as `foldr`.
-	  _.reduceRight = _.foldr = createReduce(-1);
-
-	  // Return the first value which passes a truth test. Aliased as `detect`.
-	  _.find = _.detect = function(obj, predicate, context) {
-	    var key;
-	    if (isArrayLike(obj)) {
-	      key = _.findIndex(obj, predicate, context);
-	    } else {
-	      key = _.findKey(obj, predicate, context);
-	    }
-	    if (key !== void 0 && key !== -1) return obj[key];
-	  };
-
-	  // Return all the elements that pass a truth test.
-	  // Aliased as `select`.
-	  _.filter = _.select = function(obj, predicate, context) {
-	    var results = [];
-	    predicate = cb(predicate, context);
-	    _.each(obj, function(value, index, list) {
-	      if (predicate(value, index, list)) results.push(value);
-	    });
-	    return results;
-	  };
-
-	  // Return all the elements for which a truth test fails.
-	  _.reject = function(obj, predicate, context) {
-	    return _.filter(obj, _.negate(cb(predicate)), context);
-	  };
-
-	  // Determine whether all of the elements match a truth test.
-	  // Aliased as `all`.
-	  _.every = _.all = function(obj, predicate, context) {
-	    predicate = cb(predicate, context);
-	    var keys = !isArrayLike(obj) && _.keys(obj),
-	        length = (keys || obj).length;
-	    for (var index = 0; index < length; index++) {
-	      var currentKey = keys ? keys[index] : index;
-	      if (!predicate(obj[currentKey], currentKey, obj)) return false;
-	    }
-	    return true;
-	  };
-
-	  // Determine if at least one element in the object matches a truth test.
-	  // Aliased as `any`.
-	  _.some = _.any = function(obj, predicate, context) {
-	    predicate = cb(predicate, context);
-	    var keys = !isArrayLike(obj) && _.keys(obj),
-	        length = (keys || obj).length;
-	    for (var index = 0; index < length; index++) {
-	      var currentKey = keys ? keys[index] : index;
-	      if (predicate(obj[currentKey], currentKey, obj)) return true;
-	    }
-	    return false;
-	  };
-
-	  // Determine if the array or object contains a given item (using `===`).
-	  // Aliased as `includes` and `include`.
-	  _.contains = _.includes = _.include = function(obj, item, fromIndex, guard) {
-	    if (!isArrayLike(obj)) obj = _.values(obj);
-	    if (typeof fromIndex != 'number' || guard) fromIndex = 0;
-	    return _.indexOf(obj, item, fromIndex) >= 0;
-	  };
-
-	  // Invoke a method (with arguments) on every item in a collection.
-	  _.invoke = function(obj, method) {
-	    var args = slice.call(arguments, 2);
-	    var isFunc = _.isFunction(method);
-	    return _.map(obj, function(value) {
-	      var func = isFunc ? method : value[method];
-	      return func == null ? func : func.apply(value, args);
-	    });
-	  };
-
-	  // Convenience version of a common use case of `map`: fetching a property.
-	  _.pluck = function(obj, key) {
-	    return _.map(obj, _.property(key));
-	  };
-
-	  // Convenience version of a common use case of `filter`: selecting only objects
-	  // containing specific `key:value` pairs.
-	  _.where = function(obj, attrs) {
-	    return _.filter(obj, _.matcher(attrs));
-	  };
-
-	  // Convenience version of a common use case of `find`: getting the first object
-	  // containing specific `key:value` pairs.
-	  _.findWhere = function(obj, attrs) {
-	    return _.find(obj, _.matcher(attrs));
-	  };
-
-	  // Return the maximum element (or element-based computation).
-	  _.max = function(obj, iteratee, context) {
-	    var result = -Infinity, lastComputed = -Infinity,
-	        value, computed;
-	    if (iteratee == null && obj != null) {
-	      obj = isArrayLike(obj) ? obj : _.values(obj);
-	      for (var i = 0, length = obj.length; i < length; i++) {
-	        value = obj[i];
-	        if (value > result) {
-	          result = value;
-	        }
-	      }
-	    } else {
-	      iteratee = cb(iteratee, context);
-	      _.each(obj, function(value, index, list) {
-	        computed = iteratee(value, index, list);
-	        if (computed > lastComputed || computed === -Infinity && result === -Infinity) {
-	          result = value;
-	          lastComputed = computed;
-	        }
-	      });
-	    }
-	    return result;
-	  };
-
-	  // Return the minimum element (or element-based computation).
-	  _.min = function(obj, iteratee, context) {
-	    var result = Infinity, lastComputed = Infinity,
-	        value, computed;
-	    if (iteratee == null && obj != null) {
-	      obj = isArrayLike(obj) ? obj : _.values(obj);
-	      for (var i = 0, length = obj.length; i < length; i++) {
-	        value = obj[i];
-	        if (value < result) {
-	          result = value;
-	        }
-	      }
-	    } else {
-	      iteratee = cb(iteratee, context);
-	      _.each(obj, function(value, index, list) {
-	        computed = iteratee(value, index, list);
-	        if (computed < lastComputed || computed === Infinity && result === Infinity) {
-	          result = value;
-	          lastComputed = computed;
-	        }
-	      });
-	    }
-	    return result;
-	  };
-
-	  // Shuffle a collection, using the modern version of the
-	  // [Fisher-Yates shuffle](http://en.wikipedia.org/wiki/Fisher–Yates_shuffle).
-	  _.shuffle = function(obj) {
-	    var set = isArrayLike(obj) ? obj : _.values(obj);
-	    var length = set.length;
-	    var shuffled = Array(length);
-	    for (var index = 0, rand; index < length; index++) {
-	      rand = _.random(0, index);
-	      if (rand !== index) shuffled[index] = shuffled[rand];
-	      shuffled[rand] = set[index];
-	    }
-	    return shuffled;
-	  };
-
-	  // Sample **n** random values from a collection.
-	  // If **n** is not specified, returns a single random element.
-	  // The internal `guard` argument allows it to work with `map`.
-	  _.sample = function(obj, n, guard) {
-	    if (n == null || guard) {
-	      if (!isArrayLike(obj)) obj = _.values(obj);
-	      return obj[_.random(obj.length - 1)];
-	    }
-	    return _.shuffle(obj).slice(0, Math.max(0, n));
-	  };
-
-	  // Sort the object's values by a criterion produced by an iteratee.
-	  _.sortBy = function(obj, iteratee, context) {
-	    iteratee = cb(iteratee, context);
-	    return _.pluck(_.map(obj, function(value, index, list) {
-	      return {
-	        value: value,
-	        index: index,
-	        criteria: iteratee(value, index, list)
-	      };
-	    }).sort(function(left, right) {
-	      var a = left.criteria;
-	      var b = right.criteria;
-	      if (a !== b) {
-	        if (a > b || a === void 0) return 1;
-	        if (a < b || b === void 0) return -1;
-	      }
-	      return left.index - right.index;
-	    }), 'value');
-	  };
-
-	  // An internal function used for aggregate "group by" operations.
-	  var group = function(behavior) {
-	    return function(obj, iteratee, context) {
-	      var result = {};
-	      iteratee = cb(iteratee, context);
-	      _.each(obj, function(value, index) {
-	        var key = iteratee(value, index, obj);
-	        behavior(result, value, key);
-	      });
-	      return result;
-	    };
-	  };
-
-	  // Groups the object's values by a criterion. Pass either a string attribute
-	  // to group by, or a function that returns the criterion.
-	  _.groupBy = group(function(result, value, key) {
-	    if (_.has(result, key)) result[key].push(value); else result[key] = [value];
-	  });
-
-	  // Indexes the object's values by a criterion, similar to `groupBy`, but for
-	  // when you know that your index values will be unique.
-	  _.indexBy = group(function(result, value, key) {
-	    result[key] = value;
-	  });
-
-	  // Counts instances of an object that group by a certain criterion. Pass
-	  // either a string attribute to count by, or a function that returns the
-	  // criterion.
-	  _.countBy = group(function(result, value, key) {
-	    if (_.has(result, key)) result[key]++; else result[key] = 1;
-	  });
-
-	  // Safely create a real, live array from anything iterable.
-	  _.toArray = function(obj) {
-	    if (!obj) return [];
-	    if (_.isArray(obj)) return slice.call(obj);
-	    if (isArrayLike(obj)) return _.map(obj, _.identity);
-	    return _.values(obj);
-	  };
-
-	  // Return the number of elements in an object.
-	  _.size = function(obj) {
-	    if (obj == null) return 0;
-	    return isArrayLike(obj) ? obj.length : _.keys(obj).length;
-	  };
-
-	  // Split a collection into two arrays: one whose elements all satisfy the given
-	  // predicate, and one whose elements all do not satisfy the predicate.
-	  _.partition = function(obj, predicate, context) {
-	    predicate = cb(predicate, context);
-	    var pass = [], fail = [];
-	    _.each(obj, function(value, key, obj) {
-	      (predicate(value, key, obj) ? pass : fail).push(value);
-	    });
-	    return [pass, fail];
-	  };
-
-	  // Array Functions
-	  // ---------------
-
-	  // Get the first element of an array. Passing **n** will return the first N
-	  // values in the array. Aliased as `head` and `take`. The **guard** check
-	  // allows it to work with `_.map`.
-	  _.first = _.head = _.take = function(array, n, guard) {
-	    if (array == null) return void 0;
-	    if (n == null || guard) return array[0];
-	    return _.initial(array, array.length - n);
-	  };
-
-	  // Returns everything but the last entry of the array. Especially useful on
-	  // the arguments object. Passing **n** will return all the values in
-	  // the array, excluding the last N.
-	  _.initial = function(array, n, guard) {
-	    return slice.call(array, 0, Math.max(0, array.length - (n == null || guard ? 1 : n)));
-	  };
-
-	  // Get the last element of an array. Passing **n** will return the last N
-	  // values in the array.
-	  _.last = function(array, n, guard) {
-	    if (array == null) return void 0;
-	    if (n == null || guard) return array[array.length - 1];
-	    return _.rest(array, Math.max(0, array.length - n));
-	  };
-
-	  // Returns everything but the first entry of the array. Aliased as `tail` and `drop`.
-	  // Especially useful on the arguments object. Passing an **n** will return
-	  // the rest N values in the array.
-	  _.rest = _.tail = _.drop = function(array, n, guard) {
-	    return slice.call(array, n == null || guard ? 1 : n);
-	  };
-
-	  // Trim out all falsy values from an array.
-	  _.compact = function(array) {
-	    return _.filter(array, _.identity);
-	  };
-
-	  // Internal implementation of a recursive `flatten` function.
-	  var flatten = function(input, shallow, strict, startIndex) {
-	    var output = [], idx = 0;
-	    for (var i = startIndex || 0, length = getLength(input); i < length; i++) {
-	      var value = input[i];
-	      if (isArrayLike(value) && (_.isArray(value) || _.isArguments(value))) {
-	        //flatten current level of array or arguments object
-	        if (!shallow) value = flatten(value, shallow, strict);
-	        var j = 0, len = value.length;
-	        output.length += len;
-	        while (j < len) {
-	          output[idx++] = value[j++];
-	        }
-	      } else if (!strict) {
-	        output[idx++] = value;
-	      }
-	    }
-	    return output;
-	  };
-
-	  // Flatten out an array, either recursively (by default), or just one level.
-	  _.flatten = function(array, shallow) {
-	    return flatten(array, shallow, false);
-	  };
-
-	  // Return a version of the array that does not contain the specified value(s).
-	  _.without = function(array) {
-	    return _.difference(array, slice.call(arguments, 1));
-	  };
-
-	  // Produce a duplicate-free version of the array. If the array has already
-	  // been sorted, you have the option of using a faster algorithm.
-	  // Aliased as `unique`.
-	  _.uniq = _.unique = function(array, isSorted, iteratee, context) {
-	    if (!_.isBoolean(isSorted)) {
-	      context = iteratee;
-	      iteratee = isSorted;
-	      isSorted = false;
-	    }
-	    if (iteratee != null) iteratee = cb(iteratee, context);
-	    var result = [];
-	    var seen = [];
-	    for (var i = 0, length = getLength(array); i < length; i++) {
-	      var value = array[i],
-	          computed = iteratee ? iteratee(value, i, array) : value;
-	      if (isSorted) {
-	        if (!i || seen !== computed) result.push(value);
-	        seen = computed;
-	      } else if (iteratee) {
-	        if (!_.contains(seen, computed)) {
-	          seen.push(computed);
-	          result.push(value);
-	        }
-	      } else if (!_.contains(result, value)) {
-	        result.push(value);
-	      }
-	    }
-	    return result;
-	  };
-
-	  // Produce an array that contains the union: each distinct element from all of
-	  // the passed-in arrays.
-	  _.union = function() {
-	    return _.uniq(flatten(arguments, true, true));
-	  };
-
-	  // Produce an array that contains every item shared between all the
-	  // passed-in arrays.
-	  _.intersection = function(array) {
-	    var result = [];
-	    var argsLength = arguments.length;
-	    for (var i = 0, length = getLength(array); i < length; i++) {
-	      var item = array[i];
-	      if (_.contains(result, item)) continue;
-	      for (var j = 1; j < argsLength; j++) {
-	        if (!_.contains(arguments[j], item)) break;
-	      }
-	      if (j === argsLength) result.push(item);
-	    }
-	    return result;
-	  };
-
-	  // Take the difference between one array and a number of other arrays.
-	  // Only the elements present in just the first array will remain.
-	  _.difference = function(array) {
-	    var rest = flatten(arguments, true, true, 1);
-	    return _.filter(array, function(value){
-	      return !_.contains(rest, value);
-	    });
-	  };
-
-	  // Zip together multiple lists into a single array -- elements that share
-	  // an index go together.
-	  _.zip = function() {
-	    return _.unzip(arguments);
-	  };
-
-	  // Complement of _.zip. Unzip accepts an array of arrays and groups
-	  // each array's elements on shared indices
-	  _.unzip = function(array) {
-	    var length = array && _.max(array, getLength).length || 0;
-	    var result = Array(length);
-
-	    for (var index = 0; index < length; index++) {
-	      result[index] = _.pluck(array, index);
-	    }
-	    return result;
-	  };
-
-	  // Converts lists into objects. Pass either a single array of `[key, value]`
-	  // pairs, or two parallel arrays of the same length -- one of keys, and one of
-	  // the corresponding values.
-	  _.object = function(list, values) {
-	    var result = {};
-	    for (var i = 0, length = getLength(list); i < length; i++) {
-	      if (values) {
-	        result[list[i]] = values[i];
-	      } else {
-	        result[list[i][0]] = list[i][1];
-	      }
-	    }
-	    return result;
-	  };
-
-	  // Generator function to create the findIndex and findLastIndex functions
-	  function createPredicateIndexFinder(dir) {
-	    return function(array, predicate, context) {
-	      predicate = cb(predicate, context);
-	      var length = getLength(array);
-	      var index = dir > 0 ? 0 : length - 1;
-	      for (; index >= 0 && index < length; index += dir) {
-	        if (predicate(array[index], index, array)) return index;
-	      }
-	      return -1;
-	    };
-	  }
-
-	  // Returns the first index on an array-like that passes a predicate test
-	  _.findIndex = createPredicateIndexFinder(1);
-	  _.findLastIndex = createPredicateIndexFinder(-1);
-
-	  // Use a comparator function to figure out the smallest index at which
-	  // an object should be inserted so as to maintain order. Uses binary search.
-	  _.sortedIndex = function(array, obj, iteratee, context) {
-	    iteratee = cb(iteratee, context, 1);
-	    var value = iteratee(obj);
-	    var low = 0, high = getLength(array);
-	    while (low < high) {
-	      var mid = Math.floor((low + high) / 2);
-	      if (iteratee(array[mid]) < value) low = mid + 1; else high = mid;
-	    }
-	    return low;
-	  };
-
-	  // Generator function to create the indexOf and lastIndexOf functions
-	  function createIndexFinder(dir, predicateFind, sortedIndex) {
-	    return function(array, item, idx) {
-	      var i = 0, length = getLength(array);
-	      if (typeof idx == 'number') {
-	        if (dir > 0) {
-	            i = idx >= 0 ? idx : Math.max(idx + length, i);
-	        } else {
-	            length = idx >= 0 ? Math.min(idx + 1, length) : idx + length + 1;
-	        }
-	      } else if (sortedIndex && idx && length) {
-	        idx = sortedIndex(array, item);
-	        return array[idx] === item ? idx : -1;
-	      }
-	      if (item !== item) {
-	        idx = predicateFind(slice.call(array, i, length), _.isNaN);
-	        return idx >= 0 ? idx + i : -1;
-	      }
-	      for (idx = dir > 0 ? i : length - 1; idx >= 0 && idx < length; idx += dir) {
-	        if (array[idx] === item) return idx;
-	      }
-	      return -1;
-	    };
-	  }
-
-	  // Return the position of the first occurrence of an item in an array,
-	  // or -1 if the item is not included in the array.
-	  // If the array is large and already in sort order, pass `true`
-	  // for **isSorted** to use binary search.
-	  _.indexOf = createIndexFinder(1, _.findIndex, _.sortedIndex);
-	  _.lastIndexOf = createIndexFinder(-1, _.findLastIndex);
-
-	  // Generate an integer Array containing an arithmetic progression. A port of
-	  // the native Python `range()` function. See
-	  // [the Python documentation](http://docs.python.org/library/functions.html#range).
-	  _.range = function(start, stop, step) {
-	    if (stop == null) {
-	      stop = start || 0;
-	      start = 0;
-	    }
-	    step = step || 1;
-
-	    var length = Math.max(Math.ceil((stop - start) / step), 0);
-	    var range = Array(length);
-
-	    for (var idx = 0; idx < length; idx++, start += step) {
-	      range[idx] = start;
-	    }
-
-	    return range;
-	  };
-
-	  // Function (ahem) Functions
-	  // ------------------
-
-	  // Determines whether to execute a function as a constructor
-	  // or a normal function with the provided arguments
-	  var executeBound = function(sourceFunc, boundFunc, context, callingContext, args) {
-	    if (!(callingContext instanceof boundFunc)) return sourceFunc.apply(context, args);
-	    var self = baseCreate(sourceFunc.prototype);
-	    var result = sourceFunc.apply(self, args);
-	    if (_.isObject(result)) return result;
-	    return self;
-	  };
-
-	  // Create a function bound to a given object (assigning `this`, and arguments,
-	  // optionally). Delegates to **ECMAScript 5**'s native `Function.bind` if
-	  // available.
-	  _.bind = function(func, context) {
-	    if (nativeBind && func.bind === nativeBind) return nativeBind.apply(func, slice.call(arguments, 1));
-	    if (!_.isFunction(func)) throw new TypeError('Bind must be called on a function');
-	    var args = slice.call(arguments, 2);
-	    var bound = function() {
-	      return executeBound(func, bound, context, this, args.concat(slice.call(arguments)));
-	    };
-	    return bound;
-	  };
-
-	  // Partially apply a function by creating a version that has had some of its
-	  // arguments pre-filled, without changing its dynamic `this` context. _ acts
-	  // as a placeholder, allowing any combination of arguments to be pre-filled.
-	  _.partial = function(func) {
-	    var boundArgs = slice.call(arguments, 1);
-	    var bound = function() {
-	      var position = 0, length = boundArgs.length;
-	      var args = Array(length);
-	      for (var i = 0; i < length; i++) {
-	        args[i] = boundArgs[i] === _ ? arguments[position++] : boundArgs[i];
-	      }
-	      while (position < arguments.length) args.push(arguments[position++]);
-	      return executeBound(func, bound, this, this, args);
-	    };
-	    return bound;
-	  };
-
-	  // Bind a number of an object's methods to that object. Remaining arguments
-	  // are the method names to be bound. Useful for ensuring that all callbacks
-	  // defined on an object belong to it.
-	  _.bindAll = function(obj) {
-	    var i, length = arguments.length, key;
-	    if (length <= 1) throw new Error('bindAll must be passed function names');
-	    for (i = 1; i < length; i++) {
-	      key = arguments[i];
-	      obj[key] = _.bind(obj[key], obj);
-	    }
-	    return obj;
-	  };
-
-	  // Memoize an expensive function by storing its results.
-	  _.memoize = function(func, hasher) {
-	    var memoize = function(key) {
-	      var cache = memoize.cache;
-	      var address = '' + (hasher ? hasher.apply(this, arguments) : key);
-	      if (!_.has(cache, address)) cache[address] = func.apply(this, arguments);
-	      return cache[address];
-	    };
-	    memoize.cache = {};
-	    return memoize;
-	  };
-
-	  // Delays a function for the given number of milliseconds, and then calls
-	  // it with the arguments supplied.
-	  _.delay = function(func, wait) {
-	    var args = slice.call(arguments, 2);
-	    return setTimeout(function(){
-	      return func.apply(null, args);
-	    }, wait);
-	  };
-
-	  // Defers a function, scheduling it to run after the current call stack has
-	  // cleared.
-	  _.defer = _.partial(_.delay, _, 1);
-
-	  // Returns a function, that, when invoked, will only be triggered at most once
-	  // during a given window of time. Normally, the throttled function will run
-	  // as much as it can, without ever going more than once per `wait` duration;
-	  // but if you'd like to disable the execution on the leading edge, pass
-	  // `{leading: false}`. To disable execution on the trailing edge, ditto.
-	  _.throttle = function(func, wait, options) {
-	    var context, args, result;
-	    var timeout = null;
-	    var previous = 0;
-	    if (!options) options = {};
-	    var later = function() {
-	      previous = options.leading === false ? 0 : _.now();
-	      timeout = null;
-	      result = func.apply(context, args);
-	      if (!timeout) context = args = null;
-	    };
-	    return function() {
-	      var now = _.now();
-	      if (!previous && options.leading === false) previous = now;
-	      var remaining = wait - (now - previous);
-	      context = this;
-	      args = arguments;
-	      if (remaining <= 0 || remaining > wait) {
-	        if (timeout) {
-	          clearTimeout(timeout);
-	          timeout = null;
-	        }
-	        previous = now;
-	        result = func.apply(context, args);
-	        if (!timeout) context = args = null;
-	      } else if (!timeout && options.trailing !== false) {
-	        timeout = setTimeout(later, remaining);
-	      }
-	      return result;
-	    };
-	  };
-
-	  // Returns a function, that, as long as it continues to be invoked, will not
-	  // be triggered. The function will be called after it stops being called for
-	  // N milliseconds. If `immediate` is passed, trigger the function on the
-	  // leading edge, instead of the trailing.
-	  _.debounce = function(func, wait, immediate) {
-	    var timeout, args, context, timestamp, result;
-
-	    var later = function() {
-	      var last = _.now() - timestamp;
-
-	      if (last < wait && last >= 0) {
-	        timeout = setTimeout(later, wait - last);
-	      } else {
-	        timeout = null;
-	        if (!immediate) {
-	          result = func.apply(context, args);
-	          if (!timeout) context = args = null;
-	        }
-	      }
-	    };
-
-	    return function() {
-	      context = this;
-	      args = arguments;
-	      timestamp = _.now();
-	      var callNow = immediate && !timeout;
-	      if (!timeout) timeout = setTimeout(later, wait);
-	      if (callNow) {
-	        result = func.apply(context, args);
-	        context = args = null;
-	      }
-
-	      return result;
-	    };
-	  };
-
-	  // Returns the first function passed as an argument to the second,
-	  // allowing you to adjust arguments, run code before and after, and
-	  // conditionally execute the original function.
-	  _.wrap = function(func, wrapper) {
-	    return _.partial(wrapper, func);
-	  };
-
-	  // Returns a negated version of the passed-in predicate.
-	  _.negate = function(predicate) {
-	    return function() {
-	      return !predicate.apply(this, arguments);
-	    };
-	  };
-
-	  // Returns a function that is the composition of a list of functions, each
-	  // consuming the return value of the function that follows.
-	  _.compose = function() {
-	    var args = arguments;
-	    var start = args.length - 1;
-	    return function() {
-	      var i = start;
-	      var result = args[start].apply(this, arguments);
-	      while (i--) result = args[i].call(this, result);
-	      return result;
-	    };
-	  };
-
-	  // Returns a function that will only be executed on and after the Nth call.
-	  _.after = function(times, func) {
-	    return function() {
-	      if (--times < 1) {
-	        return func.apply(this, arguments);
-	      }
-	    };
-	  };
-
-	  // Returns a function that will only be executed up to (but not including) the Nth call.
-	  _.before = function(times, func) {
-	    var memo;
-	    return function() {
-	      if (--times > 0) {
-	        memo = func.apply(this, arguments);
-	      }
-	      if (times <= 1) func = null;
-	      return memo;
-	    };
-	  };
-
-	  // Returns a function that will be executed at most one time, no matter how
-	  // often you call it. Useful for lazy initialization.
-	  _.once = _.partial(_.before, 2);
-
-	  // Object Functions
-	  // ----------------
-
-	  // Keys in IE < 9 that won't be iterated by `for key in ...` and thus missed.
-	  var hasEnumBug = !{toString: null}.propertyIsEnumerable('toString');
-	  var nonEnumerableProps = ['valueOf', 'isPrototypeOf', 'toString',
-	                      'propertyIsEnumerable', 'hasOwnProperty', 'toLocaleString'];
-
-	  function collectNonEnumProps(obj, keys) {
-	    var nonEnumIdx = nonEnumerableProps.length;
-	    var constructor = obj.constructor;
-	    var proto = (_.isFunction(constructor) && constructor.prototype) || ObjProto;
-
-	    // Constructor is a special case.
-	    var prop = 'constructor';
-	    if (_.has(obj, prop) && !_.contains(keys, prop)) keys.push(prop);
-
-	    while (nonEnumIdx--) {
-	      prop = nonEnumerableProps[nonEnumIdx];
-	      if (prop in obj && obj[prop] !== proto[prop] && !_.contains(keys, prop)) {
-	        keys.push(prop);
-	      }
-	    }
-	  }
-
-	  // Retrieve the names of an object's own properties.
-	  // Delegates to **ECMAScript 5**'s native `Object.keys`
-	  _.keys = function(obj) {
-	    if (!_.isObject(obj)) return [];
-	    if (nativeKeys) return nativeKeys(obj);
-	    var keys = [];
-	    for (var key in obj) if (_.has(obj, key)) keys.push(key);
-	    // Ahem, IE < 9.
-	    if (hasEnumBug) collectNonEnumProps(obj, keys);
-	    return keys;
-	  };
-
-	  // Retrieve all the property names of an object.
-	  _.allKeys = function(obj) {
-	    if (!_.isObject(obj)) return [];
-	    var keys = [];
-	    for (var key in obj) keys.push(key);
-	    // Ahem, IE < 9.
-	    if (hasEnumBug) collectNonEnumProps(obj, keys);
-	    return keys;
-	  };
-
-	  // Retrieve the values of an object's properties.
-	  _.values = function(obj) {
-	    var keys = _.keys(obj);
-	    var length = keys.length;
-	    var values = Array(length);
-	    for (var i = 0; i < length; i++) {
-	      values[i] = obj[keys[i]];
-	    }
-	    return values;
-	  };
-
-	  // Returns the results of applying the iteratee to each element of the object
-	  // In contrast to _.map it returns an object
-	  _.mapObject = function(obj, iteratee, context) {
-	    iteratee = cb(iteratee, context);
-	    var keys =  _.keys(obj),
-	          length = keys.length,
-	          results = {},
-	          currentKey;
-	      for (var index = 0; index < length; index++) {
-	        currentKey = keys[index];
-	        results[currentKey] = iteratee(obj[currentKey], currentKey, obj);
-	      }
-	      return results;
-	  };
-
-	  // Convert an object into a list of `[key, value]` pairs.
-	  _.pairs = function(obj) {
-	    var keys = _.keys(obj);
-	    var length = keys.length;
-	    var pairs = Array(length);
-	    for (var i = 0; i < length; i++) {
-	      pairs[i] = [keys[i], obj[keys[i]]];
-	    }
-	    return pairs;
-	  };
-
-	  // Invert the keys and values of an object. The values must be serializable.
-	  _.invert = function(obj) {
-	    var result = {};
-	    var keys = _.keys(obj);
-	    for (var i = 0, length = keys.length; i < length; i++) {
-	      result[obj[keys[i]]] = keys[i];
-	    }
-	    return result;
-	  };
-
-	  // Return a sorted list of the function names available on the object.
-	  // Aliased as `methods`
-	  _.functions = _.methods = function(obj) {
-	    var names = [];
-	    for (var key in obj) {
-	      if (_.isFunction(obj[key])) names.push(key);
-	    }
-	    return names.sort();
-	  };
-
-	  // Extend a given object with all the properties in passed-in object(s).
-	  _.extend = createAssigner(_.allKeys);
-
-	  // Assigns a given object with all the own properties in the passed-in object(s)
-	  // (https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object/assign)
-	  _.extendOwn = _.assign = createAssigner(_.keys);
-
-	  // Returns the first key on an object that passes a predicate test
-	  _.findKey = function(obj, predicate, context) {
-	    predicate = cb(predicate, context);
-	    var keys = _.keys(obj), key;
-	    for (var i = 0, length = keys.length; i < length; i++) {
-	      key = keys[i];
-	      if (predicate(obj[key], key, obj)) return key;
-	    }
-	  };
-
-	  // Return a copy of the object only containing the whitelisted properties.
-	  _.pick = function(object, oiteratee, context) {
-	    var result = {}, obj = object, iteratee, keys;
-	    if (obj == null) return result;
-	    if (_.isFunction(oiteratee)) {
-	      keys = _.allKeys(obj);
-	      iteratee = optimizeCb(oiteratee, context);
-	    } else {
-	      keys = flatten(arguments, false, false, 1);
-	      iteratee = function(value, key, obj) { return key in obj; };
-	      obj = Object(obj);
-	    }
-	    for (var i = 0, length = keys.length; i < length; i++) {
-	      var key = keys[i];
-	      var value = obj[key];
-	      if (iteratee(value, key, obj)) result[key] = value;
-	    }
-	    return result;
-	  };
-
-	   // Return a copy of the object without the blacklisted properties.
-	  _.omit = function(obj, iteratee, context) {
-	    if (_.isFunction(iteratee)) {
-	      iteratee = _.negate(iteratee);
-	    } else {
-	      var keys = _.map(flatten(arguments, false, false, 1), String);
-	      iteratee = function(value, key) {
-	        return !_.contains(keys, key);
-	      };
-	    }
-	    return _.pick(obj, iteratee, context);
-	  };
-
-	  // Fill in a given object with default properties.
-	  _.defaults = createAssigner(_.allKeys, true);
-
-	  // Creates an object that inherits from the given prototype object.
-	  // If additional properties are provided then they will be added to the
-	  // created object.
-	  _.create = function(prototype, props) {
-	    var result = baseCreate(prototype);
-	    if (props) _.extendOwn(result, props);
-	    return result;
-	  };
-
-	  // Create a (shallow-cloned) duplicate of an object.
-	  _.clone = function(obj) {
-	    if (!_.isObject(obj)) return obj;
-	    return _.isArray(obj) ? obj.slice() : _.extend({}, obj);
-	  };
-
-	  // Invokes interceptor with the obj, and then returns obj.
-	  // The primary purpose of this method is to "tap into" a method chain, in
-	  // order to perform operations on intermediate results within the chain.
-	  _.tap = function(obj, interceptor) {
-	    interceptor(obj);
-	    return obj;
-	  };
-
-	  // Returns whether an object has a given set of `key:value` pairs.
-	  _.isMatch = function(object, attrs) {
-	    var keys = _.keys(attrs), length = keys.length;
-	    if (object == null) return !length;
-	    var obj = Object(object);
-	    for (var i = 0; i < length; i++) {
-	      var key = keys[i];
-	      if (attrs[key] !== obj[key] || !(key in obj)) return false;
-	    }
-	    return true;
-	  };
-
-
-	  // Internal recursive comparison function for `isEqual`.
-	  var eq = function(a, b, aStack, bStack) {
-	    // Identical objects are equal. `0 === -0`, but they aren't identical.
-	    // See the [Harmony `egal` proposal](http://wiki.ecmascript.org/doku.php?id=harmony:egal).
-	    if (a === b) return a !== 0 || 1 / a === 1 / b;
-	    // A strict comparison is necessary because `null == undefined`.
-	    if (a == null || b == null) return a === b;
-	    // Unwrap any wrapped objects.
-	    if (a instanceof _) a = a._wrapped;
-	    if (b instanceof _) b = b._wrapped;
-	    // Compare `[[Class]]` names.
-	    var className = toString.call(a);
-	    if (className !== toString.call(b)) return false;
-	    switch (className) {
-	      // Strings, numbers, regular expressions, dates, and booleans are compared by value.
-	      case '[object RegExp]':
-	      // RegExps are coerced to strings for comparison (Note: '' + /a/i === '/a/i')
-	      case '[object String]':
-	        // Primitives and their corresponding object wrappers are equivalent; thus, `"5"` is
-	        // equivalent to `new String("5")`.
-	        return '' + a === '' + b;
-	      case '[object Number]':
-	        // `NaN`s are equivalent, but non-reflexive.
-	        // Object(NaN) is equivalent to NaN
-	        if (+a !== +a) return +b !== +b;
-	        // An `egal` comparison is performed for other numeric values.
-	        return +a === 0 ? 1 / +a === 1 / b : +a === +b;
-	      case '[object Date]':
-	      case '[object Boolean]':
-	        // Coerce dates and booleans to numeric primitive values. Dates are compared by their
-	        // millisecond representations. Note that invalid dates with millisecond representations
-	        // of `NaN` are not equivalent.
-	        return +a === +b;
-	    }
-
-	    var areArrays = className === '[object Array]';
-	    if (!areArrays) {
-	      if (typeof a != 'object' || typeof b != 'object') return false;
-
-	      // Objects with different constructors are not equivalent, but `Object`s or `Array`s
-	      // from different frames are.
-	      var aCtor = a.constructor, bCtor = b.constructor;
-	      if (aCtor !== bCtor && !(_.isFunction(aCtor) && aCtor instanceof aCtor &&
-	                               _.isFunction(bCtor) && bCtor instanceof bCtor)
-	                          && ('constructor' in a && 'constructor' in b)) {
-	        return false;
-	      }
-	    }
-	    // Assume equality for cyclic structures. The algorithm for detecting cyclic
-	    // structures is adapted from ES 5.1 section 15.12.3, abstract operation `JO`.
-
-	    // Initializing stack of traversed objects.
-	    // It's done here since we only need them for objects and arrays comparison.
-	    aStack = aStack || [];
-	    bStack = bStack || [];
-	    var length = aStack.length;
-	    while (length--) {
-	      // Linear search. Performance is inversely proportional to the number of
-	      // unique nested structures.
-	      if (aStack[length] === a) return bStack[length] === b;
-	    }
-
-	    // Add the first object to the stack of traversed objects.
-	    aStack.push(a);
-	    bStack.push(b);
-
-	    // Recursively compare objects and arrays.
-	    if (areArrays) {
-	      // Compare array lengths to determine if a deep comparison is necessary.
-	      length = a.length;
-	      if (length !== b.length) return false;
-	      // Deep compare the contents, ignoring non-numeric properties.
-	      while (length--) {
-	        if (!eq(a[length], b[length], aStack, bStack)) return false;
-	      }
-	    } else {
-	      // Deep compare objects.
-	      var keys = _.keys(a), key;
-	      length = keys.length;
-	      // Ensure that both objects contain the same number of properties before comparing deep equality.
-	      if (_.keys(b).length !== length) return false;
-	      while (length--) {
-	        // Deep compare each member
-	        key = keys[length];
-	        if (!(_.has(b, key) && eq(a[key], b[key], aStack, bStack))) return false;
-	      }
-	    }
-	    // Remove the first object from the stack of traversed objects.
-	    aStack.pop();
-	    bStack.pop();
-	    return true;
-	  };
-
-	  // Perform a deep comparison to check if two objects are equal.
-	  _.isEqual = function(a, b) {
-	    return eq(a, b);
-	  };
-
-	  // Is a given array, string, or object empty?
-	  // An "empty" object has no enumerable own-properties.
-	  _.isEmpty = function(obj) {
-	    if (obj == null) return true;
-	    if (isArrayLike(obj) && (_.isArray(obj) || _.isString(obj) || _.isArguments(obj))) return obj.length === 0;
-	    return _.keys(obj).length === 0;
-	  };
-
-	  // Is a given value a DOM element?
-	  _.isElement = function(obj) {
-	    return !!(obj && obj.nodeType === 1);
-	  };
-
-	  // Is a given value an array?
-	  // Delegates to ECMA5's native Array.isArray
-	  _.isArray = nativeIsArray || function(obj) {
-	    return toString.call(obj) === '[object Array]';
-	  };
-
-	  // Is a given variable an object?
-	  _.isObject = function(obj) {
-	    var type = typeof obj;
-	    return type === 'function' || type === 'object' && !!obj;
-	  };
-
-	  // Add some isType methods: isArguments, isFunction, isString, isNumber, isDate, isRegExp, isError.
-	  _.each(['Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp', 'Error'], function(name) {
-	    _['is' + name] = function(obj) {
-	      return toString.call(obj) === '[object ' + name + ']';
-	    };
-	  });
-
-	  // Define a fallback version of the method in browsers (ahem, IE < 9), where
-	  // there isn't any inspectable "Arguments" type.
-	  if (!_.isArguments(arguments)) {
-	    _.isArguments = function(obj) {
-	      return _.has(obj, 'callee');
-	    };
-	  }
-
-	  // Optimize `isFunction` if appropriate. Work around some typeof bugs in old v8,
-	  // IE 11 (#1621), and in Safari 8 (#1929).
-	  if (typeof /./ != 'function' && typeof Int8Array != 'object') {
-	    _.isFunction = function(obj) {
-	      return typeof obj == 'function' || false;
-	    };
-	  }
-
-	  // Is a given object a finite number?
-	  _.isFinite = function(obj) {
-	    return isFinite(obj) && !isNaN(parseFloat(obj));
-	  };
-
-	  // Is the given value `NaN`? (NaN is the only number which does not equal itself).
-	  _.isNaN = function(obj) {
-	    return _.isNumber(obj) && obj !== +obj;
-	  };
-
-	  // Is a given value a boolean?
-	  _.isBoolean = function(obj) {
-	    return obj === true || obj === false || toString.call(obj) === '[object Boolean]';
-	  };
-
-	  // Is a given value equal to null?
-	  _.isNull = function(obj) {
-	    return obj === null;
-	  };
-
-	  // Is a given variable undefined?
-	  _.isUndefined = function(obj) {
-	    return obj === void 0;
-	  };
-
-	  // Shortcut function for checking if an object has a given property directly
-	  // on itself (in other words, not on a prototype).
-	  _.has = function(obj, key) {
-	    return obj != null && hasOwnProperty.call(obj, key);
-	  };
-
-	  // Utility Functions
-	  // -----------------
-
-	  // Run Underscore.js in *noConflict* mode, returning the `_` variable to its
-	  // previous owner. Returns a reference to the Underscore object.
-	  _.noConflict = function() {
-	    root._ = previousUnderscore;
-	    return this;
-	  };
-
-	  // Keep the identity function around for default iteratees.
-	  _.identity = function(value) {
-	    return value;
-	  };
-
-	  // Predicate-generating functions. Often useful outside of Underscore.
-	  _.constant = function(value) {
-	    return function() {
-	      return value;
-	    };
-	  };
-
-	  _.noop = function(){};
-
-	  _.property = property;
-
-	  // Generates a function for a given object that returns a given property.
-	  _.propertyOf = function(obj) {
-	    return obj == null ? function(){} : function(key) {
-	      return obj[key];
-	    };
-	  };
-
-	  // Returns a predicate for checking whether an object has a given set of
-	  // `key:value` pairs.
-	  _.matcher = _.matches = function(attrs) {
-	    attrs = _.extendOwn({}, attrs);
-	    return function(obj) {
-	      return _.isMatch(obj, attrs);
-	    };
-	  };
-
-	  // Run a function **n** times.
-	  _.times = function(n, iteratee, context) {
-	    var accum = Array(Math.max(0, n));
-	    iteratee = optimizeCb(iteratee, context, 1);
-	    for (var i = 0; i < n; i++) accum[i] = iteratee(i);
-	    return accum;
-	  };
-
-	  // Return a random integer between min and max (inclusive).
-	  _.random = function(min, max) {
-	    if (max == null) {
-	      max = min;
-	      min = 0;
-	    }
-	    return min + Math.floor(Math.random() * (max - min + 1));
-	  };
-
-	  // A (possibly faster) way to get the current timestamp as an integer.
-	  _.now = Date.now || function() {
-	    return new Date().getTime();
-	  };
-
-	   // List of HTML entities for escaping.
-	  var escapeMap = {
-	    '&': '&amp;',
-	    '<': '&lt;',
-	    '>': '&gt;',
-	    '"': '&quot;',
-	    "'": '&#x27;',
-	    '`': '&#x60;'
-	  };
-	  var unescapeMap = _.invert(escapeMap);
-
-	  // Functions for escaping and unescaping strings to/from HTML interpolation.
-	  var createEscaper = function(map) {
-	    var escaper = function(match) {
-	      return map[match];
-	    };
-	    // Regexes for identifying a key that needs to be escaped
-	    var source = '(?:' + _.keys(map).join('|') + ')';
-	    var testRegexp = RegExp(source);
-	    var replaceRegexp = RegExp(source, 'g');
-	    return function(string) {
-	      string = string == null ? '' : '' + string;
-	      return testRegexp.test(string) ? string.replace(replaceRegexp, escaper) : string;
-	    };
-	  };
-	  _.escape = createEscaper(escapeMap);
-	  _.unescape = createEscaper(unescapeMap);
-
-	  // If the value of the named `property` is a function then invoke it with the
-	  // `object` as context; otherwise, return it.
-	  _.result = function(object, property, fallback) {
-	    var value = object == null ? void 0 : object[property];
-	    if (value === void 0) {
-	      value = fallback;
-	    }
-	    return _.isFunction(value) ? value.call(object) : value;
-	  };
-
-	  // Generate a unique integer id (unique within the entire client session).
-	  // Useful for temporary DOM ids.
-	  var idCounter = 0;
-	  _.uniqueId = function(prefix) {
-	    var id = ++idCounter + '';
-	    return prefix ? prefix + id : id;
-	  };
-
-	  // By default, Underscore uses ERB-style template delimiters, change the
-	  // following template settings to use alternative delimiters.
-	  _.templateSettings = {
-	    evaluate    : /<%([\s\S]+?)%>/g,
-	    interpolate : /<%=([\s\S]+?)%>/g,
-	    escape      : /<%-([\s\S]+?)%>/g
-	  };
-
-	  // When customizing `templateSettings`, if you don't want to define an
-	  // interpolation, evaluation or escaping regex, we need one that is
-	  // guaranteed not to match.
-	  var noMatch = /(.)^/;
-
-	  // Certain characters need to be escaped so that they can be put into a
-	  // string literal.
-	  var escapes = {
-	    "'":      "'",
-	    '\\':     '\\',
-	    '\r':     'r',
-	    '\n':     'n',
-	    '\u2028': 'u2028',
-	    '\u2029': 'u2029'
-	  };
-
-	  var escaper = /\\|'|\r|\n|\u2028|\u2029/g;
-
-	  var escapeChar = function(match) {
-	    return '\\' + escapes[match];
-	  };
-
-	  // JavaScript micro-templating, similar to John Resig's implementation.
-	  // Underscore templating handles arbitrary delimiters, preserves whitespace,
-	  // and correctly escapes quotes within interpolated code.
-	  // NB: `oldSettings` only exists for backwards compatibility.
-	  _.template = function(text, settings, oldSettings) {
-	    if (!settings && oldSettings) settings = oldSettings;
-	    settings = _.defaults({}, settings, _.templateSettings);
-
-	    // Combine delimiters into one regular expression via alternation.
-	    var matcher = RegExp([
-	      (settings.escape || noMatch).source,
-	      (settings.interpolate || noMatch).source,
-	      (settings.evaluate || noMatch).source
-	    ].join('|') + '|$', 'g');
-
-	    // Compile the template source, escaping string literals appropriately.
-	    var index = 0;
-	    var source = "__p+='";
-	    text.replace(matcher, function(match, escape, interpolate, evaluate, offset) {
-	      source += text.slice(index, offset).replace(escaper, escapeChar);
-	      index = offset + match.length;
-
-	      if (escape) {
-	        source += "'+\n((__t=(" + escape + "))==null?'':_.escape(__t))+\n'";
-	      } else if (interpolate) {
-	        source += "'+\n((__t=(" + interpolate + "))==null?'':__t)+\n'";
-	      } else if (evaluate) {
-	        source += "';\n" + evaluate + "\n__p+='";
-	      }
-
-	      // Adobe VMs need the match returned to produce the correct offest.
-	      return match;
-	    });
-	    source += "';\n";
-
-	    // If a variable is not specified, place data values in local scope.
-	    if (!settings.variable) source = 'with(obj||{}){\n' + source + '}\n';
-
-	    source = "var __t,__p='',__j=Array.prototype.join," +
-	      "print=function(){__p+=__j.call(arguments,'');};\n" +
-	      source + 'return __p;\n';
-
-	    try {
-	      var render = new Function(settings.variable || 'obj', '_', source);
-	    } catch (e) {
-	      e.source = source;
-	      throw e;
-	    }
-
-	    var template = function(data) {
-	      return render.call(this, data, _);
-	    };
-
-	    // Provide the compiled source as a convenience for precompilation.
-	    var argument = settings.variable || 'obj';
-	    template.source = 'function(' + argument + '){\n' + source + '}';
-
-	    return template;
-	  };
-
-	  // Add a "chain" function. Start chaining a wrapped Underscore object.
-	  _.chain = function(obj) {
-	    var instance = _(obj);
-	    instance._chain = true;
-	    return instance;
-	  };
-
-	  // OOP
-	  // ---------------
-	  // If Underscore is called as a function, it returns a wrapped object that
-	  // can be used OO-style. This wrapper holds altered versions of all the
-	  // underscore functions. Wrapped objects may be chained.
-
-	  // Helper function to continue chaining intermediate results.
-	  var result = function(instance, obj) {
-	    return instance._chain ? _(obj).chain() : obj;
-	  };
-
-	  // Add your own custom functions to the Underscore object.
-	  _.mixin = function(obj) {
-	    _.each(_.functions(obj), function(name) {
-	      var func = _[name] = obj[name];
-	      _.prototype[name] = function() {
-	        var args = [this._wrapped];
-	        push.apply(args, arguments);
-	        return result(this, func.apply(_, args));
-	      };
-	    });
-	  };
-
-	  // Add all of the Underscore functions to the wrapper object.
-	  _.mixin(_);
-
-	  // Add all mutator Array functions to the wrapper.
-	  _.each(['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(name) {
-	    var method = ArrayProto[name];
-	    _.prototype[name] = function() {
-	      var obj = this._wrapped;
-	      method.apply(obj, arguments);
-	      if ((name === 'shift' || name === 'splice') && obj.length === 0) delete obj[0];
-	      return result(this, obj);
-	    };
-	  });
-
-	  // Add all accessor Array functions to the wrapper.
-	  _.each(['concat', 'join', 'slice'], function(name) {
-	    var method = ArrayProto[name];
-	    _.prototype[name] = function() {
-	      return result(this, method.apply(this._wrapped, arguments));
-	    };
-	  });
-
-	  // Extracts the result from a wrapped and chained object.
-	  _.prototype.value = function() {
-	    return this._wrapped;
-	  };
-
-	  // Provide unwrapping proxy for some methods used in engine operations
-	  // such as arithmetic and JSON stringification.
-	  _.prototype.valueOf = _.prototype.toJSON = _.prototype.value;
-
-	  _.prototype.toString = function() {
-	    return '' + this._wrapped;
-	  };
-
-	  // AMD registration happens at the end for compatibility with AMD loaders
-	  // that may not enforce next-turn semantics on modules. Even though general
-	  // practice for AMD registration is to be anonymous, underscore registers
-	  // as a named module because, like jQuery, it is a base library that is
-	  // popular enough to be bundled in a third party lib, but not be part of
-	  // an AMD load request. Those cases could generate an error when an
-	  // anonymous define() is called outside of a loader request.
-	  if (true) {
-	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function() {
-	      return _;
-	    }.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
-	  }
-	}.call(this));
-
-
-/***/ }),
-/* 3 */
+/* 68 */
 /***/ (function(module, exports) {
 
-	module.exports = __WEBPACK_EXTERNAL_MODULE_3__;
+	module.exports = __WEBPACK_EXTERNAL_MODULE_68__;
 
 /***/ }),
-/* 4 */
+/* 69 */
 /***/ (function(module, exports) {
 
-	module.exports = __WEBPACK_EXTERNAL_MODULE_4__;
+	module.exports = __WEBPACK_EXTERNAL_MODULE_69__;
 
 /***/ }),
-/* 5 */
+/* 70 */
 /***/ (function(module, exports, __webpack_require__) {
 
 		//https://docs.npmjs.com/getting-started/creating-node-modules
@@ -11637,13 +16560,13 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 				var data_item;
 				var current_item;
 				var k;
-				var oMoment = __webpack_require__(6);
+				var oMoment = __webpack_require__(71);
 				var date_first_row;
 				var date_last_row;
 				var date_temp;
-				var SplunkVisUtils = __webpack_require__(4);
-				var vizUtils = __webpack_require__(4);
-				const { performance_analysis, item, time_bucket } = __webpack_require__(5);
+				var SplunkVisUtils = __webpack_require__(69);
+				var vizUtils = __webpack_require__(69);
+				const { performance_analysis, item, time_bucket } = __webpack_require__(70);;
 				
 				try{
 					//------------------------------  Get data row field indexes ----------------------------------------------------------------------
@@ -11703,6 +16626,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 								bucket_end_time_seconds = start_time_in_seconds + ((1+k) * this.granularity * 60) -1;
 								temp_bucket = new time_bucket();
 								temp_bucket.showStatusAsText = this.showStatusAsText;
+								temp_bucket.timeFormat = this.timeFormat;
 								temp_bucket.set_colours(this.okColour, this.warningColour, this.criticalColour, this.noDataColour);
 								temp_bucket.warning_threshold = data_item[fields["warning_threshold"]] || this.warning_threshold;
 								temp_bucket.critical_threshold = data_item[fields["critical_threshold"]] || this.critical_threshold;
@@ -11736,7 +16660,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 				var css="";
 				var html = '<table class="performance_analysis">';
 				var item;
-				var oMoment = __webpack_require__(6);
+				var oMoment = __webpack_require__(71);
 				var item_names = Object.keys(this.items);
 				for(item_counter=0; item_counter < item_names.length ; item_counter++){
 					item = this.items[item_names[item_counter]];
@@ -11817,6 +16741,8 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 				this.criticalColour = "#DD0000";
 				this.noDataColour = "#5EBFC6";
 				this.isInDownTime = false;
+				this.timeFormat = "h:mm A";
+				this.oMoment = __webpack_require__(71);
 			}
 			
 
@@ -11880,16 +16806,23 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 				var downtimeHTML = '';
 				var colour = "";
 				var td_image = "";
+				var data_tooltip="";
+				var time_period = "<b>Time Period:</b> " + this.oMoment(this.start_time).format(this.timeFormat) + " to " +  this.oMoment(this.end_time).format(this.timeFormat) + "</span><br />";
 				if (!this.showStatusAsText && !isNaN(this.average_status)){
 					td_image = "<span class=\"status_value\">" + this.average_status + "</span>";
+					data_tooltip="Average value: " + this.average_status;
 				}else if (this.num_amber==0 && this.num_red==0 && this.num_green==0){
-					td_image='<img src="/static/app/performance-analysis/images/blank.gif" style="width:16px; height: 16px;" width="16" height="16"  title="Application reported:&#13;GREEN ' + this.num_green + ' time(s)&#13;AMBER 0 time(s)&#13;RED 0 time(s)" />'
+					td_image='<img src="/static/app/performance-analysis/images/blank.gif" style="width:16px; height: 16px;" width="16" height="16"/>';
+					data_tooltip=time_period + '<b>Server:</b><br />Average: ' + this.average_value + '<br /><b>Application reported:</b><br />GREEN ' + this.num_green + ' time(s)<br />AMBER 0 time(s)<br />RED 0 time(s)';
 				}else if (this.num_amber==0 && this.num_red==0 && this.num_green > 0){
-					td_image='<img src="/static/app/performance-analysis/images/green.png" style="width:16px; height: 16px;" width="16" height="16"  title="Application reported:&#13;GREEN ' + this.num_green + ' time(s)&#13;AMBER 0 time(s)&#13;RED 0 time(s)" />'
+					td_image='<img src="/static/app/performance-analysis/images/green.png" style="width:16px; height: 16px;" width="16" height="16"/>';
+					data_tooltip=time_period + '<b>Server:</b><br />Average: ' + this.average_value + '<br /><b>Application reported:</b><br />GREEN ' + this.num_green + ' time(s)<br />AMBER 0 time(s)<br />RED 0 time(s)';
 				}else if(this.num_amber >0 && this.num_red==0){ 
-					td_image='<img src="/static/app/performance-analysis/images/amber.png" style="width:16px; height: 16px;" width="16" height="16" title="Application reported:&#13;GREEN ' + this.num_green + ' time(s)&#13;AMBER ' + this.num_amber + ' time(s)&#13;RED 0 time(s)" />'
+					td_image='<img src="/static/app/performance-analysis/images/amber.png" style="width:16px; height: 16px;" width="16" height="16"/>';
+					data_tooltip=time_period + '<b>Server:</b><br />Average: ' + this.average_value + '<br /><b>Application reported:</b><br />GREEN ' + this.num_green + ' time(s)<br />AMBER ' + this.num_amber + ' time(s)<br />RED 0 time(s)';
 				} else{
-					td_image= '<img src="/static/app/performance-analysis/images/red.png" style="width:16px; height: 16px;" width="16" height="16"  title="Application reported:&#13;GREEN ' + this.num_green + ' time(s)&#13;AMBER ' + this.num_amber + ' time(s)&#13;RED ' + this.num_red + ' time(s)" />'
+					td_image= '<img src="/static/app/performance-analysis/images/red.png" style="width:16px; height: 16px;" width="16" height="16"/>';
+					data_tooltip=time_period + '<b>Server:</b><br />Average: ' + this.average_value + '<br /><b>Application reported:</b><br />GREEN ' + this.num_green + ' time(s)<br />AMBER ' + this.num_amber + ' time(s)<br />RED ' + this.num_red + ' time(s)';
 				}
 				
 				// ---- Values (Background color) ----
@@ -11897,8 +16830,14 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 				if (this.average_value < this.critical_threshold && this.average_value >= this.warning_threshold) { css_class += ' warning'; colour = this.warningColour;}
 				if (this.average_value < this.warning_threshold) {css_class += ' ok'; colour = this.okColour;}
 				
-				if(this.isInDownTime) { css_class += ' downtime';}
-				html = '<td class="jds_ta_clickable ' + css_class + '" style="text-align:center;background-color: ' + colour + '!IMPORTANT" start_time="' + (this.start_time.getTime()/1000) + '" end_time="'+ (this.end_time.getTime()/1000) + '">' + td_image + '</td>';
+				if(this.isInDownTime) {
+					css_class += ' downtime';
+					data_tooltip += "<br>Downtime was in effect during this period.";
+				}
+				if (data_tooltip!="") {
+					data_tooltip = " data-tooltip=\"" + data_tooltip + "\"";
+				}
+				html = '<td class="jds_ta_clickable ' + css_class + '" style="text-align:center;background-color: ' + colour + '!IMPORTANT" start_time="' + (this.start_time.getTime()/1000) + '" end_time="'+ (this.end_time.getTime()/1000) + '"' + data_tooltip + '>' + td_image + '</td>';
 						
 				return html;
 			}
@@ -11910,7 +16849,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 6 */
+/* 71 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(module) {//! moment.js
@@ -13742,7 +18681,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	            module && module.exports) {
 	        try {
 	            oldLocale = globalLocale._abbr;
-	            __webpack_require__(8)("./" + name);
+	            __webpack_require__(73)("./" + name);
 	            // because defineLocale currently also sets the global locale, we
 	            // want to undo that for lazy loaded locales
 	            getSetGlobalLocale(oldLocale);
@@ -16377,10 +21316,10 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 	})));
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)(module)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(72)(module)))
 
 /***/ }),
-/* 7 */
+/* 72 */
 /***/ (function(module, exports) {
 
 	module.exports = function(module) {
@@ -16396,240 +21335,240 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 8 */
+/* 73 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	var map = {
-		"./af": 9,
-		"./af.js": 9,
-		"./ar": 10,
-		"./ar-dz": 11,
-		"./ar-dz.js": 11,
-		"./ar-kw": 12,
-		"./ar-kw.js": 12,
-		"./ar-ly": 13,
-		"./ar-ly.js": 13,
-		"./ar-ma": 14,
-		"./ar-ma.js": 14,
-		"./ar-sa": 15,
-		"./ar-sa.js": 15,
-		"./ar-tn": 16,
-		"./ar-tn.js": 16,
-		"./ar.js": 10,
-		"./az": 17,
-		"./az.js": 17,
-		"./be": 18,
-		"./be.js": 18,
-		"./bg": 19,
-		"./bg.js": 19,
-		"./bn": 20,
-		"./bn.js": 20,
-		"./bo": 21,
-		"./bo.js": 21,
-		"./br": 22,
-		"./br.js": 22,
-		"./bs": 23,
-		"./bs.js": 23,
-		"./ca": 24,
-		"./ca.js": 24,
-		"./cs": 25,
-		"./cs.js": 25,
-		"./cv": 26,
-		"./cv.js": 26,
-		"./cy": 27,
-		"./cy.js": 27,
-		"./da": 28,
-		"./da.js": 28,
-		"./de": 29,
-		"./de-at": 30,
-		"./de-at.js": 30,
-		"./de-ch": 31,
-		"./de-ch.js": 31,
-		"./de.js": 29,
-		"./dv": 32,
-		"./dv.js": 32,
-		"./el": 33,
-		"./el.js": 33,
-		"./en-au": 34,
-		"./en-au.js": 34,
-		"./en-ca": 35,
-		"./en-ca.js": 35,
-		"./en-gb": 36,
-		"./en-gb.js": 36,
-		"./en-ie": 37,
-		"./en-ie.js": 37,
-		"./en-nz": 38,
-		"./en-nz.js": 38,
-		"./eo": 39,
-		"./eo.js": 39,
-		"./es": 40,
-		"./es-do": 41,
-		"./es-do.js": 41,
-		"./es.js": 40,
-		"./et": 42,
-		"./et.js": 42,
-		"./eu": 43,
-		"./eu.js": 43,
-		"./fa": 44,
-		"./fa.js": 44,
-		"./fi": 45,
-		"./fi.js": 45,
-		"./fo": 46,
-		"./fo.js": 46,
-		"./fr": 47,
-		"./fr-ca": 48,
-		"./fr-ca.js": 48,
-		"./fr-ch": 49,
-		"./fr-ch.js": 49,
-		"./fr.js": 47,
-		"./fy": 50,
-		"./fy.js": 50,
-		"./gd": 51,
-		"./gd.js": 51,
-		"./gl": 52,
-		"./gl.js": 52,
-		"./gom-latn": 53,
-		"./gom-latn.js": 53,
-		"./he": 54,
-		"./he.js": 54,
-		"./hi": 55,
-		"./hi.js": 55,
-		"./hr": 56,
-		"./hr.js": 56,
-		"./hu": 57,
-		"./hu.js": 57,
-		"./hy-am": 58,
-		"./hy-am.js": 58,
-		"./id": 59,
-		"./id.js": 59,
-		"./is": 60,
-		"./is.js": 60,
-		"./it": 61,
-		"./it.js": 61,
-		"./ja": 62,
-		"./ja.js": 62,
-		"./jv": 63,
-		"./jv.js": 63,
-		"./ka": 64,
-		"./ka.js": 64,
-		"./kk": 65,
-		"./kk.js": 65,
-		"./km": 66,
-		"./km.js": 66,
-		"./kn": 67,
-		"./kn.js": 67,
-		"./ko": 68,
-		"./ko.js": 68,
-		"./ky": 69,
-		"./ky.js": 69,
-		"./lb": 70,
-		"./lb.js": 70,
-		"./lo": 71,
-		"./lo.js": 71,
-		"./lt": 72,
-		"./lt.js": 72,
-		"./lv": 73,
-		"./lv.js": 73,
-		"./me": 74,
-		"./me.js": 74,
-		"./mi": 75,
-		"./mi.js": 75,
-		"./mk": 76,
-		"./mk.js": 76,
-		"./ml": 77,
-		"./ml.js": 77,
-		"./mr": 78,
-		"./mr.js": 78,
-		"./ms": 79,
-		"./ms-my": 80,
-		"./ms-my.js": 80,
-		"./ms.js": 79,
-		"./my": 81,
-		"./my.js": 81,
-		"./nb": 82,
-		"./nb.js": 82,
-		"./ne": 83,
-		"./ne.js": 83,
-		"./nl": 84,
-		"./nl-be": 85,
-		"./nl-be.js": 85,
-		"./nl.js": 84,
-		"./nn": 86,
-		"./nn.js": 86,
-		"./pa-in": 87,
-		"./pa-in.js": 87,
-		"./pl": 88,
-		"./pl.js": 88,
-		"./pt": 89,
-		"./pt-br": 90,
-		"./pt-br.js": 90,
-		"./pt.js": 89,
-		"./ro": 91,
-		"./ro.js": 91,
-		"./ru": 92,
-		"./ru.js": 92,
-		"./sd": 93,
-		"./sd.js": 93,
-		"./se": 94,
-		"./se.js": 94,
-		"./si": 95,
-		"./si.js": 95,
-		"./sk": 96,
-		"./sk.js": 96,
-		"./sl": 97,
-		"./sl.js": 97,
-		"./sq": 98,
-		"./sq.js": 98,
-		"./sr": 99,
-		"./sr-cyrl": 100,
-		"./sr-cyrl.js": 100,
-		"./sr.js": 99,
-		"./ss": 101,
-		"./ss.js": 101,
-		"./sv": 102,
-		"./sv.js": 102,
-		"./sw": 103,
-		"./sw.js": 103,
-		"./ta": 104,
-		"./ta.js": 104,
-		"./te": 105,
-		"./te.js": 105,
-		"./tet": 106,
-		"./tet.js": 106,
-		"./th": 107,
-		"./th.js": 107,
-		"./tl-ph": 108,
-		"./tl-ph.js": 108,
-		"./tlh": 109,
-		"./tlh.js": 109,
-		"./tr": 110,
-		"./tr.js": 110,
-		"./tzl": 111,
-		"./tzl.js": 111,
-		"./tzm": 112,
-		"./tzm-latn": 113,
-		"./tzm-latn.js": 113,
-		"./tzm.js": 112,
-		"./uk": 114,
-		"./uk.js": 114,
-		"./ur": 115,
-		"./ur.js": 115,
-		"./uz": 116,
-		"./uz-latn": 117,
-		"./uz-latn.js": 117,
-		"./uz.js": 116,
-		"./vi": 118,
-		"./vi.js": 118,
-		"./x-pseudo": 119,
-		"./x-pseudo.js": 119,
-		"./yo": 120,
-		"./yo.js": 120,
-		"./zh-cn": 121,
-		"./zh-cn.js": 121,
-		"./zh-hk": 122,
-		"./zh-hk.js": 122,
-		"./zh-tw": 123,
-		"./zh-tw.js": 123
+		"./af": 74,
+		"./af.js": 74,
+		"./ar": 75,
+		"./ar-dz": 76,
+		"./ar-dz.js": 76,
+		"./ar-kw": 77,
+		"./ar-kw.js": 77,
+		"./ar-ly": 78,
+		"./ar-ly.js": 78,
+		"./ar-ma": 79,
+		"./ar-ma.js": 79,
+		"./ar-sa": 80,
+		"./ar-sa.js": 80,
+		"./ar-tn": 81,
+		"./ar-tn.js": 81,
+		"./ar.js": 75,
+		"./az": 82,
+		"./az.js": 82,
+		"./be": 83,
+		"./be.js": 83,
+		"./bg": 84,
+		"./bg.js": 84,
+		"./bn": 85,
+		"./bn.js": 85,
+		"./bo": 86,
+		"./bo.js": 86,
+		"./br": 87,
+		"./br.js": 87,
+		"./bs": 88,
+		"./bs.js": 88,
+		"./ca": 89,
+		"./ca.js": 89,
+		"./cs": 90,
+		"./cs.js": 90,
+		"./cv": 91,
+		"./cv.js": 91,
+		"./cy": 92,
+		"./cy.js": 92,
+		"./da": 93,
+		"./da.js": 93,
+		"./de": 94,
+		"./de-at": 95,
+		"./de-at.js": 95,
+		"./de-ch": 96,
+		"./de-ch.js": 96,
+		"./de.js": 94,
+		"./dv": 97,
+		"./dv.js": 97,
+		"./el": 98,
+		"./el.js": 98,
+		"./en-au": 99,
+		"./en-au.js": 99,
+		"./en-ca": 100,
+		"./en-ca.js": 100,
+		"./en-gb": 101,
+		"./en-gb.js": 101,
+		"./en-ie": 102,
+		"./en-ie.js": 102,
+		"./en-nz": 103,
+		"./en-nz.js": 103,
+		"./eo": 104,
+		"./eo.js": 104,
+		"./es": 105,
+		"./es-do": 106,
+		"./es-do.js": 106,
+		"./es.js": 105,
+		"./et": 107,
+		"./et.js": 107,
+		"./eu": 108,
+		"./eu.js": 108,
+		"./fa": 109,
+		"./fa.js": 109,
+		"./fi": 110,
+		"./fi.js": 110,
+		"./fo": 111,
+		"./fo.js": 111,
+		"./fr": 112,
+		"./fr-ca": 113,
+		"./fr-ca.js": 113,
+		"./fr-ch": 114,
+		"./fr-ch.js": 114,
+		"./fr.js": 112,
+		"./fy": 115,
+		"./fy.js": 115,
+		"./gd": 116,
+		"./gd.js": 116,
+		"./gl": 117,
+		"./gl.js": 117,
+		"./gom-latn": 118,
+		"./gom-latn.js": 118,
+		"./he": 119,
+		"./he.js": 119,
+		"./hi": 120,
+		"./hi.js": 120,
+		"./hr": 121,
+		"./hr.js": 121,
+		"./hu": 122,
+		"./hu.js": 122,
+		"./hy-am": 123,
+		"./hy-am.js": 123,
+		"./id": 124,
+		"./id.js": 124,
+		"./is": 125,
+		"./is.js": 125,
+		"./it": 126,
+		"./it.js": 126,
+		"./ja": 127,
+		"./ja.js": 127,
+		"./jv": 128,
+		"./jv.js": 128,
+		"./ka": 129,
+		"./ka.js": 129,
+		"./kk": 130,
+		"./kk.js": 130,
+		"./km": 131,
+		"./km.js": 131,
+		"./kn": 132,
+		"./kn.js": 132,
+		"./ko": 133,
+		"./ko.js": 133,
+		"./ky": 134,
+		"./ky.js": 134,
+		"./lb": 135,
+		"./lb.js": 135,
+		"./lo": 136,
+		"./lo.js": 136,
+		"./lt": 137,
+		"./lt.js": 137,
+		"./lv": 138,
+		"./lv.js": 138,
+		"./me": 139,
+		"./me.js": 139,
+		"./mi": 140,
+		"./mi.js": 140,
+		"./mk": 141,
+		"./mk.js": 141,
+		"./ml": 142,
+		"./ml.js": 142,
+		"./mr": 143,
+		"./mr.js": 143,
+		"./ms": 144,
+		"./ms-my": 145,
+		"./ms-my.js": 145,
+		"./ms.js": 144,
+		"./my": 146,
+		"./my.js": 146,
+		"./nb": 147,
+		"./nb.js": 147,
+		"./ne": 148,
+		"./ne.js": 148,
+		"./nl": 149,
+		"./nl-be": 150,
+		"./nl-be.js": 150,
+		"./nl.js": 149,
+		"./nn": 151,
+		"./nn.js": 151,
+		"./pa-in": 152,
+		"./pa-in.js": 152,
+		"./pl": 153,
+		"./pl.js": 153,
+		"./pt": 154,
+		"./pt-br": 155,
+		"./pt-br.js": 155,
+		"./pt.js": 154,
+		"./ro": 156,
+		"./ro.js": 156,
+		"./ru": 157,
+		"./ru.js": 157,
+		"./sd": 158,
+		"./sd.js": 158,
+		"./se": 159,
+		"./se.js": 159,
+		"./si": 160,
+		"./si.js": 160,
+		"./sk": 161,
+		"./sk.js": 161,
+		"./sl": 162,
+		"./sl.js": 162,
+		"./sq": 163,
+		"./sq.js": 163,
+		"./sr": 164,
+		"./sr-cyrl": 165,
+		"./sr-cyrl.js": 165,
+		"./sr.js": 164,
+		"./ss": 166,
+		"./ss.js": 166,
+		"./sv": 167,
+		"./sv.js": 167,
+		"./sw": 168,
+		"./sw.js": 168,
+		"./ta": 169,
+		"./ta.js": 169,
+		"./te": 170,
+		"./te.js": 170,
+		"./tet": 171,
+		"./tet.js": 171,
+		"./th": 172,
+		"./th.js": 172,
+		"./tl-ph": 173,
+		"./tl-ph.js": 173,
+		"./tlh": 174,
+		"./tlh.js": 174,
+		"./tr": 175,
+		"./tr.js": 175,
+		"./tzl": 176,
+		"./tzl.js": 176,
+		"./tzm": 177,
+		"./tzm-latn": 178,
+		"./tzm-latn.js": 178,
+		"./tzm.js": 177,
+		"./uk": 179,
+		"./uk.js": 179,
+		"./ur": 180,
+		"./ur.js": 180,
+		"./uz": 181,
+		"./uz-latn": 182,
+		"./uz-latn.js": 182,
+		"./uz.js": 181,
+		"./vi": 183,
+		"./vi.js": 183,
+		"./x-pseudo": 184,
+		"./x-pseudo.js": 184,
+		"./yo": 185,
+		"./yo.js": 185,
+		"./zh-cn": 186,
+		"./zh-cn.js": 186,
+		"./zh-hk": 187,
+		"./zh-hk.js": 187,
+		"./zh-tw": 188,
+		"./zh-tw.js": 188
 	};
 	function webpackContext(req) {
 		return __webpack_require__(webpackContextResolve(req));
@@ -16642,11 +21581,11 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	};
 	webpackContext.resolve = webpackContextResolve;
 	module.exports = webpackContext;
-	webpackContext.id = 8;
+	webpackContext.id = 73;
 
 
 /***/ }),
-/* 9 */
+/* 74 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -16654,7 +21593,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Werner Mollentze : https://github.com/wernerm
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -16724,7 +21663,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 10 */
+/* 75 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -16734,7 +21673,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : forabi https://github.com/forabi
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -16871,7 +21810,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 11 */
+/* 76 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -16879,7 +21818,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Noureddine LOUAHEDJ : https://github.com/noureddineme
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -16935,7 +21874,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 12 */
+/* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -16943,7 +21882,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Nusret Parlak: https://github.com/nusretparlak
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -16999,7 +21938,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 13 */
+/* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -17007,7 +21946,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Ali Hmer: https://github.com/kikoanis
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -17130,7 +22069,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 14 */
+/* 79 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -17139,7 +22078,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Abdel Said : https://github.com/abdelsaid
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -17195,7 +22134,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 15 */
+/* 80 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -17203,7 +22142,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Suhail Alkowaileet : https://github.com/xsoh
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -17305,7 +22244,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 16 */
+/* 81 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -17313,7 +22252,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Nader Toukabri : https://github.com/naderio
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -17369,7 +22308,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 17 */
+/* 82 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -17377,7 +22316,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : topchiyev : https://github.com/topchiyev
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -17479,7 +22418,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 18 */
+/* 83 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -17489,7 +22428,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! Author : Menelion Elensúle : https://github.com/Oire
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -17618,7 +22557,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 19 */
+/* 84 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -17626,7 +22565,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Krasen Borisov : https://github.com/kraz
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -17713,7 +22652,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 20 */
+/* 85 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -17721,7 +22660,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Kaushik Gandhi : https://github.com/kaushikgandhi
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -17837,7 +22776,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 21 */
+/* 86 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -17845,7 +22784,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Thupten N. Chakrishar : https://github.com/vajradog
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -17961,7 +22900,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 22 */
+/* 87 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -17969,7 +22908,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Jean-Baptiste Le Duigou : https://github.com/jbleduigou
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -18074,7 +23013,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 23 */
+/* 88 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -18083,7 +23022,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! based on (hr) translation by Bojan Marković
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -18222,7 +23161,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 24 */
+/* 89 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -18230,7 +23169,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Juan G. Hurtado : https://github.com/juanghurtado
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -18315,7 +23254,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 25 */
+/* 90 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -18323,7 +23262,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : petrbela : https://github.com/petrbela
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -18492,7 +23431,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 26 */
+/* 91 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -18500,7 +23439,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Anatoly Mironov : https://github.com/mirontoli
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -18560,7 +23499,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 27 */
+/* 92 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -18569,7 +23508,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : https://github.com/ryangreaves
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -18646,7 +23585,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 28 */
+/* 93 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -18654,7 +23593,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Ulrik Nielsen : https://github.com/mrbase
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -18711,7 +23650,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 29 */
+/* 94 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -18721,7 +23660,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Mikolaj Dadela : https://github.com/mik01aj
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -18794,7 +23733,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 30 */
+/* 95 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -18805,7 +23744,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Mikolaj Dadela : https://github.com/mik01aj
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -18878,7 +23817,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 31 */
+/* 96 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -18886,7 +23825,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : sschueller : https://github.com/sschueller
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -18961,7 +23900,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 32 */
+/* 97 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -18969,7 +23908,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Jawish Hameed : https://github.com/jawish
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -19066,7 +24005,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 33 */
+/* 98 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -19074,7 +24013,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Aggelos Karalias : https://github.com/mehiel
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -19171,7 +24110,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 34 */
+/* 99 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -19179,7 +24118,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Jared Morse : https://github.com/jarcoal
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -19243,7 +24182,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 35 */
+/* 100 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -19251,7 +24190,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Jonathan Abourbih : https://github.com/jonbca
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -19311,7 +24250,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 36 */
+/* 101 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -19319,7 +24258,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Chris Gedrim : https://github.com/chrisgedrim
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -19383,7 +24322,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 37 */
+/* 102 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -19391,7 +24330,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Chris Cartlidge : https://github.com/chriscartlidge
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -19455,7 +24394,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 38 */
+/* 103 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -19463,7 +24402,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Luke McGregor : https://github.com/lukemcgregor
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -19527,7 +24466,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 39 */
+/* 104 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -19537,7 +24476,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! comment : miestasmia corrected the translation by colindean
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -19605,7 +24544,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 40 */
+/* 105 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -19613,7 +24552,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Julio Napurí : https://github.com/julionc
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -19693,14 +24632,14 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 41 */
+/* 106 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
 	//! locale : Spanish (Dominican Republic) [es-do]
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -19780,7 +24719,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 42 */
+/* 107 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -19789,7 +24728,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! improvements : Illimar Tambek : https://github.com/ragulka
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -19865,7 +24804,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 43 */
+/* 108 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -19873,7 +24812,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Eneko Illarramendi : https://github.com/eillarra
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -19936,7 +24875,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 44 */
+/* 109 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -19944,7 +24883,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Ebrahim Byagowi : https://github.com/ebraminio
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -20048,7 +24987,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 45 */
+/* 110 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -20056,7 +24995,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Tarmo Aidantausta : https://github.com/bleadof
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -20160,7 +25099,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 46 */
+/* 111 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -20168,7 +25107,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Ragnar Johannesen : https://github.com/ragnar123
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -20225,7 +25164,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 47 */
+/* 112 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -20233,7 +25172,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : John Fischer : https://github.com/jfroffice
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -20313,7 +25252,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 48 */
+/* 113 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -20321,7 +25260,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Jonathan Abourbih : https://github.com/jonbca
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -20392,7 +25331,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 49 */
+/* 114 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -20400,7 +25339,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Gaspard Bucher : https://github.com/gaspard
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -20475,7 +25414,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 50 */
+/* 115 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -20483,7 +25422,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Robin van der Vliet : https://github.com/robin0van0der0v
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -20555,7 +25494,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 51 */
+/* 116 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -20563,7 +25502,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Jon Ashdown : https://github.com/jonashdown
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -20636,7 +25575,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 52 */
+/* 117 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -20644,7 +25583,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Juan G. Hurtado : https://github.com/juanghurtado
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -20718,7 +25657,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 53 */
+/* 118 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -20726,7 +25665,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : The Discoverer : https://github.com/WikiDiscoverer
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -20845,7 +25784,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 54 */
+/* 119 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -20855,7 +25794,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Tal Ater : https://github.com/TalAter
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -20949,7 +25888,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 55 */
+/* 120 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -20957,7 +25896,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Mayank Singhal : https://github.com/mayanksinghal
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -21078,7 +26017,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 56 */
+/* 121 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -21086,7 +26025,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Bojan Marković : https://github.com/bmarkovic
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -21228,7 +26167,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 57 */
+/* 122 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -21236,7 +26175,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Adam Brunner : https://github.com/adambrunner
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -21342,7 +26281,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 58 */
+/* 123 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -21350,7 +26289,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Armendarabyan : https://github.com/armendarabyan
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -21442,7 +26381,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 59 */
+/* 124 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -21451,7 +26390,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! reference: http://id.wikisource.org/wiki/Pedoman_Umum_Ejaan_Bahasa_Indonesia_yang_Disempurnakan
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -21530,7 +26469,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 60 */
+/* 125 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -21538,7 +26477,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Hinrik Örn Sigurðsson : https://github.com/hinrik
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -21662,7 +26601,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 61 */
+/* 126 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -21671,7 +26610,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author: Mattia Larentis: https://github.com/nostalgiaz
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -21737,7 +26676,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 62 */
+/* 127 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -21745,7 +26684,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : LI Long : https://github.com/baryon
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -21822,7 +26761,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 63 */
+/* 128 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -21831,7 +26770,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! reference: http://jv.wikipedia.org/wiki/Basa_Jawa
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -21910,7 +26849,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 64 */
+/* 129 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -21918,7 +26857,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Irakli Janiashvili : https://github.com/irakli-janiashvili
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -22004,7 +26943,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 65 */
+/* 130 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -22012,7 +26951,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! authors : Nurlan Rakhimzhanov : https://github.com/nurlan
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -22096,7 +27035,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 66 */
+/* 131 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -22104,7 +27043,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Kruy Vanna : https://github.com/kruyvanna
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -22159,7 +27098,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 67 */
+/* 132 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -22167,7 +27106,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Rajeev Naik : https://github.com/rajeevnaikte
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -22290,7 +27229,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 68 */
+/* 133 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -22299,7 +27238,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Jeeeyul Lee <jeeeyul@gmail.com>
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -22364,7 +27303,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 69 */
+/* 134 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -22372,7 +27311,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Chyngyz Arystan uulu : https://github.com/chyngyz
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -22457,7 +27396,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 70 */
+/* 135 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -22466,7 +27405,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : David Raison : https://github.com/kwisatz
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -22599,7 +27538,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 71 */
+/* 136 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -22607,7 +27546,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Ryan Hart : https://github.com/ryanhart2
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -22674,7 +27613,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 72 */
+/* 137 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -22682,7 +27621,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Mindaugas Mozūras : https://github.com/mmozuras
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -22796,7 +27735,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 73 */
+/* 138 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -22805,7 +27744,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Jānis Elmeris : https://github.com/JanisE
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -22898,7 +27837,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 74 */
+/* 139 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -22906,7 +27845,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Miodrag Nikač <miodrag@restartit.me> : https://github.com/miodragnikac
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -23014,7 +27953,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 75 */
+/* 140 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -23022,7 +27961,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : John Corrigan <robbiecloset@gmail.com> : https://github.com/johnideal
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -23083,7 +28022,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 76 */
+/* 141 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -23091,7 +28030,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Borislav Mickov : https://github.com/B0k0
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -23178,7 +28117,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 77 */
+/* 142 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -23186,7 +28125,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Floyd Pink : https://github.com/floydpink
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -23264,7 +28203,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 78 */
+/* 143 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -23273,7 +28212,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Vivek Athalye : https://github.com/vnathalye
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -23428,7 +28367,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 79 */
+/* 144 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -23436,7 +28375,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Weldan Jamili : https://github.com/weldan
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -23515,7 +28454,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 80 */
+/* 145 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -23524,7 +28463,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Weldan Jamili : https://github.com/weldan
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -23603,7 +28542,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 81 */
+/* 146 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -23613,7 +28552,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Tin Aung Lin : https://github.com/thanyawzinmin
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -23704,7 +28643,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 82 */
+/* 147 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -23713,7 +28652,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//!           Sigurd Gartmann : https://github.com/sigurdga
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -23772,7 +28711,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 83 */
+/* 148 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -23780,7 +28719,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : suvash : https://github.com/suvash
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -23900,7 +28839,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 84 */
+/* 149 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -23909,7 +28848,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Jacob Middag : https://github.com/middagj
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -23993,7 +28932,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 85 */
+/* 150 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -24002,7 +28941,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Jacob Middag : https://github.com/middagj
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -24086,7 +29025,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 86 */
+/* 151 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -24094,7 +29033,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : https://github.com/mechuwind
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -24151,7 +29090,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 87 */
+/* 152 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -24159,7 +29098,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Harpreet Singh : https://github.com/harpreetkhalsagtbit
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -24280,7 +29219,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 88 */
+/* 153 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -24288,7 +29227,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Rafal Hirsz : https://github.com/evoL
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -24392,7 +29331,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 89 */
+/* 154 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -24400,7 +29339,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Jefferson : https://github.com/jalex79
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -24462,7 +29401,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 90 */
+/* 155 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -24470,7 +29409,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Caio Ribeiro Pereira : https://github.com/caio-ribeiro-pereira
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -24528,7 +29467,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 91 */
+/* 156 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -24537,7 +29476,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Valentin Agachi : https://github.com/avaly
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -24608,7 +29547,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 92 */
+/* 157 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -24618,7 +29557,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Коренберг Марк : https://github.com/socketpair
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -24796,7 +29735,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 93 */
+/* 158 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -24804,7 +29743,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Narain Sagar : https://github.com/narainsagar
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -24899,7 +29838,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 94 */
+/* 159 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -24907,7 +29846,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! authors : Bård Rolstad Henriksen : https://github.com/karamell
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -24965,7 +29904,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 95 */
+/* 160 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -24973,7 +29912,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Sampath Sitinamaluwa : https://github.com/sampathsris
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -25041,7 +29980,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 96 */
+/* 161 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -25050,7 +29989,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! based on work of petrbela : https://github.com/petrbela
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -25196,7 +30135,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 97 */
+/* 162 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -25204,7 +30143,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Robert Sedovšek : https://github.com/sedovsek
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -25363,7 +30302,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 98 */
+/* 163 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -25373,7 +30312,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Oerd Cukalla : https://github.com/oerd
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -25438,7 +30377,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 99 */
+/* 164 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -25446,7 +30385,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Milan Janačković<milanjanackovic@gmail.com> : https://github.com/milan-j
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -25553,7 +30492,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 100 */
+/* 165 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -25561,7 +30500,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Milan Janačković<milanjanackovic@gmail.com> : https://github.com/milan-j
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -25668,7 +30607,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 101 */
+/* 166 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -25676,7 +30615,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Nicolai Davies<mail@nicolai.io> : https://github.com/nicolaidavies
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -25762,7 +30701,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 102 */
+/* 167 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -25770,7 +30709,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Jens Alm : https://github.com/ulmus
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -25836,7 +30775,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 103 */
+/* 168 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -25844,7 +30783,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Fahad Kassim : https://github.com/fadsel
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -25900,7 +30839,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 104 */
+/* 169 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -25908,7 +30847,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Arjunkumar Krishnamoorthy : https://github.com/tk120404
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -26035,7 +30974,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 105 */
+/* 170 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -26043,7 +30982,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Krishna Chaitanya Thota : https://github.com/kcthota
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -26129,7 +31068,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 106 */
+/* 171 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -26138,7 +31077,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Onorio De J. Afonso : https://github.com/marobo
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -26202,7 +31141,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 107 */
+/* 172 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -26210,7 +31149,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Kridsada Thanabulpong : https://github.com/sirn
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -26274,7 +31213,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 108 */
+/* 173 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -26282,7 +31221,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Dan Hagman : https://github.com/hagmandan
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -26341,7 +31280,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 109 */
+/* 174 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -26349,7 +31288,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Dominika Kruk : https://github.com/amaranthrose
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -26466,7 +31405,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 110 */
+/* 175 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -26475,7 +31414,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//!           Burak Yiğit Kaya: https://github.com/BYK
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -26561,7 +31500,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 111 */
+/* 176 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -26570,7 +31509,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Iustì Canun
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -26657,7 +31596,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 112 */
+/* 177 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -26665,7 +31604,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Abdel Said : https://github.com/abdelsaid
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -26720,7 +31659,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 113 */
+/* 178 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -26728,7 +31667,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Abdel Said : https://github.com/abdelsaid
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -26783,7 +31722,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 114 */
+/* 179 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -26792,7 +31731,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! Author : Menelion Elensúle : https://github.com/Oire
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -26939,7 +31878,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 115 */
+/* 180 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -26948,7 +31887,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Zack : https://github.com/ZackVision
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -27043,7 +31982,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 116 */
+/* 181 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -27051,7 +31990,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Sardor Muminov : https://github.com/muminoff
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -27106,7 +32045,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 117 */
+/* 182 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -27114,7 +32053,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Rasulbek Mirzayev : github.com/Rasulbeeek
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -27169,7 +32108,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 118 */
+/* 183 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -27177,7 +32116,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Bang Nguyen : https://github.com/bangnk
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -27253,7 +32192,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 119 */
+/* 184 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -27261,7 +32200,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Andrew Hood : https://github.com/andrewhood125
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -27326,7 +32265,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 120 */
+/* 185 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -27334,7 +32273,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Atolagbe Abisoye : https://github.com/andela-batolagbe
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -27391,7 +32330,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 121 */
+/* 186 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -27400,7 +32339,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Zeno Zeng : https://github.com/zenozeng
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -27507,7 +32446,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 122 */
+/* 187 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -27517,7 +32456,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Konstantin : https://github.com/skfd
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -27617,7 +32556,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 
 
 /***/ }),
-/* 123 */
+/* 188 */
 /***/ (function(module, exports, __webpack_require__) {
 
 	//! moment.js locale configuration
@@ -27626,7 +32565,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	//! author : Chris Lam : https://github.com/hehachris
 
 	;(function (global, factory) {
-	    true ? factory(__webpack_require__(6)) :
+	    true ? factory(__webpack_require__(71)) :
 	   typeof define === 'function' && define.amd ? define(['../moment'], factory) :
 	   factory(global.moment)
 	}(this, (function (moment) { 'use strict';
@@ -27723,6 +32662,1560 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	return zhTw;
 
 	})));
+
+
+/***/ }),
+/* 189 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscore.js 1.8.3
+	//     http://underscorejs.org
+	//     (c) 2009-2015 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+	//     Underscore may be freely distributed under the MIT license.
+
+	(function() {
+
+	  // Baseline setup
+	  // --------------
+
+	  // Establish the root object, `window` in the browser, or `exports` on the server.
+	  var root = this;
+
+	  // Save the previous value of the `_` variable.
+	  var previousUnderscore = root._;
+
+	  // Save bytes in the minified (but not gzipped) version:
+	  var ArrayProto = Array.prototype, ObjProto = Object.prototype, FuncProto = Function.prototype;
+
+	  // Create quick reference variables for speed access to core prototypes.
+	  var
+	    push             = ArrayProto.push,
+	    slice            = ArrayProto.slice,
+	    toString         = ObjProto.toString,
+	    hasOwnProperty   = ObjProto.hasOwnProperty;
+
+	  // All **ECMAScript 5** native function implementations that we hope to use
+	  // are declared here.
+	  var
+	    nativeIsArray      = Array.isArray,
+	    nativeKeys         = Object.keys,
+	    nativeBind         = FuncProto.bind,
+	    nativeCreate       = Object.create;
+
+	  // Naked function reference for surrogate-prototype-swapping.
+	  var Ctor = function(){};
+
+	  // Create a safe reference to the Underscore object for use below.
+	  var _ = function(obj) {
+	    if (obj instanceof _) return obj;
+	    if (!(this instanceof _)) return new _(obj);
+	    this._wrapped = obj;
+	  };
+
+	  // Export the Underscore object for **Node.js**, with
+	  // backwards-compatibility for the old `require()` API. If we're in
+	  // the browser, add `_` as a global object.
+	  if (true) {
+	    if (typeof module !== 'undefined' && module.exports) {
+	      exports = module.exports = _;
+	    }
+	    exports._ = _;
+	  } else {
+	    root._ = _;
+	  }
+
+	  // Current version.
+	  _.VERSION = '1.8.3';
+
+	  // Internal function that returns an efficient (for current engines) version
+	  // of the passed-in callback, to be repeatedly applied in other Underscore
+	  // functions.
+	  var optimizeCb = function(func, context, argCount) {
+	    if (context === void 0) return func;
+	    switch (argCount == null ? 3 : argCount) {
+	      case 1: return function(value) {
+	        return func.call(context, value);
+	      };
+	      case 2: return function(value, other) {
+	        return func.call(context, value, other);
+	      };
+	      case 3: return function(value, index, collection) {
+	        return func.call(context, value, index, collection);
+	      };
+	      case 4: return function(accumulator, value, index, collection) {
+	        return func.call(context, accumulator, value, index, collection);
+	      };
+	    }
+	    return function() {
+	      return func.apply(context, arguments);
+	    };
+	  };
+
+	  // A mostly-internal function to generate callbacks that can be applied
+	  // to each element in a collection, returning the desired result — either
+	  // identity, an arbitrary callback, a property matcher, or a property accessor.
+	  var cb = function(value, context, argCount) {
+	    if (value == null) return _.identity;
+	    if (_.isFunction(value)) return optimizeCb(value, context, argCount);
+	    if (_.isObject(value)) return _.matcher(value);
+	    return _.property(value);
+	  };
+	  _.iteratee = function(value, context) {
+	    return cb(value, context, Infinity);
+	  };
+
+	  // An internal function for creating assigner functions.
+	  var createAssigner = function(keysFunc, undefinedOnly) {
+	    return function(obj) {
+	      var length = arguments.length;
+	      if (length < 2 || obj == null) return obj;
+	      for (var index = 1; index < length; index++) {
+	        var source = arguments[index],
+	            keys = keysFunc(source),
+	            l = keys.length;
+	        for (var i = 0; i < l; i++) {
+	          var key = keys[i];
+	          if (!undefinedOnly || obj[key] === void 0) obj[key] = source[key];
+	        }
+	      }
+	      return obj;
+	    };
+	  };
+
+	  // An internal function for creating a new object that inherits from another.
+	  var baseCreate = function(prototype) {
+	    if (!_.isObject(prototype)) return {};
+	    if (nativeCreate) return nativeCreate(prototype);
+	    Ctor.prototype = prototype;
+	    var result = new Ctor;
+	    Ctor.prototype = null;
+	    return result;
+	  };
+
+	  var property = function(key) {
+	    return function(obj) {
+	      return obj == null ? void 0 : obj[key];
+	    };
+	  };
+
+	  // Helper for collection methods to determine whether a collection
+	  // should be iterated as an array or as an object
+	  // Related: http://people.mozilla.org/~jorendorff/es6-draft.html#sec-tolength
+	  // Avoids a very nasty iOS 8 JIT bug on ARM-64. #2094
+	  var MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
+	  var getLength = property('length');
+	  var isArrayLike = function(collection) {
+	    var length = getLength(collection);
+	    return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX;
+	  };
+
+	  // Collection Functions
+	  // --------------------
+
+	  // The cornerstone, an `each` implementation, aka `forEach`.
+	  // Handles raw objects in addition to array-likes. Treats all
+	  // sparse array-likes as if they were dense.
+	  _.each = _.forEach = function(obj, iteratee, context) {
+	    iteratee = optimizeCb(iteratee, context);
+	    var i, length;
+	    if (isArrayLike(obj)) {
+	      for (i = 0, length = obj.length; i < length; i++) {
+	        iteratee(obj[i], i, obj);
+	      }
+	    } else {
+	      var keys = _.keys(obj);
+	      for (i = 0, length = keys.length; i < length; i++) {
+	        iteratee(obj[keys[i]], keys[i], obj);
+	      }
+	    }
+	    return obj;
+	  };
+
+	  // Return the results of applying the iteratee to each element.
+	  _.map = _.collect = function(obj, iteratee, context) {
+	    iteratee = cb(iteratee, context);
+	    var keys = !isArrayLike(obj) && _.keys(obj),
+	        length = (keys || obj).length,
+	        results = Array(length);
+	    for (var index = 0; index < length; index++) {
+	      var currentKey = keys ? keys[index] : index;
+	      results[index] = iteratee(obj[currentKey], currentKey, obj);
+	    }
+	    return results;
+	  };
+
+	  // Create a reducing function iterating left or right.
+	  function createReduce(dir) {
+	    // Optimized iterator function as using arguments.length
+	    // in the main function will deoptimize the, see #1991.
+	    function iterator(obj, iteratee, memo, keys, index, length) {
+	      for (; index >= 0 && index < length; index += dir) {
+	        var currentKey = keys ? keys[index] : index;
+	        memo = iteratee(memo, obj[currentKey], currentKey, obj);
+	      }
+	      return memo;
+	    }
+
+	    return function(obj, iteratee, memo, context) {
+	      iteratee = optimizeCb(iteratee, context, 4);
+	      var keys = !isArrayLike(obj) && _.keys(obj),
+	          length = (keys || obj).length,
+	          index = dir > 0 ? 0 : length - 1;
+	      // Determine the initial value if none is provided.
+	      if (arguments.length < 3) {
+	        memo = obj[keys ? keys[index] : index];
+	        index += dir;
+	      }
+	      return iterator(obj, iteratee, memo, keys, index, length);
+	    };
+	  }
+
+	  // **Reduce** builds up a single result from a list of values, aka `inject`,
+	  // or `foldl`.
+	  _.reduce = _.foldl = _.inject = createReduce(1);
+
+	  // The right-associative version of reduce, also known as `foldr`.
+	  _.reduceRight = _.foldr = createReduce(-1);
+
+	  // Return the first value which passes a truth test. Aliased as `detect`.
+	  _.find = _.detect = function(obj, predicate, context) {
+	    var key;
+	    if (isArrayLike(obj)) {
+	      key = _.findIndex(obj, predicate, context);
+	    } else {
+	      key = _.findKey(obj, predicate, context);
+	    }
+	    if (key !== void 0 && key !== -1) return obj[key];
+	  };
+
+	  // Return all the elements that pass a truth test.
+	  // Aliased as `select`.
+	  _.filter = _.select = function(obj, predicate, context) {
+	    var results = [];
+	    predicate = cb(predicate, context);
+	    _.each(obj, function(value, index, list) {
+	      if (predicate(value, index, list)) results.push(value);
+	    });
+	    return results;
+	  };
+
+	  // Return all the elements for which a truth test fails.
+	  _.reject = function(obj, predicate, context) {
+	    return _.filter(obj, _.negate(cb(predicate)), context);
+	  };
+
+	  // Determine whether all of the elements match a truth test.
+	  // Aliased as `all`.
+	  _.every = _.all = function(obj, predicate, context) {
+	    predicate = cb(predicate, context);
+	    var keys = !isArrayLike(obj) && _.keys(obj),
+	        length = (keys || obj).length;
+	    for (var index = 0; index < length; index++) {
+	      var currentKey = keys ? keys[index] : index;
+	      if (!predicate(obj[currentKey], currentKey, obj)) return false;
+	    }
+	    return true;
+	  };
+
+	  // Determine if at least one element in the object matches a truth test.
+	  // Aliased as `any`.
+	  _.some = _.any = function(obj, predicate, context) {
+	    predicate = cb(predicate, context);
+	    var keys = !isArrayLike(obj) && _.keys(obj),
+	        length = (keys || obj).length;
+	    for (var index = 0; index < length; index++) {
+	      var currentKey = keys ? keys[index] : index;
+	      if (predicate(obj[currentKey], currentKey, obj)) return true;
+	    }
+	    return false;
+	  };
+
+	  // Determine if the array or object contains a given item (using `===`).
+	  // Aliased as `includes` and `include`.
+	  _.contains = _.includes = _.include = function(obj, item, fromIndex, guard) {
+	    if (!isArrayLike(obj)) obj = _.values(obj);
+	    if (typeof fromIndex != 'number' || guard) fromIndex = 0;
+	    return _.indexOf(obj, item, fromIndex) >= 0;
+	  };
+
+	  // Invoke a method (with arguments) on every item in a collection.
+	  _.invoke = function(obj, method) {
+	    var args = slice.call(arguments, 2);
+	    var isFunc = _.isFunction(method);
+	    return _.map(obj, function(value) {
+	      var func = isFunc ? method : value[method];
+	      return func == null ? func : func.apply(value, args);
+	    });
+	  };
+
+	  // Convenience version of a common use case of `map`: fetching a property.
+	  _.pluck = function(obj, key) {
+	    return _.map(obj, _.property(key));
+	  };
+
+	  // Convenience version of a common use case of `filter`: selecting only objects
+	  // containing specific `key:value` pairs.
+	  _.where = function(obj, attrs) {
+	    return _.filter(obj, _.matcher(attrs));
+	  };
+
+	  // Convenience version of a common use case of `find`: getting the first object
+	  // containing specific `key:value` pairs.
+	  _.findWhere = function(obj, attrs) {
+	    return _.find(obj, _.matcher(attrs));
+	  };
+
+	  // Return the maximum element (or element-based computation).
+	  _.max = function(obj, iteratee, context) {
+	    var result = -Infinity, lastComputed = -Infinity,
+	        value, computed;
+	    if (iteratee == null && obj != null) {
+	      obj = isArrayLike(obj) ? obj : _.values(obj);
+	      for (var i = 0, length = obj.length; i < length; i++) {
+	        value = obj[i];
+	        if (value > result) {
+	          result = value;
+	        }
+	      }
+	    } else {
+	      iteratee = cb(iteratee, context);
+	      _.each(obj, function(value, index, list) {
+	        computed = iteratee(value, index, list);
+	        if (computed > lastComputed || computed === -Infinity && result === -Infinity) {
+	          result = value;
+	          lastComputed = computed;
+	        }
+	      });
+	    }
+	    return result;
+	  };
+
+	  // Return the minimum element (or element-based computation).
+	  _.min = function(obj, iteratee, context) {
+	    var result = Infinity, lastComputed = Infinity,
+	        value, computed;
+	    if (iteratee == null && obj != null) {
+	      obj = isArrayLike(obj) ? obj : _.values(obj);
+	      for (var i = 0, length = obj.length; i < length; i++) {
+	        value = obj[i];
+	        if (value < result) {
+	          result = value;
+	        }
+	      }
+	    } else {
+	      iteratee = cb(iteratee, context);
+	      _.each(obj, function(value, index, list) {
+	        computed = iteratee(value, index, list);
+	        if (computed < lastComputed || computed === Infinity && result === Infinity) {
+	          result = value;
+	          lastComputed = computed;
+	        }
+	      });
+	    }
+	    return result;
+	  };
+
+	  // Shuffle a collection, using the modern version of the
+	  // [Fisher-Yates shuffle](http://en.wikipedia.org/wiki/Fisher–Yates_shuffle).
+	  _.shuffle = function(obj) {
+	    var set = isArrayLike(obj) ? obj : _.values(obj);
+	    var length = set.length;
+	    var shuffled = Array(length);
+	    for (var index = 0, rand; index < length; index++) {
+	      rand = _.random(0, index);
+	      if (rand !== index) shuffled[index] = shuffled[rand];
+	      shuffled[rand] = set[index];
+	    }
+	    return shuffled;
+	  };
+
+	  // Sample **n** random values from a collection.
+	  // If **n** is not specified, returns a single random element.
+	  // The internal `guard` argument allows it to work with `map`.
+	  _.sample = function(obj, n, guard) {
+	    if (n == null || guard) {
+	      if (!isArrayLike(obj)) obj = _.values(obj);
+	      return obj[_.random(obj.length - 1)];
+	    }
+	    return _.shuffle(obj).slice(0, Math.max(0, n));
+	  };
+
+	  // Sort the object's values by a criterion produced by an iteratee.
+	  _.sortBy = function(obj, iteratee, context) {
+	    iteratee = cb(iteratee, context);
+	    return _.pluck(_.map(obj, function(value, index, list) {
+	      return {
+	        value: value,
+	        index: index,
+	        criteria: iteratee(value, index, list)
+	      };
+	    }).sort(function(left, right) {
+	      var a = left.criteria;
+	      var b = right.criteria;
+	      if (a !== b) {
+	        if (a > b || a === void 0) return 1;
+	        if (a < b || b === void 0) return -1;
+	      }
+	      return left.index - right.index;
+	    }), 'value');
+	  };
+
+	  // An internal function used for aggregate "group by" operations.
+	  var group = function(behavior) {
+	    return function(obj, iteratee, context) {
+	      var result = {};
+	      iteratee = cb(iteratee, context);
+	      _.each(obj, function(value, index) {
+	        var key = iteratee(value, index, obj);
+	        behavior(result, value, key);
+	      });
+	      return result;
+	    };
+	  };
+
+	  // Groups the object's values by a criterion. Pass either a string attribute
+	  // to group by, or a function that returns the criterion.
+	  _.groupBy = group(function(result, value, key) {
+	    if (_.has(result, key)) result[key].push(value); else result[key] = [value];
+	  });
+
+	  // Indexes the object's values by a criterion, similar to `groupBy`, but for
+	  // when you know that your index values will be unique.
+	  _.indexBy = group(function(result, value, key) {
+	    result[key] = value;
+	  });
+
+	  // Counts instances of an object that group by a certain criterion. Pass
+	  // either a string attribute to count by, or a function that returns the
+	  // criterion.
+	  _.countBy = group(function(result, value, key) {
+	    if (_.has(result, key)) result[key]++; else result[key] = 1;
+	  });
+
+	  // Safely create a real, live array from anything iterable.
+	  _.toArray = function(obj) {
+	    if (!obj) return [];
+	    if (_.isArray(obj)) return slice.call(obj);
+	    if (isArrayLike(obj)) return _.map(obj, _.identity);
+	    return _.values(obj);
+	  };
+
+	  // Return the number of elements in an object.
+	  _.size = function(obj) {
+	    if (obj == null) return 0;
+	    return isArrayLike(obj) ? obj.length : _.keys(obj).length;
+	  };
+
+	  // Split a collection into two arrays: one whose elements all satisfy the given
+	  // predicate, and one whose elements all do not satisfy the predicate.
+	  _.partition = function(obj, predicate, context) {
+	    predicate = cb(predicate, context);
+	    var pass = [], fail = [];
+	    _.each(obj, function(value, key, obj) {
+	      (predicate(value, key, obj) ? pass : fail).push(value);
+	    });
+	    return [pass, fail];
+	  };
+
+	  // Array Functions
+	  // ---------------
+
+	  // Get the first element of an array. Passing **n** will return the first N
+	  // values in the array. Aliased as `head` and `take`. The **guard** check
+	  // allows it to work with `_.map`.
+	  _.first = _.head = _.take = function(array, n, guard) {
+	    if (array == null) return void 0;
+	    if (n == null || guard) return array[0];
+	    return _.initial(array, array.length - n);
+	  };
+
+	  // Returns everything but the last entry of the array. Especially useful on
+	  // the arguments object. Passing **n** will return all the values in
+	  // the array, excluding the last N.
+	  _.initial = function(array, n, guard) {
+	    return slice.call(array, 0, Math.max(0, array.length - (n == null || guard ? 1 : n)));
+	  };
+
+	  // Get the last element of an array. Passing **n** will return the last N
+	  // values in the array.
+	  _.last = function(array, n, guard) {
+	    if (array == null) return void 0;
+	    if (n == null || guard) return array[array.length - 1];
+	    return _.rest(array, Math.max(0, array.length - n));
+	  };
+
+	  // Returns everything but the first entry of the array. Aliased as `tail` and `drop`.
+	  // Especially useful on the arguments object. Passing an **n** will return
+	  // the rest N values in the array.
+	  _.rest = _.tail = _.drop = function(array, n, guard) {
+	    return slice.call(array, n == null || guard ? 1 : n);
+	  };
+
+	  // Trim out all falsy values from an array.
+	  _.compact = function(array) {
+	    return _.filter(array, _.identity);
+	  };
+
+	  // Internal implementation of a recursive `flatten` function.
+	  var flatten = function(input, shallow, strict, startIndex) {
+	    var output = [], idx = 0;
+	    for (var i = startIndex || 0, length = getLength(input); i < length; i++) {
+	      var value = input[i];
+	      if (isArrayLike(value) && (_.isArray(value) || _.isArguments(value))) {
+	        //flatten current level of array or arguments object
+	        if (!shallow) value = flatten(value, shallow, strict);
+	        var j = 0, len = value.length;
+	        output.length += len;
+	        while (j < len) {
+	          output[idx++] = value[j++];
+	        }
+	      } else if (!strict) {
+	        output[idx++] = value;
+	      }
+	    }
+	    return output;
+	  };
+
+	  // Flatten out an array, either recursively (by default), or just one level.
+	  _.flatten = function(array, shallow) {
+	    return flatten(array, shallow, false);
+	  };
+
+	  // Return a version of the array that does not contain the specified value(s).
+	  _.without = function(array) {
+	    return _.difference(array, slice.call(arguments, 1));
+	  };
+
+	  // Produce a duplicate-free version of the array. If the array has already
+	  // been sorted, you have the option of using a faster algorithm.
+	  // Aliased as `unique`.
+	  _.uniq = _.unique = function(array, isSorted, iteratee, context) {
+	    if (!_.isBoolean(isSorted)) {
+	      context = iteratee;
+	      iteratee = isSorted;
+	      isSorted = false;
+	    }
+	    if (iteratee != null) iteratee = cb(iteratee, context);
+	    var result = [];
+	    var seen = [];
+	    for (var i = 0, length = getLength(array); i < length; i++) {
+	      var value = array[i],
+	          computed = iteratee ? iteratee(value, i, array) : value;
+	      if (isSorted) {
+	        if (!i || seen !== computed) result.push(value);
+	        seen = computed;
+	      } else if (iteratee) {
+	        if (!_.contains(seen, computed)) {
+	          seen.push(computed);
+	          result.push(value);
+	        }
+	      } else if (!_.contains(result, value)) {
+	        result.push(value);
+	      }
+	    }
+	    return result;
+	  };
+
+	  // Produce an array that contains the union: each distinct element from all of
+	  // the passed-in arrays.
+	  _.union = function() {
+	    return _.uniq(flatten(arguments, true, true));
+	  };
+
+	  // Produce an array that contains every item shared between all the
+	  // passed-in arrays.
+	  _.intersection = function(array) {
+	    var result = [];
+	    var argsLength = arguments.length;
+	    for (var i = 0, length = getLength(array); i < length; i++) {
+	      var item = array[i];
+	      if (_.contains(result, item)) continue;
+	      for (var j = 1; j < argsLength; j++) {
+	        if (!_.contains(arguments[j], item)) break;
+	      }
+	      if (j === argsLength) result.push(item);
+	    }
+	    return result;
+	  };
+
+	  // Take the difference between one array and a number of other arrays.
+	  // Only the elements present in just the first array will remain.
+	  _.difference = function(array) {
+	    var rest = flatten(arguments, true, true, 1);
+	    return _.filter(array, function(value){
+	      return !_.contains(rest, value);
+	    });
+	  };
+
+	  // Zip together multiple lists into a single array -- elements that share
+	  // an index go together.
+	  _.zip = function() {
+	    return _.unzip(arguments);
+	  };
+
+	  // Complement of _.zip. Unzip accepts an array of arrays and groups
+	  // each array's elements on shared indices
+	  _.unzip = function(array) {
+	    var length = array && _.max(array, getLength).length || 0;
+	    var result = Array(length);
+
+	    for (var index = 0; index < length; index++) {
+	      result[index] = _.pluck(array, index);
+	    }
+	    return result;
+	  };
+
+	  // Converts lists into objects. Pass either a single array of `[key, value]`
+	  // pairs, or two parallel arrays of the same length -- one of keys, and one of
+	  // the corresponding values.
+	  _.object = function(list, values) {
+	    var result = {};
+	    for (var i = 0, length = getLength(list); i < length; i++) {
+	      if (values) {
+	        result[list[i]] = values[i];
+	      } else {
+	        result[list[i][0]] = list[i][1];
+	      }
+	    }
+	    return result;
+	  };
+
+	  // Generator function to create the findIndex and findLastIndex functions
+	  function createPredicateIndexFinder(dir) {
+	    return function(array, predicate, context) {
+	      predicate = cb(predicate, context);
+	      var length = getLength(array);
+	      var index = dir > 0 ? 0 : length - 1;
+	      for (; index >= 0 && index < length; index += dir) {
+	        if (predicate(array[index], index, array)) return index;
+	      }
+	      return -1;
+	    };
+	  }
+
+	  // Returns the first index on an array-like that passes a predicate test
+	  _.findIndex = createPredicateIndexFinder(1);
+	  _.findLastIndex = createPredicateIndexFinder(-1);
+
+	  // Use a comparator function to figure out the smallest index at which
+	  // an object should be inserted so as to maintain order. Uses binary search.
+	  _.sortedIndex = function(array, obj, iteratee, context) {
+	    iteratee = cb(iteratee, context, 1);
+	    var value = iteratee(obj);
+	    var low = 0, high = getLength(array);
+	    while (low < high) {
+	      var mid = Math.floor((low + high) / 2);
+	      if (iteratee(array[mid]) < value) low = mid + 1; else high = mid;
+	    }
+	    return low;
+	  };
+
+	  // Generator function to create the indexOf and lastIndexOf functions
+	  function createIndexFinder(dir, predicateFind, sortedIndex) {
+	    return function(array, item, idx) {
+	      var i = 0, length = getLength(array);
+	      if (typeof idx == 'number') {
+	        if (dir > 0) {
+	            i = idx >= 0 ? idx : Math.max(idx + length, i);
+	        } else {
+	            length = idx >= 0 ? Math.min(idx + 1, length) : idx + length + 1;
+	        }
+	      } else if (sortedIndex && idx && length) {
+	        idx = sortedIndex(array, item);
+	        return array[idx] === item ? idx : -1;
+	      }
+	      if (item !== item) {
+	        idx = predicateFind(slice.call(array, i, length), _.isNaN);
+	        return idx >= 0 ? idx + i : -1;
+	      }
+	      for (idx = dir > 0 ? i : length - 1; idx >= 0 && idx < length; idx += dir) {
+	        if (array[idx] === item) return idx;
+	      }
+	      return -1;
+	    };
+	  }
+
+	  // Return the position of the first occurrence of an item in an array,
+	  // or -1 if the item is not included in the array.
+	  // If the array is large and already in sort order, pass `true`
+	  // for **isSorted** to use binary search.
+	  _.indexOf = createIndexFinder(1, _.findIndex, _.sortedIndex);
+	  _.lastIndexOf = createIndexFinder(-1, _.findLastIndex);
+
+	  // Generate an integer Array containing an arithmetic progression. A port of
+	  // the native Python `range()` function. See
+	  // [the Python documentation](http://docs.python.org/library/functions.html#range).
+	  _.range = function(start, stop, step) {
+	    if (stop == null) {
+	      stop = start || 0;
+	      start = 0;
+	    }
+	    step = step || 1;
+
+	    var length = Math.max(Math.ceil((stop - start) / step), 0);
+	    var range = Array(length);
+
+	    for (var idx = 0; idx < length; idx++, start += step) {
+	      range[idx] = start;
+	    }
+
+	    return range;
+	  };
+
+	  // Function (ahem) Functions
+	  // ------------------
+
+	  // Determines whether to execute a function as a constructor
+	  // or a normal function with the provided arguments
+	  var executeBound = function(sourceFunc, boundFunc, context, callingContext, args) {
+	    if (!(callingContext instanceof boundFunc)) return sourceFunc.apply(context, args);
+	    var self = baseCreate(sourceFunc.prototype);
+	    var result = sourceFunc.apply(self, args);
+	    if (_.isObject(result)) return result;
+	    return self;
+	  };
+
+	  // Create a function bound to a given object (assigning `this`, and arguments,
+	  // optionally). Delegates to **ECMAScript 5**'s native `Function.bind` if
+	  // available.
+	  _.bind = function(func, context) {
+	    if (nativeBind && func.bind === nativeBind) return nativeBind.apply(func, slice.call(arguments, 1));
+	    if (!_.isFunction(func)) throw new TypeError('Bind must be called on a function');
+	    var args = slice.call(arguments, 2);
+	    var bound = function() {
+	      return executeBound(func, bound, context, this, args.concat(slice.call(arguments)));
+	    };
+	    return bound;
+	  };
+
+	  // Partially apply a function by creating a version that has had some of its
+	  // arguments pre-filled, without changing its dynamic `this` context. _ acts
+	  // as a placeholder, allowing any combination of arguments to be pre-filled.
+	  _.partial = function(func) {
+	    var boundArgs = slice.call(arguments, 1);
+	    var bound = function() {
+	      var position = 0, length = boundArgs.length;
+	      var args = Array(length);
+	      for (var i = 0; i < length; i++) {
+	        args[i] = boundArgs[i] === _ ? arguments[position++] : boundArgs[i];
+	      }
+	      while (position < arguments.length) args.push(arguments[position++]);
+	      return executeBound(func, bound, this, this, args);
+	    };
+	    return bound;
+	  };
+
+	  // Bind a number of an object's methods to that object. Remaining arguments
+	  // are the method names to be bound. Useful for ensuring that all callbacks
+	  // defined on an object belong to it.
+	  _.bindAll = function(obj) {
+	    var i, length = arguments.length, key;
+	    if (length <= 1) throw new Error('bindAll must be passed function names');
+	    for (i = 1; i < length; i++) {
+	      key = arguments[i];
+	      obj[key] = _.bind(obj[key], obj);
+	    }
+	    return obj;
+	  };
+
+	  // Memoize an expensive function by storing its results.
+	  _.memoize = function(func, hasher) {
+	    var memoize = function(key) {
+	      var cache = memoize.cache;
+	      var address = '' + (hasher ? hasher.apply(this, arguments) : key);
+	      if (!_.has(cache, address)) cache[address] = func.apply(this, arguments);
+	      return cache[address];
+	    };
+	    memoize.cache = {};
+	    return memoize;
+	  };
+
+	  // Delays a function for the given number of milliseconds, and then calls
+	  // it with the arguments supplied.
+	  _.delay = function(func, wait) {
+	    var args = slice.call(arguments, 2);
+	    return setTimeout(function(){
+	      return func.apply(null, args);
+	    }, wait);
+	  };
+
+	  // Defers a function, scheduling it to run after the current call stack has
+	  // cleared.
+	  _.defer = _.partial(_.delay, _, 1);
+
+	  // Returns a function, that, when invoked, will only be triggered at most once
+	  // during a given window of time. Normally, the throttled function will run
+	  // as much as it can, without ever going more than once per `wait` duration;
+	  // but if you'd like to disable the execution on the leading edge, pass
+	  // `{leading: false}`. To disable execution on the trailing edge, ditto.
+	  _.throttle = function(func, wait, options) {
+	    var context, args, result;
+	    var timeout = null;
+	    var previous = 0;
+	    if (!options) options = {};
+	    var later = function() {
+	      previous = options.leading === false ? 0 : _.now();
+	      timeout = null;
+	      result = func.apply(context, args);
+	      if (!timeout) context = args = null;
+	    };
+	    return function() {
+	      var now = _.now();
+	      if (!previous && options.leading === false) previous = now;
+	      var remaining = wait - (now - previous);
+	      context = this;
+	      args = arguments;
+	      if (remaining <= 0 || remaining > wait) {
+	        if (timeout) {
+	          clearTimeout(timeout);
+	          timeout = null;
+	        }
+	        previous = now;
+	        result = func.apply(context, args);
+	        if (!timeout) context = args = null;
+	      } else if (!timeout && options.trailing !== false) {
+	        timeout = setTimeout(later, remaining);
+	      }
+	      return result;
+	    };
+	  };
+
+	  // Returns a function, that, as long as it continues to be invoked, will not
+	  // be triggered. The function will be called after it stops being called for
+	  // N milliseconds. If `immediate` is passed, trigger the function on the
+	  // leading edge, instead of the trailing.
+	  _.debounce = function(func, wait, immediate) {
+	    var timeout, args, context, timestamp, result;
+
+	    var later = function() {
+	      var last = _.now() - timestamp;
+
+	      if (last < wait && last >= 0) {
+	        timeout = setTimeout(later, wait - last);
+	      } else {
+	        timeout = null;
+	        if (!immediate) {
+	          result = func.apply(context, args);
+	          if (!timeout) context = args = null;
+	        }
+	      }
+	    };
+
+	    return function() {
+	      context = this;
+	      args = arguments;
+	      timestamp = _.now();
+	      var callNow = immediate && !timeout;
+	      if (!timeout) timeout = setTimeout(later, wait);
+	      if (callNow) {
+	        result = func.apply(context, args);
+	        context = args = null;
+	      }
+
+	      return result;
+	    };
+	  };
+
+	  // Returns the first function passed as an argument to the second,
+	  // allowing you to adjust arguments, run code before and after, and
+	  // conditionally execute the original function.
+	  _.wrap = function(func, wrapper) {
+	    return _.partial(wrapper, func);
+	  };
+
+	  // Returns a negated version of the passed-in predicate.
+	  _.negate = function(predicate) {
+	    return function() {
+	      return !predicate.apply(this, arguments);
+	    };
+	  };
+
+	  // Returns a function that is the composition of a list of functions, each
+	  // consuming the return value of the function that follows.
+	  _.compose = function() {
+	    var args = arguments;
+	    var start = args.length - 1;
+	    return function() {
+	      var i = start;
+	      var result = args[start].apply(this, arguments);
+	      while (i--) result = args[i].call(this, result);
+	      return result;
+	    };
+	  };
+
+	  // Returns a function that will only be executed on and after the Nth call.
+	  _.after = function(times, func) {
+	    return function() {
+	      if (--times < 1) {
+	        return func.apply(this, arguments);
+	      }
+	    };
+	  };
+
+	  // Returns a function that will only be executed up to (but not including) the Nth call.
+	  _.before = function(times, func) {
+	    var memo;
+	    return function() {
+	      if (--times > 0) {
+	        memo = func.apply(this, arguments);
+	      }
+	      if (times <= 1) func = null;
+	      return memo;
+	    };
+	  };
+
+	  // Returns a function that will be executed at most one time, no matter how
+	  // often you call it. Useful for lazy initialization.
+	  _.once = _.partial(_.before, 2);
+
+	  // Object Functions
+	  // ----------------
+
+	  // Keys in IE < 9 that won't be iterated by `for key in ...` and thus missed.
+	  var hasEnumBug = !{toString: null}.propertyIsEnumerable('toString');
+	  var nonEnumerableProps = ['valueOf', 'isPrototypeOf', 'toString',
+	                      'propertyIsEnumerable', 'hasOwnProperty', 'toLocaleString'];
+
+	  function collectNonEnumProps(obj, keys) {
+	    var nonEnumIdx = nonEnumerableProps.length;
+	    var constructor = obj.constructor;
+	    var proto = (_.isFunction(constructor) && constructor.prototype) || ObjProto;
+
+	    // Constructor is a special case.
+	    var prop = 'constructor';
+	    if (_.has(obj, prop) && !_.contains(keys, prop)) keys.push(prop);
+
+	    while (nonEnumIdx--) {
+	      prop = nonEnumerableProps[nonEnumIdx];
+	      if (prop in obj && obj[prop] !== proto[prop] && !_.contains(keys, prop)) {
+	        keys.push(prop);
+	      }
+	    }
+	  }
+
+	  // Retrieve the names of an object's own properties.
+	  // Delegates to **ECMAScript 5**'s native `Object.keys`
+	  _.keys = function(obj) {
+	    if (!_.isObject(obj)) return [];
+	    if (nativeKeys) return nativeKeys(obj);
+	    var keys = [];
+	    for (var key in obj) if (_.has(obj, key)) keys.push(key);
+	    // Ahem, IE < 9.
+	    if (hasEnumBug) collectNonEnumProps(obj, keys);
+	    return keys;
+	  };
+
+	  // Retrieve all the property names of an object.
+	  _.allKeys = function(obj) {
+	    if (!_.isObject(obj)) return [];
+	    var keys = [];
+	    for (var key in obj) keys.push(key);
+	    // Ahem, IE < 9.
+	    if (hasEnumBug) collectNonEnumProps(obj, keys);
+	    return keys;
+	  };
+
+	  // Retrieve the values of an object's properties.
+	  _.values = function(obj) {
+	    var keys = _.keys(obj);
+	    var length = keys.length;
+	    var values = Array(length);
+	    for (var i = 0; i < length; i++) {
+	      values[i] = obj[keys[i]];
+	    }
+	    return values;
+	  };
+
+	  // Returns the results of applying the iteratee to each element of the object
+	  // In contrast to _.map it returns an object
+	  _.mapObject = function(obj, iteratee, context) {
+	    iteratee = cb(iteratee, context);
+	    var keys =  _.keys(obj),
+	          length = keys.length,
+	          results = {},
+	          currentKey;
+	      for (var index = 0; index < length; index++) {
+	        currentKey = keys[index];
+	        results[currentKey] = iteratee(obj[currentKey], currentKey, obj);
+	      }
+	      return results;
+	  };
+
+	  // Convert an object into a list of `[key, value]` pairs.
+	  _.pairs = function(obj) {
+	    var keys = _.keys(obj);
+	    var length = keys.length;
+	    var pairs = Array(length);
+	    for (var i = 0; i < length; i++) {
+	      pairs[i] = [keys[i], obj[keys[i]]];
+	    }
+	    return pairs;
+	  };
+
+	  // Invert the keys and values of an object. The values must be serializable.
+	  _.invert = function(obj) {
+	    var result = {};
+	    var keys = _.keys(obj);
+	    for (var i = 0, length = keys.length; i < length; i++) {
+	      result[obj[keys[i]]] = keys[i];
+	    }
+	    return result;
+	  };
+
+	  // Return a sorted list of the function names available on the object.
+	  // Aliased as `methods`
+	  _.functions = _.methods = function(obj) {
+	    var names = [];
+	    for (var key in obj) {
+	      if (_.isFunction(obj[key])) names.push(key);
+	    }
+	    return names.sort();
+	  };
+
+	  // Extend a given object with all the properties in passed-in object(s).
+	  _.extend = createAssigner(_.allKeys);
+
+	  // Assigns a given object with all the own properties in the passed-in object(s)
+	  // (https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object/assign)
+	  _.extendOwn = _.assign = createAssigner(_.keys);
+
+	  // Returns the first key on an object that passes a predicate test
+	  _.findKey = function(obj, predicate, context) {
+	    predicate = cb(predicate, context);
+	    var keys = _.keys(obj), key;
+	    for (var i = 0, length = keys.length; i < length; i++) {
+	      key = keys[i];
+	      if (predicate(obj[key], key, obj)) return key;
+	    }
+	  };
+
+	  // Return a copy of the object only containing the whitelisted properties.
+	  _.pick = function(object, oiteratee, context) {
+	    var result = {}, obj = object, iteratee, keys;
+	    if (obj == null) return result;
+	    if (_.isFunction(oiteratee)) {
+	      keys = _.allKeys(obj);
+	      iteratee = optimizeCb(oiteratee, context);
+	    } else {
+	      keys = flatten(arguments, false, false, 1);
+	      iteratee = function(value, key, obj) { return key in obj; };
+	      obj = Object(obj);
+	    }
+	    for (var i = 0, length = keys.length; i < length; i++) {
+	      var key = keys[i];
+	      var value = obj[key];
+	      if (iteratee(value, key, obj)) result[key] = value;
+	    }
+	    return result;
+	  };
+
+	   // Return a copy of the object without the blacklisted properties.
+	  _.omit = function(obj, iteratee, context) {
+	    if (_.isFunction(iteratee)) {
+	      iteratee = _.negate(iteratee);
+	    } else {
+	      var keys = _.map(flatten(arguments, false, false, 1), String);
+	      iteratee = function(value, key) {
+	        return !_.contains(keys, key);
+	      };
+	    }
+	    return _.pick(obj, iteratee, context);
+	  };
+
+	  // Fill in a given object with default properties.
+	  _.defaults = createAssigner(_.allKeys, true);
+
+	  // Creates an object that inherits from the given prototype object.
+	  // If additional properties are provided then they will be added to the
+	  // created object.
+	  _.create = function(prototype, props) {
+	    var result = baseCreate(prototype);
+	    if (props) _.extendOwn(result, props);
+	    return result;
+	  };
+
+	  // Create a (shallow-cloned) duplicate of an object.
+	  _.clone = function(obj) {
+	    if (!_.isObject(obj)) return obj;
+	    return _.isArray(obj) ? obj.slice() : _.extend({}, obj);
+	  };
+
+	  // Invokes interceptor with the obj, and then returns obj.
+	  // The primary purpose of this method is to "tap into" a method chain, in
+	  // order to perform operations on intermediate results within the chain.
+	  _.tap = function(obj, interceptor) {
+	    interceptor(obj);
+	    return obj;
+	  };
+
+	  // Returns whether an object has a given set of `key:value` pairs.
+	  _.isMatch = function(object, attrs) {
+	    var keys = _.keys(attrs), length = keys.length;
+	    if (object == null) return !length;
+	    var obj = Object(object);
+	    for (var i = 0; i < length; i++) {
+	      var key = keys[i];
+	      if (attrs[key] !== obj[key] || !(key in obj)) return false;
+	    }
+	    return true;
+	  };
+
+
+	  // Internal recursive comparison function for `isEqual`.
+	  var eq = function(a, b, aStack, bStack) {
+	    // Identical objects are equal. `0 === -0`, but they aren't identical.
+	    // See the [Harmony `egal` proposal](http://wiki.ecmascript.org/doku.php?id=harmony:egal).
+	    if (a === b) return a !== 0 || 1 / a === 1 / b;
+	    // A strict comparison is necessary because `null == undefined`.
+	    if (a == null || b == null) return a === b;
+	    // Unwrap any wrapped objects.
+	    if (a instanceof _) a = a._wrapped;
+	    if (b instanceof _) b = b._wrapped;
+	    // Compare `[[Class]]` names.
+	    var className = toString.call(a);
+	    if (className !== toString.call(b)) return false;
+	    switch (className) {
+	      // Strings, numbers, regular expressions, dates, and booleans are compared by value.
+	      case '[object RegExp]':
+	      // RegExps are coerced to strings for comparison (Note: '' + /a/i === '/a/i')
+	      case '[object String]':
+	        // Primitives and their corresponding object wrappers are equivalent; thus, `"5"` is
+	        // equivalent to `new String("5")`.
+	        return '' + a === '' + b;
+	      case '[object Number]':
+	        // `NaN`s are equivalent, but non-reflexive.
+	        // Object(NaN) is equivalent to NaN
+	        if (+a !== +a) return +b !== +b;
+	        // An `egal` comparison is performed for other numeric values.
+	        return +a === 0 ? 1 / +a === 1 / b : +a === +b;
+	      case '[object Date]':
+	      case '[object Boolean]':
+	        // Coerce dates and booleans to numeric primitive values. Dates are compared by their
+	        // millisecond representations. Note that invalid dates with millisecond representations
+	        // of `NaN` are not equivalent.
+	        return +a === +b;
+	    }
+
+	    var areArrays = className === '[object Array]';
+	    if (!areArrays) {
+	      if (typeof a != 'object' || typeof b != 'object') return false;
+
+	      // Objects with different constructors are not equivalent, but `Object`s or `Array`s
+	      // from different frames are.
+	      var aCtor = a.constructor, bCtor = b.constructor;
+	      if (aCtor !== bCtor && !(_.isFunction(aCtor) && aCtor instanceof aCtor &&
+	                               _.isFunction(bCtor) && bCtor instanceof bCtor)
+	                          && ('constructor' in a && 'constructor' in b)) {
+	        return false;
+	      }
+	    }
+	    // Assume equality for cyclic structures. The algorithm for detecting cyclic
+	    // structures is adapted from ES 5.1 section 15.12.3, abstract operation `JO`.
+
+	    // Initializing stack of traversed objects.
+	    // It's done here since we only need them for objects and arrays comparison.
+	    aStack = aStack || [];
+	    bStack = bStack || [];
+	    var length = aStack.length;
+	    while (length--) {
+	      // Linear search. Performance is inversely proportional to the number of
+	      // unique nested structures.
+	      if (aStack[length] === a) return bStack[length] === b;
+	    }
+
+	    // Add the first object to the stack of traversed objects.
+	    aStack.push(a);
+	    bStack.push(b);
+
+	    // Recursively compare objects and arrays.
+	    if (areArrays) {
+	      // Compare array lengths to determine if a deep comparison is necessary.
+	      length = a.length;
+	      if (length !== b.length) return false;
+	      // Deep compare the contents, ignoring non-numeric properties.
+	      while (length--) {
+	        if (!eq(a[length], b[length], aStack, bStack)) return false;
+	      }
+	    } else {
+	      // Deep compare objects.
+	      var keys = _.keys(a), key;
+	      length = keys.length;
+	      // Ensure that both objects contain the same number of properties before comparing deep equality.
+	      if (_.keys(b).length !== length) return false;
+	      while (length--) {
+	        // Deep compare each member
+	        key = keys[length];
+	        if (!(_.has(b, key) && eq(a[key], b[key], aStack, bStack))) return false;
+	      }
+	    }
+	    // Remove the first object from the stack of traversed objects.
+	    aStack.pop();
+	    bStack.pop();
+	    return true;
+	  };
+
+	  // Perform a deep comparison to check if two objects are equal.
+	  _.isEqual = function(a, b) {
+	    return eq(a, b);
+	  };
+
+	  // Is a given array, string, or object empty?
+	  // An "empty" object has no enumerable own-properties.
+	  _.isEmpty = function(obj) {
+	    if (obj == null) return true;
+	    if (isArrayLike(obj) && (_.isArray(obj) || _.isString(obj) || _.isArguments(obj))) return obj.length === 0;
+	    return _.keys(obj).length === 0;
+	  };
+
+	  // Is a given value a DOM element?
+	  _.isElement = function(obj) {
+	    return !!(obj && obj.nodeType === 1);
+	  };
+
+	  // Is a given value an array?
+	  // Delegates to ECMA5's native Array.isArray
+	  _.isArray = nativeIsArray || function(obj) {
+	    return toString.call(obj) === '[object Array]';
+	  };
+
+	  // Is a given variable an object?
+	  _.isObject = function(obj) {
+	    var type = typeof obj;
+	    return type === 'function' || type === 'object' && !!obj;
+	  };
+
+	  // Add some isType methods: isArguments, isFunction, isString, isNumber, isDate, isRegExp, isError.
+	  _.each(['Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp', 'Error'], function(name) {
+	    _['is' + name] = function(obj) {
+	      return toString.call(obj) === '[object ' + name + ']';
+	    };
+	  });
+
+	  // Define a fallback version of the method in browsers (ahem, IE < 9), where
+	  // there isn't any inspectable "Arguments" type.
+	  if (!_.isArguments(arguments)) {
+	    _.isArguments = function(obj) {
+	      return _.has(obj, 'callee');
+	    };
+	  }
+
+	  // Optimize `isFunction` if appropriate. Work around some typeof bugs in old v8,
+	  // IE 11 (#1621), and in Safari 8 (#1929).
+	  if (typeof /./ != 'function' && typeof Int8Array != 'object') {
+	    _.isFunction = function(obj) {
+	      return typeof obj == 'function' || false;
+	    };
+	  }
+
+	  // Is a given object a finite number?
+	  _.isFinite = function(obj) {
+	    return isFinite(obj) && !isNaN(parseFloat(obj));
+	  };
+
+	  // Is the given value `NaN`? (NaN is the only number which does not equal itself).
+	  _.isNaN = function(obj) {
+	    return _.isNumber(obj) && obj !== +obj;
+	  };
+
+	  // Is a given value a boolean?
+	  _.isBoolean = function(obj) {
+	    return obj === true || obj === false || toString.call(obj) === '[object Boolean]';
+	  };
+
+	  // Is a given value equal to null?
+	  _.isNull = function(obj) {
+	    return obj === null;
+	  };
+
+	  // Is a given variable undefined?
+	  _.isUndefined = function(obj) {
+	    return obj === void 0;
+	  };
+
+	  // Shortcut function for checking if an object has a given property directly
+	  // on itself (in other words, not on a prototype).
+	  _.has = function(obj, key) {
+	    return obj != null && hasOwnProperty.call(obj, key);
+	  };
+
+	  // Utility Functions
+	  // -----------------
+
+	  // Run Underscore.js in *noConflict* mode, returning the `_` variable to its
+	  // previous owner. Returns a reference to the Underscore object.
+	  _.noConflict = function() {
+	    root._ = previousUnderscore;
+	    return this;
+	  };
+
+	  // Keep the identity function around for default iteratees.
+	  _.identity = function(value) {
+	    return value;
+	  };
+
+	  // Predicate-generating functions. Often useful outside of Underscore.
+	  _.constant = function(value) {
+	    return function() {
+	      return value;
+	    };
+	  };
+
+	  _.noop = function(){};
+
+	  _.property = property;
+
+	  // Generates a function for a given object that returns a given property.
+	  _.propertyOf = function(obj) {
+	    return obj == null ? function(){} : function(key) {
+	      return obj[key];
+	    };
+	  };
+
+	  // Returns a predicate for checking whether an object has a given set of
+	  // `key:value` pairs.
+	  _.matcher = _.matches = function(attrs) {
+	    attrs = _.extendOwn({}, attrs);
+	    return function(obj) {
+	      return _.isMatch(obj, attrs);
+	    };
+	  };
+
+	  // Run a function **n** times.
+	  _.times = function(n, iteratee, context) {
+	    var accum = Array(Math.max(0, n));
+	    iteratee = optimizeCb(iteratee, context, 1);
+	    for (var i = 0; i < n; i++) accum[i] = iteratee(i);
+	    return accum;
+	  };
+
+	  // Return a random integer between min and max (inclusive).
+	  _.random = function(min, max) {
+	    if (max == null) {
+	      max = min;
+	      min = 0;
+	    }
+	    return min + Math.floor(Math.random() * (max - min + 1));
+	  };
+
+	  // A (possibly faster) way to get the current timestamp as an integer.
+	  _.now = Date.now || function() {
+	    return new Date().getTime();
+	  };
+
+	   // List of HTML entities for escaping.
+	  var escapeMap = {
+	    '&': '&amp;',
+	    '<': '&lt;',
+	    '>': '&gt;',
+	    '"': '&quot;',
+	    "'": '&#x27;',
+	    '`': '&#x60;'
+	  };
+	  var unescapeMap = _.invert(escapeMap);
+
+	  // Functions for escaping and unescaping strings to/from HTML interpolation.
+	  var createEscaper = function(map) {
+	    var escaper = function(match) {
+	      return map[match];
+	    };
+	    // Regexes for identifying a key that needs to be escaped
+	    var source = '(?:' + _.keys(map).join('|') + ')';
+	    var testRegexp = RegExp(source);
+	    var replaceRegexp = RegExp(source, 'g');
+	    return function(string) {
+	      string = string == null ? '' : '' + string;
+	      return testRegexp.test(string) ? string.replace(replaceRegexp, escaper) : string;
+	    };
+	  };
+	  _.escape = createEscaper(escapeMap);
+	  _.unescape = createEscaper(unescapeMap);
+
+	  // If the value of the named `property` is a function then invoke it with the
+	  // `object` as context; otherwise, return it.
+	  _.result = function(object, property, fallback) {
+	    var value = object == null ? void 0 : object[property];
+	    if (value === void 0) {
+	      value = fallback;
+	    }
+	    return _.isFunction(value) ? value.call(object) : value;
+	  };
+
+	  // Generate a unique integer id (unique within the entire client session).
+	  // Useful for temporary DOM ids.
+	  var idCounter = 0;
+	  _.uniqueId = function(prefix) {
+	    var id = ++idCounter + '';
+	    return prefix ? prefix + id : id;
+	  };
+
+	  // By default, Underscore uses ERB-style template delimiters, change the
+	  // following template settings to use alternative delimiters.
+	  _.templateSettings = {
+	    evaluate    : /<%([\s\S]+?)%>/g,
+	    interpolate : /<%=([\s\S]+?)%>/g,
+	    escape      : /<%-([\s\S]+?)%>/g
+	  };
+
+	  // When customizing `templateSettings`, if you don't want to define an
+	  // interpolation, evaluation or escaping regex, we need one that is
+	  // guaranteed not to match.
+	  var noMatch = /(.)^/;
+
+	  // Certain characters need to be escaped so that they can be put into a
+	  // string literal.
+	  var escapes = {
+	    "'":      "'",
+	    '\\':     '\\',
+	    '\r':     'r',
+	    '\n':     'n',
+	    '\u2028': 'u2028',
+	    '\u2029': 'u2029'
+	  };
+
+	  var escaper = /\\|'|\r|\n|\u2028|\u2029/g;
+
+	  var escapeChar = function(match) {
+	    return '\\' + escapes[match];
+	  };
+
+	  // JavaScript micro-templating, similar to John Resig's implementation.
+	  // Underscore templating handles arbitrary delimiters, preserves whitespace,
+	  // and correctly escapes quotes within interpolated code.
+	  // NB: `oldSettings` only exists for backwards compatibility.
+	  _.template = function(text, settings, oldSettings) {
+	    if (!settings && oldSettings) settings = oldSettings;
+	    settings = _.defaults({}, settings, _.templateSettings);
+
+	    // Combine delimiters into one regular expression via alternation.
+	    var matcher = RegExp([
+	      (settings.escape || noMatch).source,
+	      (settings.interpolate || noMatch).source,
+	      (settings.evaluate || noMatch).source
+	    ].join('|') + '|$', 'g');
+
+	    // Compile the template source, escaping string literals appropriately.
+	    var index = 0;
+	    var source = "__p+='";
+	    text.replace(matcher, function(match, escape, interpolate, evaluate, offset) {
+	      source += text.slice(index, offset).replace(escaper, escapeChar);
+	      index = offset + match.length;
+
+	      if (escape) {
+	        source += "'+\n((__t=(" + escape + "))==null?'':_.escape(__t))+\n'";
+	      } else if (interpolate) {
+	        source += "'+\n((__t=(" + interpolate + "))==null?'':__t)+\n'";
+	      } else if (evaluate) {
+	        source += "';\n" + evaluate + "\n__p+='";
+	      }
+
+	      // Adobe VMs need the match returned to produce the correct offest.
+	      return match;
+	    });
+	    source += "';\n";
+
+	    // If a variable is not specified, place data values in local scope.
+	    if (!settings.variable) source = 'with(obj||{}){\n' + source + '}\n';
+
+	    source = "var __t,__p='',__j=Array.prototype.join," +
+	      "print=function(){__p+=__j.call(arguments,'');};\n" +
+	      source + 'return __p;\n';
+
+	    try {
+	      var render = new Function(settings.variable || 'obj', '_', source);
+	    } catch (e) {
+	      e.source = source;
+	      throw e;
+	    }
+
+	    var template = function(data) {
+	      return render.call(this, data, _);
+	    };
+
+	    // Provide the compiled source as a convenience for precompilation.
+	    var argument = settings.variable || 'obj';
+	    template.source = 'function(' + argument + '){\n' + source + '}';
+
+	    return template;
+	  };
+
+	  // Add a "chain" function. Start chaining a wrapped Underscore object.
+	  _.chain = function(obj) {
+	    var instance = _(obj);
+	    instance._chain = true;
+	    return instance;
+	  };
+
+	  // OOP
+	  // ---------------
+	  // If Underscore is called as a function, it returns a wrapped object that
+	  // can be used OO-style. This wrapper holds altered versions of all the
+	  // underscore functions. Wrapped objects may be chained.
+
+	  // Helper function to continue chaining intermediate results.
+	  var result = function(instance, obj) {
+	    return instance._chain ? _(obj).chain() : obj;
+	  };
+
+	  // Add your own custom functions to the Underscore object.
+	  _.mixin = function(obj) {
+	    _.each(_.functions(obj), function(name) {
+	      var func = _[name] = obj[name];
+	      _.prototype[name] = function() {
+	        var args = [this._wrapped];
+	        push.apply(args, arguments);
+	        return result(this, func.apply(_, args));
+	      };
+	    });
+	  };
+
+	  // Add all of the Underscore functions to the wrapper object.
+	  _.mixin(_);
+
+	  // Add all mutator Array functions to the wrapper.
+	  _.each(['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'], function(name) {
+	    var method = ArrayProto[name];
+	    _.prototype[name] = function() {
+	      var obj = this._wrapped;
+	      method.apply(obj, arguments);
+	      if ((name === 'shift' || name === 'splice') && obj.length === 0) delete obj[0];
+	      return result(this, obj);
+	    };
+	  });
+
+	  // Add all accessor Array functions to the wrapper.
+	  _.each(['concat', 'join', 'slice'], function(name) {
+	    var method = ArrayProto[name];
+	    _.prototype[name] = function() {
+	      return result(this, method.apply(this._wrapped, arguments));
+	    };
+	  });
+
+	  // Extracts the result from a wrapped and chained object.
+	  _.prototype.value = function() {
+	    return this._wrapped;
+	  };
+
+	  // Provide unwrapping proxy for some methods used in engine operations
+	  // such as arithmetic and JSON stringification.
+	  _.prototype.valueOf = _.prototype.toJSON = _.prototype.value;
+
+	  _.prototype.toString = function() {
+	    return '' + this._wrapped;
+	  };
+
+	  // AMD registration happens at the end for compatibility with AMD loaders
+	  // that may not enforce next-turn semantics on modules. Even though general
+	  // practice for AMD registration is to be anonymous, underscore registers
+	  // as a named module because, like jQuery, it is a base library that is
+	  // popular enough to be bundled in a third party lib, but not be part of
+	  // an AMD load request. Those cases could generate an error when an
+	  // anonymous define() is called outside of a loader request.
+	  if (true) {
+	    !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function() {
+	      return _;
+	    }.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+	  }
+	}.call(this));
 
 
 /***/ })
