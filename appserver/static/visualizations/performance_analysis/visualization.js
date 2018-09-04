@@ -16592,7 +16592,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 					if(this.granularity<=60){
 						time_minute = oMoment(this.start_time).minute()
 						this.start_time=oMoment(this.start_time).minute(Math.floor(time_minute/this.granularity)* this.granularity).second(0).toDate();
-						time_minute = oMoment(this.start_end).minute()
+						time_minute = oMoment(this.end_time).minute()
 						this.end_time=oMoment(this.end_time).minute(Math.ceil(time_minute/this.granularity)* this.granularity).second(0).toDate();
 					}else{
 						// Granularity is more than 1 hour - just set start minutes/seconds to hh:00:00 and end minutes/seconds to hh:59:59
@@ -16605,7 +16605,8 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 					var start_time_in_seconds = Math.round(new Date(currentTime + localOffset).getTime() / 1000);
 					var start_time_in_seconds_utc = this.start_time.getTime()/1000;
 					// Timezone won't affect the number of buckets
-					this.num_buckets = Math.ceil(((this.end_time.getTime() / 1000)  - (this.start_time.getTime() / 1000) ) / (this.granularity*60)) +1;
+					//this.num_buckets = Math.ceil(((this.end_time.getTime() / 1000)  - (this.start_time.getTime() / 1000) ) / (this.granularity*60)) +1;
+					this.num_buckets = Math.ceil(((this.end_time.getTime() / 1000)  - (this.start_time.getTime() / 1000) ) / (this.granularity*60));
 					//---------------- End set start / end time from data object ----------------------------
 
 
