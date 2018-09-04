@@ -6,11 +6,11 @@ daniel@spavin.net
 
 
 # Who is this app for? #
-- This app is for anyone who wants to display two different metrics over time in a tablular format.
+- This app is for anyone who wants to show how two related metrics vary over time in a tablular format.
 
 
 # How does the app work? #
-- This app provides a visualization to display two loosely related metrics over time in a tabular format.
+- This app provides a visualization that you can use in your own apps and dashboards.
 - To use it in your dashboards, simply install the app, and create a search that provides the following fields: _time, name, value, status
 
 
@@ -18,6 +18,7 @@ daniel@spavin.net
 1. Displaying both infrastructure and application health over time
 2. Showing both performance and availability of transactions from a selenium script (Application Performance Monitoring)
 3. Monitoring Application health and exceptions over the past day or week
+4. Tracking the number of code commits vs build status over time
 
 
 ### The following fields can be used in the search: ###
@@ -33,6 +34,9 @@ daniel@spavin.net
 ### Example Search ###
 index=_internal earliest = -24h@h group=*| rename group as name, date_second as value, status as date_minute  | table _time, name, value, status
 
+A sample data set is included with the app:
+
+| inputlookup sample-data.csv
 
 # Release Notes #
 ## v 0.8.0 ##
