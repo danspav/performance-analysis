@@ -131,7 +131,7 @@ define([
 		// Now load the visualisation
 		var perfAnalysisVis = new performance_analysis(granularity, okThreshold, highThreshold, warningThreshold, veryHighThreshold, criticalThreshold, downTimeStart,downTimeEnd,timeFormat,showLegend,showStatusAsText);
 		
-		perfAnalysisVis.set_colours(okColour,warningColour,criticalColour,noDataColour);
+		perfAnalysisVis.set_colours(lowColour,okColour,highColour,warningColour,veryHighColour, criticalColour,noDataColour);
 		var vizObj = this
 		perfAnalysisVis.setData(data);
 		this.$el.html(perfAnalysisVis.getHTML());
