@@ -111,11 +111,17 @@ define([
 		
 		// Get Config parameters:
 		var granularity = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'granularity']) || 15;
-		var okColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'okColour'] || "#78B24A";
-		var warningColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'warningColour'] || "#E0C135";
-		var criticalColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'criticalColour'] || "#DD0000";
-		var noDataColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'noDataColour'] || "#5EBFC6";		
+		var lowColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'lowColour'] || "#00B0F0";
+		var okColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'okColour'] || "#00B050";
+		var criticalColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'criticalColour'] || "#92D050";
+		var okColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'okColour'] || "#FFC000";
+		var warningColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'warningColour'] || "#ED7D31";
+		var criticalColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'criticalColour'] || "#FF0000";
+		var noDataColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'noDataColour'] || "#A5A5A5";		
+		var okThreshold = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'okThreshold']) || 8;
+		var highThreshold = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'highThreshold']) || 8;
 		var warningThreshold = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'warningThreshold']) || 8;
+		var veryHighThreshold = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'veryHighThreshold']) || 8;
 		var criticalThreshold = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'criticalThreshold']) || 12;
 		var timeFormat = config[this.getPropertyNamespaceInfo().propertyNamespace + "timeFormat"] || "h:mm A";
 		var downTimeStart = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + "downTimeStart"]) || 0;
@@ -123,7 +129,7 @@ define([
 		var showLegend = config[this.getPropertyNamespaceInfo().propertyNamespace + "showLegend"] || true;
 		var showStatusAsText = config[this.getPropertyNamespaceInfo().propertyNamespace + "showStatusAsText"] || true;
 		// Now load the visualisation
-		var perfAnalysisVis = new performance_analysis(granularity, warningThreshold, criticalThreshold, downTimeStart,downTimeEnd,timeFormat,showLegend,showStatusAsText);
+		var perfAnalysisVis = new performance_analysis(granularity, okThreshold, highThreshold, warningThreshold, veryHighThreshold, criticalThreshold, downTimeStart,downTimeEnd,timeFormat,showLegend,showStatusAsText);
 		
 		perfAnalysisVis.set_colours(okColour,warningColour,criticalColour,noDataColour);
 		var vizObj = this

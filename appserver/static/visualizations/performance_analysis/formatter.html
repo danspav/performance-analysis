@@ -1,10 +1,20 @@
 <form class="splunk-formatter-section" section-label="Default Thresholds">
-    <splunk-control-group label="Warning Threshold">
-        <splunk-text-input name="{{VIZ_NAMESPACE}}.warningThreshold" value="12"></splunk-text-input>
+    <splunk-control-group label="OK Threshold">
+        <splunk-text-input name="{{VIZ_NAMESPACE}}.okThreshold" value="3"></splunk-text-input>
+	</splunk-control-group>
+	<splunk-control-group label="High Threshold">
+        <splunk-text-input name="{{VIZ_NAMESPACE}}.highThreshold" value="4"></splunk-text-input>
+	</splunk-control-group>
+	<splunk-control-group label="Warning Threshold">
+        <splunk-text-input name="{{VIZ_NAMESPACE}}.warningThreshold" value="4.5"></splunk-text-input>
+	</splunk-control-group>
+	<splunk-control-group label="Warning Threshold">
+        <splunk-text-input name="{{VIZ_NAMESPACE}}.veryHighThreshold" value="5.5"></splunk-text-input>
 	</splunk-control-group>
 	<splunk-control-group label="Critical Threshold">
-        <splunk-text-input name="{{VIZ_NAMESPACE}}.criticalThreshold" value="18"></splunk-text-input>
+        <splunk-text-input name="{{VIZ_NAMESPACE}}.criticalThreshold" value="6.5"></splunk-text-input>
 	</splunk-control-group>
+	
 </form>
 
 <form class="splunk-formatter-section" section-label="Options">
@@ -29,9 +39,12 @@
 </form>
 
 <form class="splunk-formatter-section" section-label="Colours">
-    <splunk-control-group label="Ok Colour">		<splunk-color-picker name="{{VIZ_NAMESPACE}}.okColour" value="#78B24A">			</splunk-color-picker></splunk-control-group>
-	<splunk-control-group label="Warning Colour">	<splunk-color-picker name="{{VIZ_NAMESPACE}}.warningColour" value="#E0C135">	</splunk-color-picker></splunk-control-group>
-	<splunk-control-group label="Critical Colour">	<splunk-color-picker name="{{VIZ_NAMESPACE}}.criticalColour" value="#DD0000">	</splunk-color-picker></splunk-control-group>
+    <splunk-control-group label="Low Colour">		<splunk-color-picker name="{{VIZ_NAMESPACE}}.lowColour" value="#00B0F0">			</splunk-color-picker></splunk-control-group>
+	<splunk-control-group label="OK Colour">	<splunk-color-picker name="{{VIZ_NAMESPACE}}.okColour" value="#00B050">	</splunk-color-picker></splunk-control-group>
+	<splunk-control-group label="High Colour">	<splunk-color-picker name="{{VIZ_NAMESPACE}}.highColour" value="#92D050">	</splunk-color-picker></splunk-control-group>
+	<splunk-control-group label="Warning Colour">		<splunk-color-picker name="{{VIZ_NAMESPACE}}.warningColour" value="#FFC000">			</splunk-color-picker></splunk-control-group>
+	<splunk-control-group label="Very High Colour">	<splunk-color-picker name="{{VIZ_NAMESPACE}}.veryHighColour" value="#ED7D31">	</splunk-color-picker></splunk-control-group>
+	<splunk-control-group label="Critical Colour">	<splunk-color-picker name="{{VIZ_NAMESPACE}}.criticalColour" value="#FF0000">	</splunk-color-picker></splunk-control-group>
 	<splunk-control-group label="No Data Colour">	<splunk-color-picker name="{{VIZ_NAMESPACE}}.noDataColour" value="#5EBFC6">		</splunk-color-picker></splunk-control-group>
 </form>
 
