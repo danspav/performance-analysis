@@ -156,11 +156,18 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 			
 			// Get Config parameters:
 			var granularity = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'granularity']) || 15;
-			var okColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'okColour'] || "#78B24A";
-			var warningColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'warningColour'] || "#E0C135";
-			var criticalColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'criticalColour'] || "#DD0000";
-			var noDataColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'noDataColour'] || "#5EBFC6";		
+			var lowColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'lowColour'] || "#00B0F0";
+			var okColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'okColour'] || "#00B050";
+			var highColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'highColour'] || "#92D050";
+			var warningColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'warningColour'] || "#FFC000";
+			var veryHighColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'veryHighColour'] || "#ED7D31";
+			var criticalColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'criticalColour'] || "#FF0000";
+			
+			var noDataColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'noDataColour'] || "#A5A5A5";		
+			var okThreshold = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'okThreshold']) || 8;
+			var highThreshold = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'highThreshold']) || 8;
 			var warningThreshold = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'warningThreshold']) || 8;
+			var veryHighThreshold = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'veryHighThreshold']) || 8;
 			var criticalThreshold = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'criticalThreshold']) || 12;
 			var timeFormat = config[this.getPropertyNamespaceInfo().propertyNamespace + "timeFormat"] || "h:mm A";
 			var downTimeStart = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + "downTimeStart"]) || 0;
@@ -168,9 +175,9 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 			var showLegend = config[this.getPropertyNamespaceInfo().propertyNamespace + "showLegend"] || true;
 			var showStatusAsText = config[this.getPropertyNamespaceInfo().propertyNamespace + "showStatusAsText"] || true;
 			// Now load the visualisation
-			var perfAnalysisVis = new performance_analysis(granularity, warningThreshold, criticalThreshold, downTimeStart,downTimeEnd,timeFormat,showLegend,showStatusAsText);
+			var perfAnalysisVis = new performance_analysis(granularity, okThreshold, highThreshold, warningThreshold, veryHighThreshold, criticalThreshold, downTimeStart,downTimeEnd,timeFormat,showLegend,showStatusAsText);
 			
-			perfAnalysisVis.set_colours(okColour,warningColour,criticalColour,noDataColour);
+			perfAnalysisVis.set_colours(lowColour,okColour,highColour,warningColour,veryHighColour, criticalColour,noDataColour);
 			var vizObj = this
 			perfAnalysisVis.setData(data);
 			this.$el.html(perfAnalysisVis.getHTML());
@@ -16512,20 +16519,26 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 		
 		
 		class performance_analysis{
-			constructor(granularity, warning_threshold, critical_threshold,down_time_start,down_time_end,time_format,show_legend,showStatusAsText){
+			constructor(granularity, ok_threshold,  high_threshold,warning_threshold, veryHigh_threshold, critical_threshold,down_time_start,down_time_end,time_format,show_legend,showStatusAsText){
 				this.items = [];
 				this.num_items = 0;
 				this.start_time = Date.now();
 				this.end_time = Date.now();
 				this.granularity = granularity;
 				this.numBuckets = 12;
+				this.ok_threshold = ok_threshold;
+				this.high_threshold = high_threshold;
+				this.veryHigh_threshold = veryHigh_threshold
 				this.warning_threshold = warning_threshold;
 				this.critical_threshold = critical_threshold;
 				//Colour Defaults:
-				this.okColour = "#78B24A";
-				this.warningColour = "#E0C135";
-				this.criticalColour = "#DD0000";
-				this.noDataColour = "#5EBFC6";
+				this.lowColour = "#00B0F0";
+				this.okColour = "#00B050";
+				this.highColour = "#92D050";
+				this.warningColour = "#FFC000";
+				this.veryHighColour = "#ED7D31";
+				this.criticalColour = "#FF0000";
+				this.noDataColour = "#A5A5A5";
 				this.downTimeStart=down_time_start;
 				this.downTimeEnd=down_time_end;
 				this.timeFormat = time_format;
@@ -16538,9 +16551,12 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 			
 
 			//Method to set all the colours for OK / Warning/ Critical / NoData
-			set_colours(okColour, warningColour, criticalColour, noDataColour){
+			set_colours(lowColour, okColour, highColour, warningColour, veryHighColour, criticalColour, noDataColour){
+				this.lowColour = lowColour;
 				this.okColour = okColour;
+				this.highColour = highColour;
 				this.warningColour = warningColour;
+				this.veryHighColour = veryHighColour;
 				this.criticalColour = criticalColour;
 				this.noDataColour = noDataColour;
 			}
@@ -16628,8 +16644,11 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 								temp_bucket = new time_bucket();
 								temp_bucket.showStatusAsText = this.showStatusAsText;
 								temp_bucket.timeFormat = this.timeFormat;
-								temp_bucket.set_colours(this.okColour, this.warningColour, this.criticalColour, this.noDataColour);
+								temp_bucket.set_colours(this.lowColour, this.okColour, this.highColour, this.warningColour, this.veryHighColour, this.criticalColour, this.noDataColour);
+								temp_bucket.ok_threshold = data_item[fields["ok_threshold"]] || this.ok_threshold;
+								temp_bucket.high_threshold = data_item[fields["high_threshold"]] || this.high_threshold;
 								temp_bucket.warning_threshold = data_item[fields["warning_threshold"]] || this.warning_threshold;
+								temp_bucket.veryHigh_threshold = data_item[fields["veryHigh_threshold"]] || this.veryHigh_threshold;
 								temp_bucket.critical_threshold = data_item[fields["critical_threshold"]] || this.critical_threshold;
 								temp_bucket.set_start_time(bucket_start_time_seconds);
 								temp_bucket.set_end_time(bucket_end_time_seconds);
@@ -16688,9 +16707,12 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 				if(this.showLegend){
 					html += '<table class=performance_analysis_legend_container"><tr><td><a href="#" onclick="$(\'table.performance_analysis_legend\').toggle();return false;" title="View Legend"><img src="/static/app/performance-analysis/images/legend.gif" alt="Show or hide the legend" width="16" height="16" /></a></td><td>';
 					html += '<table class="performance_analysis performance_analysis_legend"><tr><td><strong>Legend:</strong></td>';
-					html += '<td class="ok"><img src="/static/app/performance-analysis/images/blank.gif" alt="Infrastrucure OK" width="16" height="16" /></td><td>Infrastructure OK</td><td>&nbsp;</td>';
-					html += '<td class="warning"><img src="/static/app/performance-analysis/images/blank.gif" alt="Infrastrucure Amber" width="16" height="16" /></td><td>Infrastructure Amber</td><td>&nbsp;</td>';
-					html += '<td class="critical"><img src="/static/app/performance-analysis/images/blank.gif" alt="Infrastrucure Red" width="16" height="16" /></td><td>Infrastructure Red</td><td>&nbsp;</td>';
+					html += '<td class="low"><img src="/static/app/performance-analysis/images/blank.gif" alt="Infrastrucure LOW" width="16" height="16" /></td><td>Infra LOW</td><td>&nbsp;</td>';
+					html += '<td class="ok"><img src="/static/app/performance-analysis/images/blank.gif" alt="Infrastrucure OK" width="16" height="16" /></td><td>Infras OK</td><td>&nbsp;</td>';
+					html += '<td class="high"><img src="/static/app/performance-analysis/images/blank.gif" alt="Infrastrucure HIGH" width="16" height="16" /></td><td>Infra HIGH</td><td>&nbsp;</td>';
+					html += '<td class="warning"><img src="/static/app/performance-analysis/images/blank.gif" alt="Infrastrucure WARNING" width="16" height="16" /></td><td>Infra WARNING</td><td>&nbsp;</td>';
+					html += '<td class="veryHigh"><img src="/static/app/performance-analysis/images/blank.gif" alt="Infrastrucure VERY HIGH" width="16" height="16" /></td><td>Infra VERY HIGH</td><td>&nbsp;</td>';
+					html += '<td class="critical"><img src="/static/app/performance-analysis/images/blank.gif" alt="Infrastrucure CRITICAL" width="16" height="16" /></td><td>Infra CRITICAL</td><td>&nbsp;</td>';
 					html += '<td><img src="/static/app/performance-analysis/images/green.png" style="width:16px; height: 16px;" width="16" height="16" title="Application reported GREEN" /></td><td>Application Green</td><td>&nbsp;</td>';
 					html += '<td><img src="/static/app/performance-analysis/images/amber.png" style="width:16px; height: 16px;" width="16" height="16" title="Application reported AMBER" /></td><td>Application Amber</td><td>&nbsp;</td>';
 					html += '<td><img src="/static/app/performance-analysis/images/red.png" style="width:16px; height: 16px;" width="16" height="16" title="Application reported Red" /></td><td>Application Red</td><td>&nbsp;</td>';
@@ -16737,21 +16759,29 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 				this.sum_status = 0.0;
 				this.average_status = 0.0;
 				//Colour Defaults:
+				this.lowColour = "#78B24A";
 				this.okColour = "#78B24A";
+				this.highColour = "#E0C135";
 				this.warningColour = "#E0C135";
-				this.criticalColour = "#DD0000";
-				this.noDataColour = "#5EBFC6";
+				this.veryHighColour ="#DD0000";
+				this.criticalColour ="#DD0000";
+				this.noDataColour = "#a5a5a5";
+				
 				this.isInDownTime = false;
 				this.timeFormat = "h:mm A";
 				this.oMoment = __webpack_require__(71);
 			}
 			
 
-			set_colours(okColour, warningColour, criticalColour, noDataColour){
+			set_colours(lowColour, okColour, highColour, warningColour, veryHighColour, criticalColour, noDataColour){
+				this.lowColour = lowColour;
 				this.okColour = okColour;
+				this.highColour = highColour;
 				this.warningColour = warningColour;
+				this.veryHighColour = veryHighColour;
 				this.criticalColour = criticalColour;
 				this.noDataColour = noDataColour;
+			
 			}
 			set_start_time(start){ 
 				this.start_time = new Date(1970, 0, 1); // Epoch
@@ -16831,8 +16861,11 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 				// ---- Values (Background color) ----
 				
 				if (this.average_value >= this.critical_threshold) { css_class += ' critical'; colour = this.criticalColour;}
-				if (this.average_value < this.critical_threshold && this.average_value >= this.warning_threshold) { css_class += ' warning'; colour = this.warningColour;}
-				if (this.average_value < this.warning_threshold) {css_class += ' ok'; colour = this.okColour;}
+				if (this.average_value < this.critical_threshold && this.average_value >= this.veryHigh_threshold) { css_class += ' veryHigh'; colour = this.veryHighColour;}
+				if (this.average_value < this.veryHigh_threshold && this.average_value >= this.warning_threshold) { css_class += ' warning'; colour = this.warningColour;}
+				if (this.average_value < this.warning_threshold && this.average_value >= this.high_threshold) { css_class += ' high'; colour = this.highColour;}
+				if (this.average_value < this.high_threshold && this.average_value >= this.ok_threshold) { css_class += ' ok'; colour = this.okColour;}
+				if (this.average_value < this.ok_threshold) {css_class += ' low'; colour = this.lowColour;}
 				if (this.total==0) {css_class = " nodata"; colour=this.noDataColour;}
 				if(this.isInDownTime) {
 					css_class += ' downtime';

@@ -25,17 +25,23 @@
         </search>
         <option name="drilldown">none</option>
         <option name="performance-analysis.performance_analysis.criticalColour">#DD0000</option>
-        <option name="performance-analysis.performance_analysis.criticalThreshold">18</option>
-        <option name="performance-analysis.performance_analysis.downTimeEnd">7</option>
+        <option name="performance-analysis.performance_analysis.criticalThreshold">70</option>
+        <option name="performance-analysis.performance_analysis.downTimeEnd">0</option>
         <option name="performance-analysis.performance_analysis.downTimeStart">0</option>
         <option name="performance-analysis.performance_analysis.granularity">60</option>
+        <option name="performance-analysis.performance_analysis.highColour">#92D050</option>
+        <option name="performance-analysis.performance_analysis.highThreshold">40</option>
+        <option name="performance-analysis.performance_analysis.lowColour">#00B0F0</option>
         <option name="performance-analysis.performance_analysis.noDataColour">#5EBFC6</option>
         <option name="performance-analysis.performance_analysis.okColour">#78B24A</option>
+        <option name="performance-analysis.performance_analysis.okThreshold">30</option>
         <option name="performance-analysis.performance_analysis.showLegend">true</option>
         <option name="performance-analysis.performance_analysis.showStatusAsText">true</option>
         <option name="performance-analysis.performance_analysis.timeFormat">h:mm A</option>
+        <option name="performance-analysis.performance_analysis.veryHighColour">#ED7D31</option>
+        <option name="performance-analysis.performance_analysis.veryHighThreshold">60</option>
         <option name="performance-analysis.performance_analysis.warningColour">#f8be34</option>
-        <option name="performance-analysis.performance_analysis.warningThreshold">12</option>
+        <option name="performance-analysis.performance_analysis.warningThreshold">50</option>
         <option name="trellis.enabled">0</option>
         <option name="trellis.scales.shared">1</option>
         <option name="trellis.size">medium</option>

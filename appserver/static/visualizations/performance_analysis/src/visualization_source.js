@@ -113,9 +113,9 @@ define([
 		var granularity = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + 'granularity']) || 15;
 		var lowColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'lowColour'] || "#00B0F0";
 		var okColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'okColour'] || "#00B050";
-		var highColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'criticalColour'] || "#92D050";
-		var warningColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'okColour'] || "#FFC000";
-		var veryHighColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'warningColour'] || "#ED7D31";
+		var highColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'highColour'] || "#92D050";
+		var warningColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'warningColour'] || "#FFC000";
+		var veryHighColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'veryHighColour'] || "#ED7D31";
 		var criticalColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'criticalColour'] || "#FF0000";
 		
 		var noDataColour = config[this.getPropertyNamespaceInfo().propertyNamespace + 'noDataColour'] || "#A5A5A5";		
