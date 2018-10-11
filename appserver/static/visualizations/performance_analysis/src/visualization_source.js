@@ -103,7 +103,7 @@ define([
 		//this.$el.class="transaction_analysis";
 		
 		//var trans_analysis = require("performance_analysis");
-		const { performance_analysis, item, time_bucket } = require('performance_analysis');
+		const performance_analysis= require('performance_analysis');
 		const Tooltip = require('tooltip');
 		var tip = Tooltip();
 		
@@ -130,7 +130,7 @@ define([
 		var showLegend = config[this.getPropertyNamespaceInfo().propertyNamespace + "showLegend"] || true;
 		var showStatusAsText = config[this.getPropertyNamespaceInfo().propertyNamespace + "showStatusAsText"] || true;
 		// Now load the visualisation
-		var perfAnalysisVis = new performance_analysis(granularity, okThreshold, highThreshold, warningThreshold, veryHighThreshold, criticalThreshold, downTimeStart,downTimeEnd,timeFormat,showLegend,showStatusAsText);
+		var perfAnalysisVis = new performance_analysis.performance_analysis(granularity, okThreshold, highThreshold, warningThreshold, veryHighThreshold, criticalThreshold, downTimeStart,downTimeEnd,timeFormat,showLegend,showStatusAsText);
 		
 		perfAnalysisVis.set_colours(lowColour,okColour,highColour,warningColour,veryHighColour, criticalColour,noDataColour);
 		var vizObj = this
