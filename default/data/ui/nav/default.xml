@@ -1,4 +1,4 @@
-<nav search_view="search" color="#5C8EB1">
+<nav search_view="search" color="#3C444D">
   <view name="search" />
   <view name="about" default="true" />
   <view name="visualisation_examples" />
