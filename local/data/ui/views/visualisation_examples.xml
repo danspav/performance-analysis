@@ -92,7 +92,7 @@
       <viz type="performance-analysis.performance_analysis">
         <search>
           <query>| gentimes start=4/1/18:12:00:00 end=4/1/18:17:00:00 increment=1m
-| rename starthuman as _time 
+| rename starttime as _time
 | eval rnd = random()%5 
 | eval name=case(rnd==0,"Homepage", rnd==1,"Login",rnd==2,"Search Page",rnd==3,"Select Result",rnd==4,"Logout",1==1,"Homepage")
 | eval value = rnd*2 
