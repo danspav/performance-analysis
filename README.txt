@@ -2,7 +2,7 @@ Daniel Spavin
 daniel@spavin.net
 
 # Version Support #
-7.1, 7.0, 6.3
+7.2, 7.1, 7.0, 6.3
 
 
 # Who is this app for? #
@@ -32,14 +32,14 @@ daniel@spavin.net
 
 
 ### Example Search ###
-index=_internal earliest = -24h@h group=*| rename group as name, date_second as value, status as date_minute  | table _time, name, value, status
+index=_internal earliest = -24h@h group=*| rename group as name, date_second as value, date_minute as status | table _time, name, value, status
 
 A sample data set is included with the app:
 
 | inputlookup sample-data.csv
 
 # Release Notes #
-## v 0.8.0 ##
+## v 1.0.0 ##
 - Initial version
 
 
