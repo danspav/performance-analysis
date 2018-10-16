@@ -139,7 +139,7 @@ define([
 				}
 				cells[i].className.replace(/jds_ta_clickable/, '');
 			}
-			$('[data-toggle="tooltip"]').tooltip();
+			//$('[data-toggle="tooltip"]').tooltip();
 		}
 	});
 });
