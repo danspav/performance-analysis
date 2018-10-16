@@ -104,8 +104,8 @@ define([
 		
 		//var trans_analysis = require("performance_analysis");
 		const { performance_analysis, item, time_bucket } = require('performance_analysis');
-		const Tooltip = require('tooltip');
-		var tip = Tooltip();
+		//const Tooltip = require('tooltip');
+		//var tip = Tooltip();
 		
 		
 		
@@ -136,6 +136,9 @@ define([
 			cells[i].onclick = function(){vizObj.drilldownToTimeRange(this.getAttribute("start_time"), this.getAttribute("end_time"), event);}
 			cells[i].className.replace(/jds_ta_clickable/,'');
 		}
+		//Set up Bootstrap Tooltips
+		$('[data-toggle="tooltip"]').tooltip();
+})
     }
     });
 });
