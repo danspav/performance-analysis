@@ -32,3 +32,8 @@ table.performance_analysis td{border-radius:5px; border:none!important;}
 table.performance_analysis_legend{background: none!important; border: 1px solid #efefef!important;width:auto!important;display:none;}
 
 table.performance_analysis_legend_container .icon-alert{font-size: 25px;}
+
+/* IE9, IE10 */
+@media screen and (min-width:0\0) {
+    table.performance_analysis{width:98%;}
+}

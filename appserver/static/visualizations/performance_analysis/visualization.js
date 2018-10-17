@@ -147,11 +147,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 				//this.$el.class="transaction_analysis";
 
 				//var trans_analysis = require("performance_analysis");
-				const {
-					performance_analysis,
-					item,
-					time_bucket
-				} = __webpack_require__(70);
+				const performance_analysis = __webpack_require__(70);
 				const Tooltip = __webpack_require__(1);
 				var tip = Tooltip();
 
@@ -169,7 +165,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 				var showLegend = config[this.getPropertyNamespaceInfo().propertyNamespace + "showLegend"] || true;
 				var showStatusAsText = config[this.getPropertyNamespaceInfo().propertyNamespace + "showStatusAsText"] || true;
 				// Now load the visualisation
-				var perfAnalysisVis = new performance_analysis(granularity, warningThreshold, criticalThreshold, downTimeStart, downTimeEnd, timeFormat, showLegend, showStatusAsText);
+				var perfAnalysisVis = new performance_analysis.performance_analysis(granularity, warningThreshold, criticalThreshold, downTimeStart, downTimeEnd, timeFormat, showLegend, showStatusAsText);
 
 				perfAnalysisVis.set_colours(okColour, warningColour, criticalColour, noDataColour);
 				var vizObj = this
@@ -16498,359 +16494,554 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 /* 70 */
 /***/ (function(module, exports, __webpack_require__) {
 
-		//https://docs.npmjs.com/getting-started/creating-node-modules
-		//https://googlechrome.github.io/samples/classes-es6/
-		/*
-			Search query must supply:
-				* name		| Provides a label for the row
-				* value		| Provides a measurement to represent the cell background color
-				* status	| Provides a metric for the icon in the cell
-				-------
-				Optional values:
-				* warning_threshold	| Level at which green becomes amber
-				* critical_threshold	| Level at which amber becomes red	
-		*/
-		
-		
-		class performance_analysis{
-			constructor(granularity, warning_threshold, critical_threshold,down_time_start,down_time_end,time_format,show_legend,showStatusAsText){
-				this.items = [];
-				this.num_items = 0;
-				this.start_time = Date.now();
-				this.end_time = Date.now();
-				this.granularity = granularity;
-				this.numBuckets = 12;
-				this.warning_threshold = warning_threshold;
-				this.critical_threshold = critical_threshold;
-				//Colour Defaults:
-				this.okColour = "#78B24A";
-				this.warningColour = "#E0C135";
-				this.criticalColour = "#DD0000";
-				this.noDataColour = "#5EBFC6";
-				this.downTimeStart=down_time_start;
-				this.downTimeEnd=down_time_end;
-				this.timeFormat = time_format;
-				this.showLegend = (show_legend=="true");
-				this.showStatusAsText = (showStatusAsText=="true");
-				//----------------
-				this.data_item;
-				this.current_item;
-			}
-			
+	"use strict";
 
-			//Method to set all the colours for OK / Warning/ Critical / NoData
-			set_colours(okColour, warningColour, criticalColour, noDataColour){
-				this.okColour = okColour;
-				this.warningColour = warningColour;
-				this.criticalColour = criticalColour;
-				this.noDataColour = noDataColour;
-			}
+	function _classCallCheck(instance, Constructor) {
+	  if (!(instance instanceof Constructor)) {
+	    throw new TypeError("Cannot call a class as a function");
+	  }
+	}
 
+	//https://docs.npmjs.com/getting-started/creating-node-modules
+	//https://googlechrome.github.io/samples/classes-es6/
+	/*
+		Search query must supply:
+			* name		| Provides a label for the row
+			* value		| Provides a measurement to represent the cell background color
+			* status	| Provides a metric for the icon in the cell
+			-------
+			Optional values:
+			* warning_threshold	| Level at which green becomes amber
+			* critical_threshold	| Level at which amber becomes red	
+	*/
 
-			setData(data){
-				var temp_bucket;
-				var bucket;
-				var bucket_start_time_seconds;
-				var bucket_end_time_seconds;
-				var bucket_index = 0;
-				var start_time_in_seconds;
-				var time_minute = 0;
-				var time_hour = 0;
-				var i = 0;
-				var fields = [];
-				var data_item;
-				var current_item;
-				var k;
-				var oMoment = __webpack_require__(71);
-				var date_first_row;
-				var date_last_row;
-				var date_temp;
-				var SplunkVisUtils = __webpack_require__(69);
-				var vizUtils = __webpack_require__(69);
-				const { performance_analysis, item, time_bucket } = __webpack_require__(70);;
-				
-				try{
-					//------------------------------  Get data row field indexes ----------------------------------------------------------------------
-					for (i=0; i<data.fields.length; i++){
-						fields[data.fields[i].name.toLowerCase()]  = i;
-					}
+	var performance_analysis = (function() {
+	  function performance_analysis(
+	    granularity,
+	    warning_threshold,
+	    critical_threshold,
+	    down_time_start,
+	    down_time_end,
+	    time_format,
+	    show_legend,
+	    showStatusAsText
+	  ) {
+	    _classCallCheck(this, performance_analysis);
 
-					// Set up the Start and End dates based on data supplied. This will determine how much time each bucket has, as  num_buckets is configurable
-					date_first_row = data.rows[0][fields["_time"]];
-					date_first_row  = oMoment(date_first_row);
-					date_last_row = data.rows[data.rows.length-1][fields["_time"]];
-					date_last_row = oMoment(date_last_row); //, 'DD/MM/YYYY HH:mm:ss A'
-					//Set earliest time as start time, and latest time as end time
-					if (date_first_row > date_last_row) { 
-						this.start_time = SplunkVisUtils.parseTimestamp(date_last_row);
-						this.end_time = SplunkVisUtils.parseTimestamp(date_first_row);
-					}else{
-						this.start_time = SplunkVisUtils.parseTimestamp(date_first_row);
-						this.end_time = SplunkVisUtils.parseTimestamp(date_last_row);
-					}
-					
-					//Snap to the granularity - e.g. if Granularity is 5 minutes, set start/end time to hh:00:00, hh:05:00, hh:10:00
-					if(this.granularity<=60){
-						time_minute = oMoment(this.start_time).minute()
-						this.start_time=oMoment(this.start_time).minute(Math.floor(time_minute/this.granularity)* this.granularity).second(0).toDate();
-						time_minute = oMoment(this.end_time).minute()
-						this.end_time=oMoment(this.end_time).minute(Math.ceil(time_minute/this.granularity)* this.granularity).second(0).toDate();
-					}else{
-						// Granularity is more than 1 hour - just set start minutes/seconds to hh:00:00 and end minutes/seconds to hh:59:59
-						this.start_time=oMoment(this.start_time).minute(0).second(0).toDate();
-						this.end_time=oMoment(this.end_time).minute(59).second(59).toDate();
-					}
-					
-					var currentTime = this.start_time.getTime();
-					var localOffset = (-1) * this.start_time.getTimezoneOffset() * 60000;
-					var start_time_in_seconds = Math.round(new Date(currentTime + localOffset).getTime() / 1000);
-					var start_time_in_seconds_utc = this.start_time.getTime()/1000;
-					// Timezone won't affect the number of buckets
-					//this.num_buckets = Math.ceil(((this.end_time.getTime() / 1000)  - (this.start_time.getTime() / 1000) ) / (this.granularity*60)) +1;
-					this.num_buckets = Math.ceil(((this.end_time.getTime() / 1000)  - (this.start_time.getTime() / 1000) ) / (this.granularity*60))+1;
-					//---------------- End set start / end time from data object ----------------------------
+	    this.items = [];
+	    this.num_items = 0;
+	    this.start_time = Date.now();
+	    this.end_time = Date.now();
+	    this.granularity = granularity;
+	    this.numBuckets = 12;
+	    this.warning_threshold = warning_threshold;
+	    this.critical_threshold = critical_threshold;
+	    //Colour Defaults:
+	    this.okColour = "#78B24A";
+	    this.warningColour = "#E0C135";
+	    this.criticalColour = "#DD0000";
+	    this.noDataColour = "#5EBFC6";
+	    this.downTimeStart = down_time_start;
+	    this.downTimeEnd = down_time_end;
+	    this.timeFormat = time_format;
+	    this.showLegend = show_legend == "true";
+	    this.showStatusAsText = showStatusAsText == "true";
+	    //----------------
+	    this.data_item;
+	    this.current_item;
+	  }
 
+	  //Method to set all the colours for OK / Warning/ Critical / NoData
 
-					// Get the current transation, or create it if it doesn't yet exist
-					for (i=0; i<data.rows.length; i++){
-						data_item = data.rows[i];
-						//------------------------------  Create or Locate item Objects ----------------------------------------------------------------------
-						if(typeof this.items[vizUtils.escapeHtml(data_item[fields["name"]])] === 'undefined') {
-							// does not exist
-							this.items[vizUtils.escapeHtml(data_item[fields["name"]])] = new item(vizUtils.escapeHtml(data_item[fields["name"]]));
-							this.num_items++;
-							current_item = this.items[vizUtils.escapeHtml(data_item[fields["name"]])];
-							current_item.num_buckets = this.num_buckets;
-							// Create Time Buckets for this item
-							for(k=0;k<current_item.num_buckets;k++){
-								//Set up the time bucket
-								bucket_start_time_seconds = start_time_in_seconds + (k *  this.granularity * 60);
-								bucket_end_time_seconds = start_time_in_seconds + ((1+k) * this.granularity * 60) -1;
-								temp_bucket = new time_bucket();
-								temp_bucket.showStatusAsText = this.showStatusAsText;
-								temp_bucket.timeFormat = this.timeFormat;
-								temp_bucket.set_colours(this.okColour, this.warningColour, this.criticalColour, this.noDataColour);
-								temp_bucket.warning_threshold = data_item[fields["warning_threshold"]] || this.warning_threshold;
-								temp_bucket.critical_threshold = data_item[fields["critical_threshold"]] || this.critical_threshold;
-								temp_bucket.set_start_time(bucket_start_time_seconds);
-								temp_bucket.set_end_time(bucket_end_time_seconds);
-								// Is the bucket during down time?
-								if(oMoment(temp_bucket.start_time).hour() >= this.downTimeStart && oMoment(temp_bucket.start_time).hour() < this.downTimeEnd) temp_bucket.isInDownTime = true;
-								//Add to item's bucket array
-								current_item.buckets.push(temp_bucket);
-							}
-						} else {
-							// does exist
-						}
-						//------------------------------  Fill in details for Bucket Objects ----------------------------------------------------------------------
-						current_item = this.items[vizUtils.escapeHtml(data_item[fields["name"]])];		
-						// Find the correct bucket to put the item details into:
-						// Index = Math.ceiling(   (time - start_time) / granularity   ) 
-						bucket_start_time_seconds = oMoment(data_item[fields["_time"]]).toDate().getTime()/1000; 
-						bucket_index = Math.ceil(   (bucket_start_time_seconds - (start_time_in_seconds_utc-1)) / (60*this.granularity)) -1;
-						if (bucket_index >= current_item.buckets.length) bucket_index = current_item.buckets.length-1;
-						current_item.buckets[bucket_index].add_item(data_item, fields);
-					}	
-				} catch(err) {
-					console.log("Error setting data. " + err);
-				}
-			}
+	  performance_analysis.prototype.set_colours = function set_colours(
+	    okColour,
+	    warningColour,
+	    criticalColour,
+	    noDataColour
+	  ) {
+	    this.okColour = okColour;
+	    this.warningColour = warningColour;
+	    this.criticalColour = criticalColour;
+	    this.noDataColour = noDataColour;
+	  };
 
-			getHTML(){
-				var item_counter = 0;
-				var bucket_counter = 0;
-				var css="";
-				var html = '<table class="performance_analysis">';
-				var item;
-				var oMoment = __webpack_require__(71);
-				var item_names = Object.keys(this.items);
-				for(item_counter=0; item_counter < item_names.length ; item_counter++){
-					item = this.items[item_names[item_counter]];
-					
-					// Print out the header row of the table
-					if(item_counter==0){
-						html += '<tr><td>&nbsp;</td>';
-						for(bucket_counter=0; bucket_counter < this.num_buckets -1; bucket_counter++){
-							//If time is in a downtime period, add the downtime class
-							css = (item.buckets[bucket_counter].isInDownTime) ? " downtime" : "";
-							html += '<td class="time' + css + '">' + oMoment(item.buckets[bucket_counter].start_time).format(this.timeFormat) + '</td>';
-						}
-						html+= '</tr>';
-					}
-					//---------------------------------------
-					html += '<tr><tr><td class="item_name">' + item.name + '</td>';
-					for(bucket_counter=0; bucket_counter < this.num_buckets -1; bucket_counter++){
-						html += item.buckets[bucket_counter].getHTML();
-					}
-					html += '</tr>';
-				} // loop item_counter
-				html += '</table>';
-				//Add a legend?
-				if(this.showLegend){
-					html += '<table class="performance_analysis_legend_container"><tr><td><a href="#" onclick="$(\'table.performance_analysis_legend\').toggle();return false;" title="View Legend"><i class="icon-alert"></i></a></td><td>';
-					html += '<table class="performance_analysis performance_analysis_legend"><tr><td><strong>Legend:</strong></td>';
-					html += '<td class="ok"><img src="/static/app/performance-analysis/images/blank.gif" alt="Infrastrucure OK" width="16" height="16" /></td><td>Infrastructure OK</td><td>&nbsp;</td>';
-					html += '<td class="warning"><img src="/static/app/performance-analysis/images/blank.gif" alt="Infrastrucure Amber" width="16" height="16" /></td><td>Infrastructure Amber</td><td>&nbsp;</td>';
-					html += '<td class="critical"><img src="/static/app/performance-analysis/images/blank.gif" alt="Infrastrucure Red" width="16" height="16" /></td><td>Infrastructure Red</td><td>&nbsp;</td>';
-					html += '<td><img src="/static/app/performance-analysis/images/green.png" style="width:16px; height: 16px;" width="16" height="16" title="Application reported GREEN" /></td><td>Application Green</td><td>&nbsp;</td>';
-					html += '<td><img src="/static/app/performance-analysis/images/amber.png" style="width:16px; height: 16px;" width="16" height="16" title="Application reported AMBER" /></td><td>Application Amber</td><td>&nbsp;</td>';
-					html += '<td><img src="/static/app/performance-analysis/images/red.png" style="width:16px; height: 16px;" width="16" height="16" title="Application reported Red" /></td><td>Application Red</td><td>&nbsp;</td>';
-					html += '<td class="downtime"><img src="/static/app/performance-analysis/images/blank.gif" alt="Down time" width="16" height="16" /></td><td>Down Time</td><td>&nbsp;</td></tr></table></td></table>';
-				}
-				
-				return html;
-			}
-		}
+	  performance_analysis.prototype.setData = function setData(data) {
+	    var temp_bucket;
+	    var bucket;
+	    var bucket_start_time_seconds;
+	    var bucket_end_time_seconds;
+	    var bucket_index = 0;
+	    var start_time_in_seconds;
+	    var time_minute = 0;
+	    var time_hour = 0;
+	    var i = 0;
+	    var fields = [];
+	    var data_item;
+	    var current_item;
+	    var k;
+	    var oMoment = __webpack_require__(71);
+	    var date_first_row;
+	    var date_last_row;
+	    var date_temp;
+	    var SplunkVisUtils = __webpack_require__(69);
+	    var vizUtils = __webpack_require__(69);
 
-		/* item class
-			This class defines a row in the performance analysis graph.
-			It will house the time buckets, item name etc.
-			There will be multiple instances, but one per unique name
-		*/
-		class item{
+	    var _require = __webpack_require__(70),
+	      performance_analysis = _require.performance_analysis,
+	      item = _require.item,
+	      time_bucket = _require.time_bucket;
 
-			constructor(tname){
-				this.name = tname;		// the item Name
-				this.total = 0;			// the Total number of items
-				this.buckets = [];		// The timebuckets
-			}
-		}
+	    try {
+	      //------------------------------  Get data row field indexes ----------------------------------------------------------------------
+	      for (i = 0; i < data.fields.length; i++) {
+	        fields[data.fields[i].name.toLowerCase()] = i;
+	      }
 
-		/* timeBucket class
-			This class is a collection of cells that will become the red/yellow/green/blue boxes in the analysis graph
-		*/
-		class  time_bucket {
-			
-			constructor(){
-				this.start_time;
-				this.end_time;
-				this.num_failed = 0;
-				this.num_amber = 0;
-				this.num_red = 0;
-				this.num_green = 0;
-				this.total = 0;
-				this.warning_threshold = 8;
-				this.critical_threshold = 12;
-				this.sum_value = 0.0;
-				this.average_value = 0.0;
-				this.showStatusAsText = true;
-				// Status can be a float or string (12.20 or "GREEN")
-				this.sum_status = 0.0;
-				this.average_status = 0.0;
-				//Colour Defaults:
-				this.okColour = "#78B24A";
-				this.warningColour = "#E0C135";
-				this.criticalColour = "#DD0000";
-				this.noDataColour = "#5EBFC6";
-				this.isInDownTime = false;
-				this.timeFormat = "h:mm A";
-				this.oMoment = __webpack_require__(71);
-			}
-			
+	      // Set up the Start and End dates based on data supplied. This will determine how much time each bucket has, as  num_buckets is configurable
+	      date_first_row = data.rows[0][fields["_time"]];
+	      date_first_row = oMoment(date_first_row);
+	      date_last_row = data.rows[data.rows.length - 1][fields["_time"]];
+	      date_last_row = oMoment(date_last_row); //, 'DD/MM/YYYY HH:mm:ss A'
+	      //Set earliest time as start time, and latest time as end time
+	      if (date_first_row > date_last_row) {
+	        this.start_time = SplunkVisUtils.parseTimestamp(date_last_row);
+	        this.end_time = SplunkVisUtils.parseTimestamp(date_first_row);
+	      } else {
+	        this.start_time = SplunkVisUtils.parseTimestamp(date_first_row);
+	        this.end_time = SplunkVisUtils.parseTimestamp(date_last_row);
+	      }
 
-			set_colours(okColour, warningColour, criticalColour, noDataColour){
-				this.okColour = okColour;
-				this.warningColour = warningColour;
-				this.criticalColour = criticalColour;
-				this.noDataColour = noDataColour;
-			}
-			set_start_time(start){ 
-				this.start_time = new Date(1970, 0, 1); // Epoch
-				this.start_time.setSeconds(start);
-		    }
-			
-			set_end_time (end){
-				this.end_time = new Date(1970, 0, 1); // Epoch
-				this.end_time.setSeconds(end);
-		    };
-			
-			add_item(result_row,fields){
-				var temp_status=0.0;
-				var temp_value=0.0;
-				try{
-					//GREEN
-					if (result_row[fields["status"]].toLowerCase()=="green") this.num_green++;
-					if (result_row[fields["status"]].toLowerCase()=="ok") this.num_green++;
-					if (result_row[fields["status"]].toLowerCase()=="pass") this.num_green++;
-					if (result_row[fields["status"]].toLowerCase()=="low") this.num_green++;
-					//AMBER
-					if (result_row[fields["status"]].toLowerCase()=="amber") this.num_amber++;
-					if (result_row[fields["status"]].toLowerCase()=="warn") this.num_amber++;
-					if (result_row[fields["status"]].toLowerCase()=="warning") this.num_amber++;
-					if (result_row[fields["status"]].toLowerCase()=="caution") this.num_amber++;
-					//RED
-					if (result_row[fields["status"]].toLowerCase()=="red") this.num_red++;
-					if (result_row[fields["status"]].toLowerCase()=="critical") this.num_red++;
-					if (result_row[fields["status"]].toLowerCase()=="severe") this.num_red++;
-					if (result_row[fields["status"]].toLowerCase()=="fail") this.num_red++;
-					
-					// Add the passed, failed, update percentages etc
-					temp_value=parseFloat(result_row[fields["value"]]);
-					if (isNaN(temp_value)) { temp_value=0;}
-					this.sum_value += temp_value;
-					// Increment total values for this bucket
-					this.total++;
-					this.average_value = (this.sum_value/ this.total).toFixed(2);
-					
-					temp_status=parseFloat(result_row[fields["status"]]);
-					if (isNaN(temp_status)) { temp_status=0;}
-					this.sum_status += temp_status;
-					this.average_status = (this.sum_status/ this.total).toFixed(2); 
-					
-				} catch(err) {
-					console.log("Error determining status / value.")
-				}
-			}
-			
-			getHTML(){
-				var css_class= '';
-				var html = '';
-				var downtimeHTML = '';
-				var colour = "";
-				var td_image = "";
-				var data_tooltip="";
-				var time_period = "<b>Time Period:</b> " + this.oMoment(this.start_time).format(this.timeFormat) + " to " +  this.oMoment(this.end_time).format(this.timeFormat) + "</span><br />";
-				if (this.total==0){
-					td_image = "";
-				}else if (!this.showStatusAsText && !isNaN(this.average_status)){
-					td_image = "<span class=\"status_value\">" + this.average_status + "</span>";
-					data_tooltip="Average value: " + this.average_status;
-				}else if (this.num_amber==0 && this.num_red==0 && this.num_green==0){
-					td_image='<img src="/static/app/performance-analysis/images/blank.gif" style="width:16px; height: 16px;" width="16" height="16"/>';
-					data_tooltip=time_period + '<b>Server:</b><br />Average: ' + this.average_value + '<br /><b>Application reported:</b><br />GREEN ' + this.num_green + ' time(s)<br />AMBER 0 time(s)<br />RED 0 time(s)';
-				}else if (this.num_amber==0 && this.num_red==0 && this.num_green > 0){
-					td_image='<img src="/static/app/performance-analysis/images/green.png" style="width:16px; height: 16px;" width="16" height="16"/>';
-					data_tooltip=time_period + '<b>Server:</b><br />Average: ' + this.average_value + '<br /><b>Application reported:</b><br />GREEN ' + this.num_green + ' time(s)<br />AMBER 0 time(s)<br />RED 0 time(s)';
-				}else if(this.num_amber >0 && this.num_red==0){ 
-					td_image='<img src="/static/app/performance-analysis/images/amber.png" style="width:16px; height: 16px;" width="16" height="16"/>';
-					data_tooltip=time_period + '<b>Server:</b><br />Average: ' + this.average_value + '<br /><b>Application reported:</b><br />GREEN ' + this.num_green + ' time(s)<br />AMBER ' + this.num_amber + ' time(s)<br />RED 0 time(s)';
-				} else{
-					td_image= '<img src="/static/app/performance-analysis/images/red.png" style="width:16px; height: 16px;" width="16" height="16"/>';
-					data_tooltip=time_period + '<b>Server:</b><br />Average: ' + this.average_value + '<br /><b>Application reported:</b><br />GREEN ' + this.num_green + ' time(s)<br />AMBER ' + this.num_amber + ' time(s)<br />RED ' + this.num_red + ' time(s)';
-				}
-				
-				// ---- Values (Background color) ----
-				
-				if (this.average_value >= this.critical_threshold) { css_class += ' critical'; colour = this.criticalColour;}
-				if (this.average_value < this.critical_threshold && this.average_value >= this.warning_threshold) { css_class += ' warning'; colour = this.warningColour;}
-				if (this.average_value < this.warning_threshold) {css_class += ' ok'; colour = this.okColour;}
-				if (this.total==0) {css_class = " nodata"; colour=this.noDataColour;}
-				if(this.isInDownTime) {
-					css_class += ' downtime';
-					data_tooltip += "<br>Downtime was in effect during this period.";
-				}
-				if (data_tooltip!="") {
-					data_tooltip = " data-tooltip=\"" + data_tooltip + "\"";
-				}
-				html = '<td class="jds_ta_clickable ' + css_class + '" style="text-align:center;background-color: ' + colour + '!IMPORTANT" start_time="' + (this.start_time.getTime()/1000) + '" end_time="'+ (this.end_time.getTime()/1000) + '"' + data_tooltip + '>' + td_image + '</td>';
-						
-				return html;
-			}
-		}
+	      //Snap to the granularity - e.g. if Granularity is 5 minutes, set start/end time to hh:00:00, hh:05:00, hh:10:00
+	      if (this.granularity <= 60) {
+	        time_minute = oMoment(this.start_time).minute();
+	        this.start_time = oMoment(this.start_time)
+	          .minute(Math.floor(time_minute / this.granularity) * this.granularity)
+	          .second(0)
+	          .toDate();
+	        time_minute = oMoment(this.end_time).minute();
+	        this.end_time = oMoment(this.end_time)
+	          .minute(Math.ceil(time_minute / this.granularity) * this.granularity)
+	          .second(0)
+	          .toDate();
+	      } else {
+	        // Granularity is more than 1 hour - just set start minutes/seconds to hh:00:00 and end minutes/seconds to hh:59:59
+	        this.start_time = oMoment(this.start_time)
+	          .minute(0)
+	          .second(0)
+	          .toDate();
+	        this.end_time = oMoment(this.end_time)
+	          .minute(59)
+	          .second(59)
+	          .toDate();
+	      }
 
+	      var currentTime = this.start_time.getTime();
+	      var localOffset = -1 * this.start_time.getTimezoneOffset() * 60000;
+	      var start_time_in_seconds = Math.round(
+	        new Date(currentTime + localOffset).getTime() / 1000
+	      );
+	      var start_time_in_seconds_utc = this.start_time.getTime() / 1000;
+	      // Timezone won't affect the number of buckets
+	      //this.num_buckets = Math.ceil(((this.end_time.getTime() / 1000)  - (this.start_time.getTime() / 1000) ) / (this.granularity*60)) +1;
+	      this.num_buckets =
+	        Math.ceil(
+	          (this.end_time.getTime() / 1000 - this.start_time.getTime() / 1000) /
+	            (this.granularity * 60)
+	        ) + 1;
+	      //---------------- End set start / end time from data object ----------------------------
 
+	      // Get the current transation, or create it if it doesn't yet exist
+	      for (i = 0; i < data.rows.length; i++) {
+	        data_item = data.rows[i];
+	        //------------------------------  Create or Locate item Objects ----------------------------------------------------------------------
+	        if (
+	          typeof this.items[vizUtils.escapeHtml(data_item[fields["name"]])] ===
+	          "undefined"
+	        ) {
+	          // does not exist
+	          this.items[vizUtils.escapeHtml(data_item[fields["name"]])] = new item(
+	            vizUtils.escapeHtml(data_item[fields["name"]])
+	          );
+	          this.num_items++;
+	          current_item = this.items[
+	            vizUtils.escapeHtml(data_item[fields["name"]])
+	          ];
+	          current_item.num_buckets = this.num_buckets;
+	          // Create Time Buckets for this item
+	          for (k = 0; k < current_item.num_buckets; k++) {
+	            //Set up the time bucket
+	            bucket_start_time_seconds =
+	              start_time_in_seconds + k * this.granularity * 60;
+	            bucket_end_time_seconds =
+	              start_time_in_seconds + (1 + k) * this.granularity * 60 - 1;
+	            temp_bucket = new time_bucket();
+	            temp_bucket.showStatusAsText = this.showStatusAsText;
+	            temp_bucket.timeFormat = this.timeFormat;
+	            temp_bucket.set_colours(
+	              this.okColour,
+	              this.warningColour,
+	              this.criticalColour,
+	              this.noDataColour
+	            );
+	            temp_bucket.warning_threshold =
+	              data_item[fields["warning_threshold"]] || this.warning_threshold;
+	            temp_bucket.critical_threshold =
+	              data_item[fields["critical_threshold"]] ||
+	              this.critical_threshold;
+	            temp_bucket.set_start_time(bucket_start_time_seconds);
+	            temp_bucket.set_end_time(bucket_end_time_seconds);
+	            // Is the bucket during down time?
+	            if (
+	              oMoment(temp_bucket.start_time).hour() >= this.downTimeStart &&
+	              oMoment(temp_bucket.start_time).hour() < this.downTimeEnd
+	            )
+	              temp_bucket.isInDownTime = true;
+	            //Add to item's bucket array
+	            current_item.buckets.push(temp_bucket);
+	          }
+	        } else {
+	        }
+	        // does exist
 
-		module.exports = { performance_analysis, item, time_bucket}
+	        //------------------------------  Fill in details for Bucket Objects ----------------------------------------------------------------------
+	        current_item = this.items[
+	          vizUtils.escapeHtml(data_item[fields["name"]])
+	        ];
+	        // Find the correct bucket to put the item details into:
+	        // Index = Math.ceiling(   (time - start_time) / granularity   )
+	        bucket_start_time_seconds =
+	          oMoment(data_item[fields["_time"]])
+	            .toDate()
+	            .getTime() / 1000;
+	        bucket_index =
+	          Math.ceil(
+	            (bucket_start_time_seconds - (start_time_in_seconds_utc - 1)) /
+	              (60 * this.granularity)
+	          ) - 1;
+	        if (bucket_index >= current_item.buckets.length)
+	          bucket_index = current_item.buckets.length - 1;
+	        current_item.buckets[bucket_index].add_item(data_item, fields);
+	      }
+	    } catch (err) {
+	      console.log("Error setting data. " + err);
+	    }
+	  };
+
+	  performance_analysis.prototype.getHTML = function getHTML() {
+	    var item_counter = 0;
+	    var bucket_counter = 0;
+	    var css = "";
+	    var html = '<table class="performance_analysis">';
+	    var item;
+	    var oMoment = __webpack_require__(71);
+	    var item_names = Object.keys(this.items);
+	    for (item_counter = 0; item_counter < item_names.length; item_counter++) {
+	      item = this.items[item_names[item_counter]];
+
+	      // Print out the header row of the table
+	      if (item_counter == 0) {
+	        html += "<tr><td>&nbsp;</td>";
+	        for (
+	          bucket_counter = 0;
+	          bucket_counter < this.num_buckets - 1;
+	          bucket_counter++
+	        ) {
+	          //If time is in a downtime period, add the downtime class
+	          css = item.buckets[bucket_counter].isInDownTime ? " downtime" : "";
+	          html +=
+	            '<td class="time' +
+	            css +
+	            '">' +
+	            oMoment(item.buckets[bucket_counter].start_time).format(
+	              this.timeFormat
+	            ) +
+	            "</td>";
+	        }
+	        html += "</tr>";
+	      }
+	      //---------------------------------------
+	      html += '<tr><tr><td class="item_name">' + item.name + "</td>";
+	      for (
+	        bucket_counter = 0;
+	        bucket_counter < this.num_buckets - 1;
+	        bucket_counter++
+	      ) {
+	        html += item.buckets[bucket_counter].getHTML();
+	      }
+	      html += "</tr>";
+	    } // loop item_counter
+	    html += "</table>";
+	    //Add a legend?
+	    if (this.showLegend) {
+	      html +=
+	        '<table class="performance_analysis_legend_container"><tr><td><a href="#" onclick="$(\'table.performance_analysis_legend\').toggle();return false;" title="View Legend"><i class="icon-alert"></i></a></td><td>';
+	      html +=
+	        '<table class="performance_analysis performance_analysis_legend"><tr><td><strong>Legend:</strong></td>';
+	      html +=
+	        '<td class="ok"><img src="/static/app/performance-analysis/images/blank.gif" alt="Infrastrucure OK" width="16" height="16" /></td><td>Infrastructure OK</td><td>&nbsp;</td>';
+	      html +=
+	        '<td class="warning"><img src="/static/app/performance-analysis/images/blank.gif" alt="Infrastrucure Amber" width="16" height="16" /></td><td>Infrastructure Amber</td><td>&nbsp;</td>';
+	      html +=
+	        '<td class="critical"><img src="/static/app/performance-analysis/images/blank.gif" alt="Infrastrucure Red" width="16" height="16" /></td><td>Infrastructure Red</td><td>&nbsp;</td>';
+	      html +=
+	        '<td><img src="/static/app/performance-analysis/images/green.png" style="width:16px; height: 16px;" width="16" height="16" title="Application reported GREEN" /></td><td>Application Green</td><td>&nbsp;</td>';
+	      html +=
+	        '<td><img src="/static/app/performance-analysis/images/amber.png" style="width:16px; height: 16px;" width="16" height="16" title="Application reported AMBER" /></td><td>Application Amber</td><td>&nbsp;</td>';
+	      html +=
+	        '<td><img src="/static/app/performance-analysis/images/red.png" style="width:16px; height: 16px;" width="16" height="16" title="Application reported Red" /></td><td>Application Red</td><td>&nbsp;</td>';
+	      html +=
+	        '<td class="downtime"><img src="/static/app/performance-analysis/images/blank.gif" alt="Down time" width="16" height="16" /></td><td>Down Time</td><td>&nbsp;</td></tr></table></td></table>';
+	    }
+
+	    return html;
+	  };
+
+	  return performance_analysis;
+	})();
+
+	/* item class
+		This class defines a row in the performance analysis graph.
+		It will house the time buckets, item name etc.
+		There will be multiple instances, but one per unique name
+	*/
+
+	var item = function item(tname) {
+	  _classCallCheck(this, item);
+
+	  this.name = tname; // the item Name
+	  this.total = 0; // the Total number of items
+	  this.buckets = []; // The timebuckets
+	};
+
+	/* timeBucket class
+		This class is a collection of cells that will become the red/yellow/green/blue boxes in the analysis graph
+	*/
+
+	var time_bucket = (function() {
+	  function time_bucket() {
+	    _classCallCheck(this, time_bucket);
+
+	    this.start_time;
+	    this.end_time;
+	    this.num_failed = 0;
+	    this.num_amber = 0;
+	    this.num_red = 0;
+	    this.num_green = 0;
+	    this.total = 0;
+	    this.warning_threshold = 8;
+	    this.critical_threshold = 12;
+	    this.sum_value = 0.0;
+	    this.average_value = 0.0;
+	    this.showStatusAsText = true;
+	    // Status can be a float or string (12.20 or "GREEN")
+	    this.sum_status = 0.0;
+	    this.average_status = 0.0;
+	    //Colour Defaults:
+	    this.okColour = "#78B24A";
+	    this.warningColour = "#E0C135";
+	    this.criticalColour = "#DD0000";
+	    this.noDataColour = "#5EBFC6";
+	    this.isInDownTime = false;
+	    this.timeFormat = "h:mm A";
+	    this.oMoment = __webpack_require__(71);
+	  }
+
+	  time_bucket.prototype.set_colours = function set_colours(
+	    okColour,
+	    warningColour,
+	    criticalColour,
+	    noDataColour
+	  ) {
+	    this.okColour = okColour;
+	    this.warningColour = warningColour;
+	    this.criticalColour = criticalColour;
+	    this.noDataColour = noDataColour;
+	  };
+
+	  time_bucket.prototype.set_start_time = function set_start_time(start) {
+	    this.start_time = new Date(1970, 0, 1); // Epoch
+	    this.start_time.setSeconds(start);
+	  };
+
+	  time_bucket.prototype.set_end_time = function set_end_time(end) {
+	    this.end_time = new Date(1970, 0, 1); // Epoch
+	    this.end_time.setSeconds(end);
+	  };
+
+	  time_bucket.prototype.add_item = function add_item(result_row, fields) {
+	    var temp_status = 0.0;
+	    var temp_value = 0.0;
+	    try {
+	      //GREEN
+	      if (result_row[fields["status"]].toLowerCase() == "green")
+	        this.num_green++;
+	      if (result_row[fields["status"]].toLowerCase() == "ok") this.num_green++;
+	      if (result_row[fields["status"]].toLowerCase() == "pass")
+	        this.num_green++;
+	      if (result_row[fields["status"]].toLowerCase() == "low") this.num_green++;
+	      //AMBER
+	      if (result_row[fields["status"]].toLowerCase() == "amber")
+	        this.num_amber++;
+	      if (result_row[fields["status"]].toLowerCase() == "warn")
+	        this.num_amber++;
+	      if (result_row[fields["status"]].toLowerCase() == "warning")
+	        this.num_amber++;
+	      if (result_row[fields["status"]].toLowerCase() == "caution")
+	        this.num_amber++;
+	      //RED
+	      if (result_row[fields["status"]].toLowerCase() == "red") this.num_red++;
+	      if (result_row[fields["status"]].toLowerCase() == "critical")
+	        this.num_red++;
+	      if (result_row[fields["status"]].toLowerCase() == "severe")
+	        this.num_red++;
+	      if (result_row[fields["status"]].toLowerCase() == "fail") this.num_red++;
+
+	      // Add the passed, failed, update percentages etc
+	      temp_value = parseFloat(result_row[fields["value"]]);
+	      if (isNaN(temp_value)) {
+	        temp_value = 0;
+	      }
+	      this.sum_value += temp_value;
+	      // Increment total values for this bucket
+	      this.total++;
+	      this.average_value = (this.sum_value / this.total).toFixed(2);
+
+	      temp_status = parseFloat(result_row[fields["status"]]);
+	      if (isNaN(temp_status)) {
+	        temp_status = 0;
+	      }
+	      this.sum_status += temp_status;
+	      this.average_status = (this.sum_status / this.total).toFixed(2);
+	    } catch (err) {
+	      console.log("Error determining status / value.");
+	    }
+	  };
+
+	  time_bucket.prototype.getHTML = function getHTML() {
+	    var css_class = "";
+	    var html = "";
+	    var downtimeHTML = "";
+	    var colour = "";
+	    var td_image = "";
+	    var data_tooltip = "";
+	    var time_period =
+	      "<b>Time Period:</b> " +
+	      this.oMoment(this.start_time).format(this.timeFormat) +
+	      " to " +
+	      this.oMoment(this.end_time).format(this.timeFormat) +
+	      "</span><br />";
+	    if (this.total == 0) {
+	      td_image = "";
+	    } else if (!this.showStatusAsText && !isNaN(this.average_status)) {
+	      td_image =
+	        '<span class="status_value">' + this.average_status + "</span>";
+	      data_tooltip = "Average value: " + this.average_status;
+	    } else if (
+	      this.num_amber == 0 &&
+	      this.num_red == 0 &&
+	      this.num_green == 0
+	    ) {
+	      td_image =
+	        '<img src="/static/app/performance-analysis/images/blank.gif" style="width:16px; height: 16px;" width="16" height="16"/>';
+	      data_tooltip =
+	        time_period +
+	        "<b>Server:</b><br />Average: " +
+	        this.average_value +
+	        "<br /><b>Application reported:</b><br />GREEN " +
+	        this.num_green +
+	        " time(s)<br />AMBER 0 time(s)<br />RED 0 time(s)";
+	    } else if (this.num_amber == 0 && this.num_red == 0 && this.num_green > 0) {
+	      td_image =
+	        '<img src="/static/app/performance-analysis/images/green.png" style="width:16px; height: 16px;" width="16" height="16"/>';
+	      data_tooltip =
+	        time_period +
+	        "<b>Server:</b><br />Average: " +
+	        this.average_value +
+	        "<br /><b>Application reported:</b><br />GREEN " +
+	        this.num_green +
+	        " time(s)<br />AMBER 0 time(s)<br />RED 0 time(s)";
+	    } else if (this.num_amber > 0 && this.num_red == 0) {
+	      td_image =
+	        '<img src="/static/app/performance-analysis/images/amber.png" style="width:16px; height: 16px;" width="16" height="16"/>';
+	      data_tooltip =
+	        time_period +
+	        "<b>Server:</b><br />Average: " +
+	        this.average_value +
+	        "<br /><b>Application reported:</b><br />GREEN " +
+	        this.num_green +
+	        " time(s)<br />AMBER " +
+	        this.num_amber +
+	        " time(s)<br />RED 0 time(s)";
+	    } else {
+	      td_image =
+	        '<img src="/static/app/performance-analysis/images/red.png" style="width:16px; height: 16px;" width="16" height="16"/>';
+	      data_tooltip =
+	        time_period +
+	        "<b>Server:</b><br />Average: " +
+	        this.average_value +
+	        "<br /><b>Application reported:</b><br />GREEN " +
+	        this.num_green +
+	        " time(s)<br />AMBER " +
+	        this.num_amber +
+	        " time(s)<br />RED " +
+	        this.num_red +
+	        " time(s)";
+	    }
+
+	    // ---- Values (Background color) ----
+
+	    if (this.average_value >= this.critical_threshold) {
+	      css_class += " critical";
+	      colour = this.criticalColour;
+	    }
+	    if (
+	      this.average_value < this.critical_threshold &&
+	      this.average_value >= this.warning_threshold
+	    ) {
+	      css_class += " warning";
+	      colour = this.warningColour;
+	    }
+	    if (this.average_value < this.warning_threshold) {
+	      css_class += " ok";
+	      colour = this.okColour;
+	    }
+	    if (this.total == 0) {
+	      css_class = " nodata";
+	      colour = this.noDataColour;
+	    }
+	    if (this.isInDownTime) {
+	      css_class += " downtime";
+	      data_tooltip += "<br>Downtime was in effect during this period.";
+	    }
+	    if (data_tooltip != "") {
+	      data_tooltip = ' data-tooltip="' + data_tooltip + '"';
+	    }
+	    html =
+	      '<td class="jds_ta_clickable ' +
+	      css_class +
+	      '" style="text-align:center;background-color: ' +
+	      colour +
+	      '!IMPORTANT" start_time="' +
+	      this.start_time.getTime() / 1000 +
+	      '" end_time="' +
+	      this.end_time.getTime() / 1000 +
+	      '"' +
+	      data_tooltip +
+	      ">" +
+	      td_image +
+	      "</td>";
+
+	    return html;
+	  };
+
+	  return time_bucket;
+	})();
+
+	module.exports = {
+	  performance_analysis: performance_analysis,
+	  item: item,
+	  time_bucket: time_bucket
+	};
 
 
 /***/ }),
