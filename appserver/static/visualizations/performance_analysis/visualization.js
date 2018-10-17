@@ -16935,7 +16935,7 @@ define(["api/SplunkVisualizationBase","api/SplunkVisualizationUtils"], function(
 	    } else if (!this.showStatusAsText && !isNaN(this.average_status)) {
 	      td_image =
 	        '<span class="status_value">' + this.average_status + "</span>";
-	      data_tooltip = "Average value: " + this.average_status;
+	      data_tooltip = time_period + "Average value: " + this.average_status;
 	    } else if (
 	      this.num_amber == 0 &&
 	      this.num_red == 0 &&
