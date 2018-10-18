@@ -73,11 +73,18 @@
               <img src="/static/app/performance-analysis/images/about-options.png"/>
             </td>
             <td valign="top">
-              <b>Granularity</b> sets the duration of each cell, in minutes. <br/> 5 = 5 minute intervals.<br/>30 = half-hour intervals.<br/>60 = 1 hour intervals.<br/>
-              <br/>
-            <b>Show Legend</b> turns the legend on and off. When set to 'show' the visualization will have a legend at the bottom left. <br/>
-              <br/>
-            <b>Status Format</b> determines what sort of decoration goes in the middle of the cells. Select 'Text' for textual values (GREEN / AMBER / RED) and 'Numerical' to show a number instead.
+              <p><b>Granularity</b> sets the duration of each cell, in minutes. <br/> 5 = 5 minute intervals.<br/>30 = half-hour intervals.<br/>60 = 1 hour intervals.</p><br/>
+              
+            <p><b>Show Legend</b> turns the legend on and off. When set to 'show' the visualization will have a legend at the bottom left.</p>
+              
+            <p><b>Status Format</b> determines what sort of decoration goes in the middle of the cells. Select 'Text' for textual values (GREEN / AMBER / RED) and 'Numerical' to show a number instead.</p>
+            <p>For the Text option, the following strings can be used for the status field:</p>
+            <table width="260" cellpadding="2" cellspacing="0" border="1" style="border: 1px solid #cccccc; border-collapse:collapse;">
+              <tr><td align="center"><strong>Icon</strong></td><td align="center"><strong>Status</strong></td></tr>
+              <tr><td align="center"><img src="/static/app/performance-analysis/images/green.png" alt="Green" /></td><td align="center">green<br />ok<br />pass<br />low</td></tr>
+              <tr><td align="center"><img src="/static/app/performance-analysis/images/amber.png" alt="Amber" /></td><td align="center">amber<br />warn<br />warning<br />caution</td></tr>
+              <tr><td align="center"><img src="/static/app/performance-analysis/images/red.png" alt="Red" /></td><td align="center">red<br />critical<br />severe<br />fail</td></tr>
+            </table>
             </td>
           </tr>
           </table>

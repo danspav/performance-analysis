@@ -42,4 +42,64 @@
       </viz>
     </panel>
   </row>
+  <row><panel><html>
+    
+    
+<h1>Version Support</h1>
+<p>7.2, 7.1, 7.0, 6.3</p>
+
+
+<h1> Who is this app for? </h1>
+<p>This app is for anyone who wants to show how two related metrics vary over time in a tablular format.</p>
+
+
+<h1>How does the app work? </h1>
+<p>This app provides a visualization that you can use in your own apps and dashboards.</p><p>To use it in your dashboards, simply install the app, and create a search that provides the following fields: _time, name, value, status</p>
+
+
+<h1>Usecases for the Performance Analysis Visualization:</h1>
+<ol><li>Displaying both infrastructure and application health over time</li>
+<li>Showing both performance and availability of transactions from a selenium script (Application Performance Monitoring)</li>
+<li>Monitoring Application health and exceptions over the past day or week</li>
+<li>Tracking the number of code commits vs build status over time</li></ol>
+
+
+<h1>The following fields can be used in the search:</h1>
+<ul>
+  <li>_time (required): the time field for the events.</li>
+<li>name (required): The label for each row of the table. This usually represents the server name.</li>
+<li>value (required): The numeric value of the primary metric - e.g. CPU %. This will determine the colour of the cells.</li>
+<li>status (required): This represents the secondary metric - e.g. Application health. Status is used to create the icon or numeric value. Can be textual: GREEN / AMBER / RED, or numeric: 12.22. If you don't want to show a status, you can set this to "" (...| eval staus="" |...)</li>
+<li>warning_threshold (optional): This value determines when the cell background color changes from GREEN to AMBER. You can set a different warning_threshold for each name, or use the default settings.</li>
+<li>critical_threshold (optional): This value determines when the cell background color changes from AMBER to RED. You can set a different critical_threshold for each name, or use the default settings.</li>
+</ul>
+
+
+<h1>Example Search</h1>
+<p><code>index=_internal earliest = -24h@h group=*| rename group as name, date_second as value, date_minute as status | table _time, name, value, status</code></p>
+
+<p>A sample data set is included with the app:</p>
+
+<p><code>| inputlookup sample-data.csv</code></p>
+
+<h1># Release Notes #</h1>
+<h2>v 1.0.0</h2>
+<ul><li>Initial version</li></ul>
+
+
+<h1>Possible Issues </h1>
+<p>No issues have been raised. If you have a bug report, please contact <a href="email:daniel@spavin.net" title="Email: daniel@spavin.net">daniel@spavin.net</a></p>
+
+
+<h1>Privacy and Legal</h1>
+<p>No  personally identifiable information is logged or obtained in any way through this visualizaton.</p>
+
+
+
+<h1>For support </h1>
+<p>Send email to <a href="email:daniel@spavin.net" title="Email: daniel@spavin.net">daniel@spavin.net</a></p>
+<p>Support is not guaranteed and will be provided on a best effort basis.</p>
+    
+    
+  </html></panel></row>
 </dashboard>
