@@ -5,7 +5,7 @@
  */
 
 /* Formatting for text element*/
-div.performance_analysis{max-width:-webkit-fill-available; overflow-x: auto;margin: 15px 15px 0px 15px;}
+div.performance_analysis{max-width:-webkit-fill-available; overflow-x: auto;margin: 15px 15px 0px 15px;width:auto!important;}
 table.performance_analysis {border-collapse: separate;border-spacing: 3px 3px;border-radius: 10px;border:1px solid #999999;
 background: rgb(255,255,255); /* Old browsers */
 background: -moz-linear-gradient(top, rgba(255,255,255,1) 0%, rgba(196,196,196,1) 100%); /* FF3.6-15 */
