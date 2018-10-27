@@ -101,7 +101,7 @@ define([
 		
 		setTokens: function(aTokens){
 			for (var tok in aTokens) {
-				this._setToken(aTokens['tok']['key'],aTokens['tok']['value']);
+				this._setToken(aTokens[tok]['key'],aTokens[tok]['value']);
 			}
 		},
 		
