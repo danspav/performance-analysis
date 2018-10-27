@@ -152,7 +152,9 @@ define([
 			var showLegend = config[this.getPropertyNamespaceInfo().propertyNamespace + "showLegend"] || true;
 			var showStatusAsText = config[this.getPropertyNamespaceInfo().propertyNamespace + "showStatusAsText"] || true;
 			// Get Token names
-			
+			var tokenName = config[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_name";
+			var tokenEarliest = config[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_earliest";
+			var tokenLatest = config[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_latest";
 			// Now load the visualisation
 			var perfAnalysisVis = new performance_analysis.performance_analysis(granularity, warningThreshold, criticalThreshold, downTimeStart, downTimeEnd, timeFormat, showLegend, showStatusAsText);
 
@@ -164,13 +166,11 @@ define([
 			var i = 0;
 			
 			for (i = 0; i < cells.length; i++) {
-				var tokenName = config[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_name";
-				var tokenEarliest = config[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_earliest";
-				var tokenLatest = config[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_latest";
+				tokenName +="";
 			
 				cells[i].onclick = function () {
 					//vizObj.drilldownToTimeRange(this.getAttribute("start_time"), this.getAttribute("end_time"), event);
-					var tokens={this.tokenName: this.getAttribute("value"), tokenEarliest:this.getAttribute("start_time"), tokenLatest:this.getAttribute("end_time")};
+					var tokens={tokenName: this.getAttribute("value"), tokenEarliest:this.getAttribute("start_time"), tokenLatest:this.getAttribute("end_time")};
 					vizObj.setTokens(tokens);
 					vizObj.drilldownToTimeRangeAndCategory(this.getAttribute("start_time"), this.getAttribute("end_time"),this.getAttribute("category"),this.getAttribute("value"), event);
 				}
