@@ -116,6 +116,7 @@ define([
 			var submittedTokenModel = mvc.Components.get('submitted');
 			if (submittedTokenModel) {
 				submittedTokenModel.set(name, value);
+			}
 		},
 		
 		
