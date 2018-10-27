@@ -85,6 +85,19 @@ define([
 			}, browserEvent);
 		},
 
+		drilldownToTimeRangeAndCategory: function(earliestTime, latestTime, categoryName, categoryValue, browserEvent) {
+    var data = {};
+    data[categoryName] = categoryValue;
+
+    this.drilldown({
+        action: SplunkVisualizationBase.FIELD_VALUE_DRILLDOWN,
+        data: data,
+        earliest: earliestTime,
+        latest: latestTime
+    }, browserEvent);
+}
+		
+		
 		updateView: function (data, config) {
 			// Return if no data
 			if (!data) {
@@ -131,7 +144,8 @@ define([
 
 			for (i = 0; i < cells.length; i++) {
 				cells[i].onclick = function () {
-					vizObj.drilldownToTimeRange(this.getAttribute("start_time"), this.getAttribute("end_time"), event);
+					//vizObj.drilldownToTimeRange(this.getAttribute("start_time"), this.getAttribute("end_time"), event);
+					vizObj.drilldownToTimeRangeAndCategory(this.getAttribute("start_time"), this.getAttribute("end_time"),this.getAttribute("category"),this.getAttribute("value"), event);
 				}
 				cells[i].className.replace(/jds_ta_clickable/, '');
 			}
