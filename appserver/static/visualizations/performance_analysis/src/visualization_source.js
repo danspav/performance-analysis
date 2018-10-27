@@ -99,9 +99,9 @@ define([
 		
 		setTokens: function(earliestTime, latestTime, value){
 			// Get the custom Token names
-			var tokenName = config[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_name";
-			var tokenEarliest = config[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_earliest";
-			var tokenLatest = config[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_latest";
+			var tokenName = configObj[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_name";
+			var tokenEarliest = configObj[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_earliest";
+			var tokenLatest = configObj[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_latest";
 			// Set the tokens
 			this._setToken(tokenName, value);
 			this._setToken(tokenEarliest, earliestTime);
@@ -163,7 +163,7 @@ define([
 			this.$el.html(perfAnalysisVis.getHTML());
 			var cells = document.getElementsByClassName("jds_ta_clickable");
 			var i = 0;
-
+			var configObj = config;
 			for (i = 0; i < cells.length; i++) {
 				cells[i].onclick = function () {
 					//vizObj.drilldownToTimeRange(this.getAttribute("start_time"), this.getAttribute("end_time"), event);
