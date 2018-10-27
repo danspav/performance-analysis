@@ -86,16 +86,16 @@ define([
 		},
 
 		drilldownToTimeRangeAndCategory: function(earliestTime, latestTime, categoryName, categoryValue, browserEvent) {
-    var data = {};
-    data[categoryName] = categoryValue;
+			var data = {};
+			data[categoryName] = categoryValue;
 
-    this.drilldown({
-        action: SplunkVisualizationBase.FIELD_VALUE_DRILLDOWN,
-        data: data,
-        earliest: earliestTime,
-        latest: latestTime
-    }, browserEvent);
-}
+			this.drilldown({
+				action: SplunkVisualizationBase.FIELD_VALUE_DRILLDOWN,
+				data: data,
+				earliest: earliestTime,
+				latest: latestTime
+			}, browserEvent);
+		},
 		
 		
 		updateView: function (data, config) {
