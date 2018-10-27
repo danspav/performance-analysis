@@ -97,15 +97,8 @@ define([
 			}, browserEvent);
 		},
 		
-		setTokens: function(earliestTime, latestTime, value){
-			// Get the custom Token names
-			var tokenName = configObj[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_name";
-			var tokenEarliest = configObj[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_earliest";
-			var tokenLatest = configObj[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_latest";
-			// Set the tokens
-			this._setToken(tokenName, value);
-			this._setToken(tokenEarliest, earliestTime);
-			this._setToken(tokenLatest, latestTime);
+		setTokens: function(aTokens){
+			aTokens.forEach(this._setToken)
 		},
 		
 		_setToken : function(name, value) {
@@ -154,6 +147,10 @@ define([
 			var downTimeEnd = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + "downTimeEnd"]) || 0;
 			var showLegend = config[this.getPropertyNamespaceInfo().propertyNamespace + "showLegend"] || true;
 			var showStatusAsText = config[this.getPropertyNamespaceInfo().propertyNamespace + "showStatusAsText"] || true;
+			// Get Token names
+			var tokenName = configObj[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_name";
+			var tokenEarliest = configObj[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_earliest";
+			var tokenLatest = configObj[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_latest";
 			// Now load the visualisation
 			var perfAnalysisVis = new performance_analysis.performance_analysis(granularity, warningThreshold, criticalThreshold, downTimeStart, downTimeEnd, timeFormat, showLegend, showStatusAsText);
 
@@ -163,11 +160,12 @@ define([
 			this.$el.html(perfAnalysisVis.getHTML());
 			var cells = document.getElementsByClassName("jds_ta_clickable");
 			var i = 0;
-			var configObj = config;
+			
 			for (i = 0; i < cells.length; i++) {
 				cells[i].onclick = function () {
 					//vizObj.drilldownToTimeRange(this.getAttribute("start_time"), this.getAttribute("end_time"), event);
-					vizObj.setTokens(this.getAttribute("start_time"), this.getAttribute("end_time"),this.getAttribute("value"));
+					var tokens={tokenName: this.getAttribute("value"), tokenEarliest:this.getAttribute("start_time"), tokenLatest:this.getAttribute("end_time")};
+					vizObj.setTokens(tokens);
 					vizObj.drilldownToTimeRangeAndCategory(this.getAttribute("start_time"), this.getAttribute("end_time"),this.getAttribute("category"),this.getAttribute("value"), event);
 				}
 				cells[i].className.replace(/jds_ta_clickable/, '');
