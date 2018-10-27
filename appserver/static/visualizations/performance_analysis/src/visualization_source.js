@@ -100,8 +100,8 @@ define([
 		},
 		
 		setTokens: function(aTokens){
-			for (var key in aTokens) {
-				this._setToken(key, aTokens[key]);
+			for (var tok in aTokens) {
+				this._setToken(aTokens['tok']['key'],aTokens['tok']['value']);
 			}
 		},
 		
@@ -168,13 +168,16 @@ define([
 			for (i = 0; i < cells.length; i++) {
 				tokenName +="";
 			
-			/*	cells[i].onclick = function () {
+				cells[i].onclick = function () {
 					//vizObj.drilldownToTimeRange(this.getAttribute("start_time"), this.getAttribute("end_time"), event);
-					var tokens={tokenName: this.getAttribute("value"), tokenEarliest:this.getAttribute("start_time"), tokenLatest:this.getAttribute("end_time")};
+					var tokens={"name": {"key": tokenName, "value": this.getAttribute("value")},
+								"earliest": {"key": tokenEarliest, "value":this.getAttribute("start_time")},
+								"tokenLatest" : {"key": tokenLatest, "value":this.getAttribute("end_time")}
+					};
 					vizObj.setTokens(tokens);
 					vizObj.drilldownToTimeRangeAndCategory(this.getAttribute("start_time"), this.getAttribute("end_time"),this.getAttribute("category"),this.getAttribute("value"), event);
 				}
-			*/	
+			/*	
 				//----------------------
 				
 				var eventData = {
@@ -188,7 +191,7 @@ define([
 						vizObj.drilldownToTimeRangeAndCategory(this.getAttribute("start_time"), this.getAttribute("end_time"),this.getAttribute("category"),this.getAttribute("value"), event);
 					return false;
 				});
-								//----------------------
+				*/				//----------------------
 				
 				
 				
