@@ -11,3 +11,7 @@ default.visualizations.custom.performance-analysis.performance_analysis.downTime
 default.visualizations.custom.performance-analysis.performance_analysis.timeFormat = <string>
 default.visualizations.custom.performance-analysis.performance_analysis.showLegend = <string>
 default.visualizations.custom.performance-analysis.performance_analysis.showStatusAsText = <string>
+# v1.1 - introduced tokens
+default.visualizations.custom.performance-analysis.performance_analysis.tokenName = <string>
+default.visualizations.custom.performance-analysis.performance_analysis.tokenEarliest = <string>
+default.visualizations.custom.performance-analysis.performance_analysis.tokenLatest = <string>

@@ -97,6 +97,27 @@ define([
 			}, browserEvent);
 		},
 		
+		setTokens: function(earliestTime, latestTime, value){
+			// Get the custom Token names
+			var tokenName = config[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_name";
+			var tokenEarliest = config[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_earliest";
+			var tokenLatest = config[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_latest";
+			// Set the tokens
+			this._setToken(tokenName, value);
+			this._setToken(tokenEarliest, earliestTime);
+			this._setToken(tokenLatest, latestTime);
+		},
+		
+		_setToken : function(name, value) {
+			var defaultTokenModel = mvc.Components.get('default');
+			if (defaultTokenModel) {
+				defaultTokenModel.set(name, value);
+			}
+			var submittedTokenModel = mvc.Components.get('submitted');
+			if (submittedTokenModel) {
+				submittedTokenModel.set(name, value);
+		},
+		
 		
 		updateView: function (data, config) {
 			// Return if no data
@@ -145,6 +166,7 @@ define([
 			for (i = 0; i < cells.length; i++) {
 				cells[i].onclick = function () {
 					//vizObj.drilldownToTimeRange(this.getAttribute("start_time"), this.getAttribute("end_time"), event);
+					vizObj.setTokens(this.getAttribute("start_time"), this.getAttribute("end_time"),this.getAttribute("value"));
 					vizObj.drilldownToTimeRangeAndCategory(this.getAttribute("start_time"), this.getAttribute("end_time"),this.getAttribute("category"),this.getAttribute("value"), event);
 				}
 				cells[i].className.replace(/jds_ta_clickable/, '');

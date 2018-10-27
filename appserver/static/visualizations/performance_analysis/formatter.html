@@ -56,4 +56,14 @@
 		</splunk-select>
 	</splunk-control-group>
 </form>
-
+<form class="splunk-formatter-section" section-label="Tokens">
+    <splunk-control-group label="Earliest Timestamp">
+        <splunk-text-input name="{{VIZ_NAMESPACE}}.tokenEarliest" value="pa_earliest"></splunk-text-input>
+    </splunk-control-group>
+	<splunk-control-group label="Latest Timestamp">
+        <splunk-text-input name="{{VIZ_NAMESPACE}}.tokenLatest" value="pa_latest"></splunk-text-input>
+    </splunk-control-group>
+	<splunk-control-group label="Row Name">
+        <splunk-text-input name="{{VIZ_NAMESPACE}}.tokenName" value="pa_name"></splunk-text-input>
+    </splunk-control-group>
+</form>
