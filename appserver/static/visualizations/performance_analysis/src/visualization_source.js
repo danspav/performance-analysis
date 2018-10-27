@@ -98,7 +98,9 @@ define([
 		},
 		
 		setTokens: function(aTokens){
-			aTokens.forEach(this._setToken)
+			for (var key in aTokens) {
+				this._setToken(key, aTokens[key]);
+			}
 		},
 		
 		_setToken : function(name, value) {
