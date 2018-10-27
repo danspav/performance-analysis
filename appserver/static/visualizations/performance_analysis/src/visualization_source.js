@@ -3,6 +3,7 @@ define([
 		'underscore',
 		'api/SplunkVisualizationBase',
 		'api/SplunkVisualizationUtils',
+		'splunkjs/mvc',
 		'performance_analysis',
 		'moment',
 		'tooltip',
