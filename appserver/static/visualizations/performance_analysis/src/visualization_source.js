@@ -148,9 +148,9 @@ define([
 			var showLegend = config[this.getPropertyNamespaceInfo().propertyNamespace + "showLegend"] || true;
 			var showStatusAsText = config[this.getPropertyNamespaceInfo().propertyNamespace + "showStatusAsText"] || true;
 			// Get Token names
-			var tokenName = configObj[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_name";
-			var tokenEarliest = configObj[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_earliest";
-			var tokenLatest = configObj[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_latest";
+			var tokenName = config[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_name";
+			var tokenEarliest = config[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_earliest";
+			var tokenLatest = config[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_latest";
 			// Now load the visualisation
 			var perfAnalysisVis = new performance_analysis.performance_analysis(granularity, warningThreshold, criticalThreshold, downTimeStart, downTimeEnd, timeFormat, showLegend, showStatusAsText);
 
