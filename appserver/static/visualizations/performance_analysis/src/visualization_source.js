@@ -12,7 +12,8 @@ define([
 		$,
 		_,
 		SplunkVisualizationBase,
-		SplunkVisualizationUtils) {
+		SplunkVisualizationUtils,
+		mvc) {
 
 	return SplunkVisualizationBase.extend({
 
