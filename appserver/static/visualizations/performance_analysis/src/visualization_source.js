@@ -162,7 +162,7 @@ define([
 			var vizObj = this
 				perfAnalysisVis.setData(data);
 			this.$el.html(perfAnalysisVis.getHTML());
-			var cells = document.getElementsByClassName("jds_ta_clickable");
+			var cells = this.$el.find(".jds_ta_clickable");
 			var i = 0;
 			
 			for (i = 0; i < cells.length; i++) {
