@@ -1,0 +1,8 @@
+<nav search_view="search" color="#3C444D">
+  <view name="search" />
+  <view name="about" default="true" />
+  <view name="visualisation_examples" />
+  <view name="drill_down_and_token_examples" />
+  <view name="settings" />
+  
+</nav>
