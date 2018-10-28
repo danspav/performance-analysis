@@ -2,7 +2,7 @@ Daniel Spavin
 daniel@spavin.net
 
 # Version Support #
-7.2, 7.1, 7.0, 6.6
+7.2, 7.1, 7.0, 6.6, 6.5, 6.4, 6.3
 
 # What does the app do? #
 The Performance Analysis Visualization allows you to compare two related metrics over time in a tabular format. Use cases include comparing your infrastructure and application health, showing performance and availability of synthetic monitoring scripts, and tracking build status vs code commits over time. This app provides a visualization that you can use in your own apps and dashboards. 
@@ -41,6 +41,11 @@ A sample data set is included with the app:
 | inputlookup sample-data.csv
 
 # Release Notes #
+## v 1.1.0 ##
+- Updated drill down support to filter by name as well as date
+- Added token support to allow interactive dashboards
+- Created new dashboard to feature the drill down and token features
+
 ## v 1.0.0 ##
 - Initial version
 - Works with dark mode in Splunk 7.2

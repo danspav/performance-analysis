@@ -8,7 +8,7 @@
     <panel>
       <html>
       <h2>Performance Analysis Visualization</h2>
-      <h4>Version: 1.0</h4>
+      <h4>Version: 1.1</h4>
       <h4>Created by Daniel Spavin (<a href="mailto:daniel@spavin.org">daniel@spavin.org</a>)</h4>
         </html>
     </panel>
@@ -46,7 +46,7 @@
     
     
 <h1>Version Support</h1>
-<p>7.2, 7.1, 7.0, 6.3</p>
+<p>7.2, 7.1, 7.0, 6.6, 6.5, 6.4, 6.3</p>
 
 
 <h1> Who is this app for? </h1>
@@ -83,6 +83,12 @@
 <p><code>| inputlookup sample-data.csv</code></p>
 
 <h1># Release Notes #</h1>
+<h2>v 1.1.0</h2>
+<ul><li>Updated drill down support to filter by name as well as date</li>
+<li>Added token support to allow interactive dashboards</li>
+<li>Created new dashboard to feature the drill down and token features</li>
+</ul>
+
 <h2>v 1.0.0</h2>
 <ul><li>Initial version</li></ul>
 
