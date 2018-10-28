@@ -38,11 +38,12 @@
     <body>
       <h4>Settings</h4>
 
-<button class="button on" data-on-class="on" data-off-class="button" data-set-token="default-thresholds" data-unset-token="options,colours,downtime-range,time-format" data-value="default-thresholds">Default Thresholds</button>
-<button class="button" data-on-class="on" data-off-class="button" data-set-token="options" data-unset-token="default-thresholds,colours,downtime-range,time-format" data-value="options">Options</button>
-<button class="button" data-on-class="on" data-off-class="button" data-set-token="colours" data-unset-token="options,default-thresholds,downtime-range,time-format" data-value="colours">Colours</button>
-<button class="button" data-on-class="on" data-off-class="button" data-set-token="downtime-range" data-unset-token="options,colours,default-thresholds,time-format" data-value="downtime-range">Downtime Range</button>
-<button class="button" data-on-class="on" data-off-class="button" data-set-token="time-format" data-unset-token="options,colours,downtime-range,default-thresholds" data-value="time-format">Time Format</button>
+<button class="button on" data-on-class="on" data-off-class="button" data-set-token="default-thresholds" data-unset-token="options,colours,downtime-range,time-format,tokens" data-value="default-thresholds">Default Thresholds</button>
+<button class="button" data-on-class="on" data-off-class="button" data-set-token="options" data-unset-token="default-thresholds,colours,downtime-range,time-format,tokens" data-value="options">Options</button>
+<button class="button" data-on-class="on" data-off-class="button" data-set-token="colours" data-unset-token="options,default-thresholds,downtime-range,time-format,tokens" data-value="colours">Colours</button>
+<button class="button" data-on-class="on" data-off-class="button" data-set-token="downtime-range" data-unset-token="options,colours,default-thresholds,time-format,tokens" data-value="downtime-range">Downtime Range</button>
+<button class="button" data-on-class="on" data-off-class="button" data-set-token="time-format" data-unset-token="options,colours,downtime-range,default-thresholds,tokens" data-value="time-format">Time Format</button>
+<button class="button" data-on-class="on" data-off-class="button" data-set-token="tokens" data-unset-token="options,default-thresholds,colours,downtime-range,time-format,default-thresholds" data-value="tokens">Tokens</button>
 
     </body>
     </html>
@@ -53,7 +54,7 @@
       <html>
       <table cellpadding="10">
         <tr>
-            <td>
+            <td valign="top">
               <img src="/static/app/performance-analysis/images/about-default-thresholds.png"/>
             </td>
             <td valign="top">The default thresholds will be used for all rows if you don't specify any thresholds in your search query.<br/>
@@ -69,7 +70,7 @@
     <panel depends="$options$">
       <html>  <table cellpadding="10">
       <tr>
-            <td>
+            <td valign="top">
               <img src="/static/app/performance-analysis/images/about-options.png"/>
             </td>
             <td valign="top">
@@ -93,7 +94,7 @@
     <panel depends="$colours$">
       <html>  <table cellpadding="10">
       <tr>
-            <td>
+            <td valign="top">
               <img src="/static/app/performance-analysis/images/about-colours.png"/>
             </td>
             <td valign="top">
@@ -105,7 +106,7 @@
     <panel depends="$downtime-range$">
       <html>  <table cellpadding="10">
       <tr>
-            <td>
+            <td valign="top">
               <img src="/static/app/performance-analysis/images/about-downtime-range.png"/>
             </td>
             <td valign="top">
@@ -121,7 +122,7 @@
       <html>  
           <table cellpadding="10">
       <tr>
-            <td>
+            <td valign="top">
               <img src="/static/app/performance-analysis/images/about-time-format.png"/>
             </td>
             <td valign="top">
@@ -130,6 +131,28 @@
       </table>
       
             </html>
+    </panel>
+     <panel depends="$tokens$">
+      <html>
+      <table cellpadding="10">
+        <tr>
+            <td valign="top">
+              <img src="/static/app/performance-analysis/images/about-tokens.png"/>
+            </td>
+            <td valign="top"><p>When you click on a cell, the Performance Analysis Viz will create three tokens:</p>
+
+<ul><li>pa_name: The label for this row, e.g. "LNXPRODDB01"</li>
+<li>pa_earliest: The timestamp for the start of the cell's time period</li>
+<li>pa_latest: The timestamp for the end of the cell's time period</li>
+</ul><p>You can then use these tokens to filter the source data and feed that into a second Performance Analysis Viz on your dashboard.</p>
+<p>The names of these tokens are customizable to allow you to manipulate tokens without affecting other Performance Analysis Viz panels.</p>
+
+
+<p>See the <a href="drill_down_and_token_examples">Drill Down and Token Examples</a> dashboard to learn more.</p>
+            </td>
+          </tr>
+          </table>
+        </html>
     </panel>
   </row>
 </dashboard>
