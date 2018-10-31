@@ -26,7 +26,7 @@
         <option name="performance-analysis.performance_analysis.criticalThreshold">8</option>
         <option name="performance-analysis.performance_analysis.downTimeEnd">0</option>
         <option name="performance-analysis.performance_analysis.downTimeStart">0</option>
-        <option name="performance-analysis.performance_analysis.granularity">15</option>
+        <option name="performance-analysis.performance_analysis.granularity">30</option>
         <option name="performance-analysis.performance_analysis.highColour">#92D050</option>
         <option name="performance-analysis.performance_analysis.highThreshold">3</option>
         <option name="performance-analysis.performance_analysis.lowColour">#00B0F0</option>
@@ -82,7 +82,7 @@
         <option name="performance-analysis.performance_analysis.criticalThreshold">18</option>
         <option name="performance-analysis.performance_analysis.downTimeEnd">0</option>
         <option name="performance-analysis.performance_analysis.downTimeStart">0</option>
-        <option name="performance-analysis.performance_analysis.granularity">120</option>
+        <option name="performance-analysis.performance_analysis.granularity">180</option>
         <option name="performance-analysis.performance_analysis.noDataColour">#5EBFC6</option>
         <option name="performance-analysis.performance_analysis.okColour">#78B24A</option>
         <option name="performance-analysis.performance_analysis.showLegend">false</option>
@@ -133,7 +133,7 @@
         <option name="performance-analysis.performance_analysis.criticalThreshold">18</option>
         <option name="performance-analysis.performance_analysis.downTimeEnd">0</option>
         <option name="performance-analysis.performance_analysis.downTimeStart">0</option>
-        <option name="performance-analysis.performance_analysis.granularity">10</option>
+        <option name="performance-analysis.performance_analysis.granularity">30</option>
         <option name="performance-analysis.performance_analysis.noDataColour">#5EBFC6</option>
         <option name="performance-analysis.performance_analysis.okColour">#78B24A</option>
         <option name="performance-analysis.performance_analysis.showLegend">false</option>
@@ -163,7 +163,7 @@
         <option name="performance-analysis.performance_analysis.criticalThreshold">18</option>
         <option name="performance-analysis.performance_analysis.downTimeEnd">7</option>
         <option name="performance-analysis.performance_analysis.downTimeStart">0</option>
-        <option name="performance-analysis.performance_analysis.granularity">120</option>
+        <option name="performance-analysis.performance_analysis.granularity">180</option>
         <option name="performance-analysis.performance_analysis.noDataColour">#5EBFC6</option>
         <option name="performance-analysis.performance_analysis.okColour">#78B24A</option>
         <option name="performance-analysis.performance_analysis.showLegend">false</option>
