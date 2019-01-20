@@ -1,6 +1,6 @@
 <dashboard script="token-via-links.js">
   <init>
-    <set token="default-thresholds">default-thresholds</set>
+    <set token="general">general</set>
   </init>
   <label>Settings</label>
   <description>How to use settings to customize the visualization.</description>
