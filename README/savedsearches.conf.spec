@@ -15,3 +15,5 @@ default.visualizations.custom.performance-analysis.performance_analysis.showStat
 default.visualizations.custom.performance-analysis.performance_analysis.tokenName = <string>
 default.visualizations.custom.performance-analysis.performance_analysis.tokenEarliest = <string>
 default.visualizations.custom.performance-analysis.performance_analysis.tokenLatest = <string>
+# v1.2
+default.visualizations.custom.performance-analysis.performance_analysis.OKisLoworHigh=<string>

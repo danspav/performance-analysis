@@ -5,6 +5,14 @@
 	<splunk-control-group label="Critical Threshold">
         <splunk-text-input name="{{VIZ_NAMESPACE}}.criticalThreshold" value="18"></splunk-text-input>
 	</splunk-control-group>
+	 <splunk-control-group label="Time Format">
+		<splunk-select name="{{VIZ_NAMESPACE}}.OKisLoworHigh" value="low" section-label="Direction">
+			<option value="low">OK is Lowest Value</option>
+			<option value="high">Critical is Lowest Value</option>
+		</splunk-select>
+	</splunk-control-group>
+	
+	
 </form>
 
 <form class="splunk-formatter-section" section-label="Options">

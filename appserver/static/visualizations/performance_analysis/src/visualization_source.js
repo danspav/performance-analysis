@@ -151,12 +151,13 @@ define([
 			var downTimeEnd = parseFloat(config[this.getPropertyNamespaceInfo().propertyNamespace + "downTimeEnd"]) || 0;
 			var showLegend = config[this.getPropertyNamespaceInfo().propertyNamespace + "showLegend"] || true;
 			var showStatusAsText = config[this.getPropertyNamespaceInfo().propertyNamespace + "showStatusAsText"] || true;
+			var OKIsLowOrHigh = config[this.getPropertyNamespaceInfo().propertyNamespace + "OKIsLowOrHigh"] || "low";
 			// Get Token names
 			var tokenName = config[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenName'] || "pa_name";
 			var tokenEarliest = config[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenEarliest'] || "pa_earliest";
 			var tokenLatest = config[this.getPropertyNamespaceInfo().propertyNamespace + 'tokenLatest'] || "pa_latest";
 			// Now load the visualisation
-			var perfAnalysisVis = new performance_analysis.performance_analysis(granularity, warningThreshold, criticalThreshold, downTimeStart, downTimeEnd, timeFormat, showLegend, showStatusAsText);
+			var perfAnalysisVis = new performance_analysis.performance_analysis(granularity, warningThreshold, criticalThreshold, downTimeStart, downTimeEnd, timeFormat, showLegend, showStatusAsText,OKIsLowOrHigh);
 
 			perfAnalysisVis.set_colours(okColour, warningColour, criticalColour, noDataColour);
 			var vizObj = this
