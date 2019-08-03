@@ -93,7 +93,7 @@
 		   <br />
 		   
 		   <p><b>Sort Order</b> changes the order of the names on the left of the visualization. The choices are:
-			<ul><li>Default - names will generallyappear as they do in the search results. </li>
+			<ul><li>Default - names will generally appear as they do in the search results. </li>
 			<li>A-Z - Names will be sorted alphanumerically: 0,1,2,3...a,b,c,d </li>
 			<li>Z-A - Names will be sorted reverse alphanumerically: d,c,b,a....3,2,1,0</li>
 			</ul>
