@@ -46,7 +46,7 @@
     
     
 <h1>Version Support</h1>
-<p>7.2, 7.1, 7.0, 6.6, 6.5, 6.4, 6.3</p>
+<p>7.3. 7.2, 7.1, 7.0, 6.6</p>
 
 
 <h1> Who is this app for? </h1>
@@ -83,6 +83,14 @@
 <p><code>| inputlookup sample-data.csv</code></p>
 
 <h1># Release Notes #</h1>
+<h2>v 1.2.0</h2>
+<ul>
+	<li>Events previously had to be in time order, causing some searches to show incorrect results. That requirement has now been removed.</li>
+	<li>You can now have critical values lower than OK values - e.g. number of purchases per hour is critical at 0, but OK at 50. See Options - Default Thresholds</li>
+	<li>Names are now sorted by alphabetical order.</li>
+</ul>
+
+
 <h2>v 1.1.0</h2>
 <ul><li>Updated drill down support to filter by name as well as date</li>
 <li>Added token support to allow interactive dashboards</li>

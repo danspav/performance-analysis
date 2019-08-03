@@ -17,3 +17,4 @@ default.visualizations.custom.performance-analysis.performance_analysis.tokenEar
 default.visualizations.custom.performance-analysis.performance_analysis.tokenLatest = <string>
 # v1.2
 default.visualizations.custom.performance-analysis.performance_analysis.OKisLoworHigh=<string>
+default.visualizations.custom.performance-analysis.performance_analysis.sortOrder = <string>
