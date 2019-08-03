@@ -25,6 +25,12 @@
 			<option value="false">Hide Legend</option>
 		</splunk-select>
 	</splunk-control-group>
+	<splunk-control-group label="Status Format">
+		<splunk-select name="{{VIZ_NAMESPACE}}.showStatusAsText" value="true" section-label="Status as Text">
+			<option value="true">Text Values</option>
+			<option value="false">Numerical Values</option>
+		</splunk-select>
+	</splunk-control-group>
 	 <splunk-control-group label="Sort Order">
 		<splunk-select name="{{VIZ_NAMESPACE}}.sortOrder" value="true" section-label="Sort Names">
 			<option value="default">Default</option>
