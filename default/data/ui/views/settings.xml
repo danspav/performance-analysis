@@ -63,9 +63,7 @@
             You can set these valuse in the search query by using an <code>eval</code> statement:<br/>
             <code>...| eval warning_threshold = case(name=="windows_server", 60,name=="unix_server", 65, 1==1, 70)<br/>
             | eval critical_threshold = case(name=="windows_server", 80,name=="unix_server", 85, 1==1, 90)</code>
-            </td>
-          </tr>
-		  <tr><td valign="top">
+            <br />
 			<p>If you would like to show critical at lower values than OK, choose the threshold direction as "Critical is lowest value". This would be the case if you were showing sales per hour - where a lower sales figure represents a Critical status, and a higher figure represents an OK status.</p>
 			<p>The default is for OK to be a low value, and Critical to be a high value, e.g. with CPU use, Memory use, Response times, and error rates.</p>
 		  </td></tr>
@@ -91,9 +89,10 @@
               <tr><td align="center"><img src="/static/app/performance-analysis/images/amber.png" alt="Amber" /></td><td align="center">amber<br />warn<br />warning<br />caution</td></tr>
               <tr><td align="center"><img src="/static/app/performance-analysis/images/red.png" alt="Red" /></td><td align="center">red<br />critical<br />severe<br />fail</td></tr>
             </table>
-            </td>
-          </tr>
-		  <tr><td><p><b>Sort Order</b> changes the order of the names on the left of the visualization. The choices are:
+           
+		   <br />
+		   
+		   <p><b>Sort Order</b> changes the order of the names on the left of the visualization. The choices are:
 			<ul><li>Default - names will generallyappear as they do in the search results. </li>
 			<li>A-Z - Names will be sorted alphanumerically: 0,1,2,3...a,b,c,d </li>
 			<li>Z-A - Names will be sorted reverse alphanumerically: d,c,b,a....3,2,1,0</li>
