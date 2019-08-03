@@ -90,9 +90,9 @@
 <h1># Release Notes #</h1>
 <h2>v 1.2.0</h2>
 <ul>
-	<li>Events previously had to be in time order, causing some searches to show incorrect results. That requirement has now been removed.</li>
+	<li>Events previously had to be in time order, causing some searches to show incorrect results. That requirement has now been removed. Even when sorted in a random order the viz will display the start and end times correctly.</li>
 	<li>You can now have Critical values lower than OK values - e.g. number of purchases per hour is critical at 0, but OK at 50. See Options - Default Thresholds</li>
-	<li>Names can now be sorted by order found in search results, alphabetical, or reverse alphabetical.</li>
+	<li>Names can now be sorted by order found in search results (default), alphabetical, or reverse alphabetical.</li>
 	<li>The maximum size of the visualization has been increased from 1,000px to 10,000px so you can view more KPIs without seeing a scroll bar.</li>
 </ul>
 
