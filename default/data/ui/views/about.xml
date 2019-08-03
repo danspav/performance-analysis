@@ -87,7 +87,7 @@
 <ul>
 	<li>Events previously had to be in time order, causing some searches to show incorrect results. That requirement has now been removed.</li>
 	<li>You can now have critical values lower than OK values - e.g. number of purchases per hour is critical at 0, but OK at 50. See Options - Default Thresholds</li>
-	<li>Names are now sorted by alphabetical order.</li>
+	<li>Names can now be sorted by order found in search results, alphabetical, or reverse alphabetical.</li>
 </ul>
 
 

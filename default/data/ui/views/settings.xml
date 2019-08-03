@@ -1,6 +1,6 @@
 <dashboard script="token-via-links.js">
   <init>
-    <set token="general">general</set>
+		<set token="default-thresholds">general</set>
   </init>
   <label>Settings</label>
   <description>How to use settings to customize the visualization.</description>
@@ -24,7 +24,7 @@
     background-color: #5C8EB1!important; /* Green */
     color: white!important;
     font-weight:bold;
-    border: 2px solid #4CAF50!important; /* Green */
+    border: 2px solid #5C8EB1!important; /* Green */
     padding: 15px 32px;
     text-align: center;
     text-decoration: none;
@@ -33,7 +33,8 @@
     border-radius: 4px;
     }
     
-    
+    h2{border-bottom: 1px solid #999999;    width: auto;    }
+    h2.dashboard-title{border:none;}
     </style>
     <body>
       <h4>Settings</h4>
@@ -64,6 +65,10 @@
             | eval critical_threshold = case(name=="windows_server", 80,name=="unix_server", 85, 1==1, 90)</code>
             </td>
           </tr>
+		  <tr><td valign="top">
+			<p>If you would like to show critical at lower values than OK, choose the threshold direction as "Critical is lowest value". This would be the case if you were showing sales per hour - where a lower sales figure represents a Critical status, and a higher figure represents an OK status.</p>
+			<p>The default is for OK to be a low value, and Critical to be a high value, e.g. with CPU use, Memory use, Response times, and error rates.</p>
+		  </td></tr>
           </table>
         </html>
     </panel>
@@ -88,6 +93,14 @@
             </table>
             </td>
           </tr>
+		  <tr><td><p><b>Sort Order</b> changes the order of the names on the left of the visualization. The choices are:
+			<ul><li>Default - names will generallyappear as they do in the search results. </li>
+			<li>A-Z - Names will be sorted alphanumerically: 0,1,2,3...a,b,c,d </li>
+			<li>Z-A - Names will be sorted reverse alphanumerically: d,c,b,a....3,2,1,0</li>
+			</ul>
+		  
+		  
+		  </p></td></tr>
           </table>
       </html>
     </panel>
