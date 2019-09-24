@@ -92,6 +92,7 @@
 <ul>
 	<li>Fixed issue with Splunk 7.3 showing 'undefined' on the options menu</li>
 	<li>Fixed bug where null values were converted to zero. Now you can display 'No Data' coloring where all values were null.</li>
+	<li>Down-time is now turned off by default. It can still be enabled via the Options window. </li>
 </ul>
 
 <h2>v 1.2.0</h2>
