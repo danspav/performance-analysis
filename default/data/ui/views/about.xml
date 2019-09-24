@@ -8,8 +8,8 @@
     <panel>
       <html>
       <h2>Performance Analysis Visualization</h2>
-      <h4>Version: 1.1</h4>
-      <h4>Created by Daniel Spavin (<a href="mailto:daniel@spavin.org">daniel@spavin.org</a>)</h4>
+      <h4>Version: 1.3</h4>
+      <h4>Created by Daniel Spavin (<a href="mailto:daniel@spavin.net">daniel@spavin.net</a>)</h4>
         </html>
     </panel>
   </row>
@@ -88,6 +88,12 @@
 <p><code>| inputlookup sample-data.csv</code></p>
 
 <h1># Release Notes #</h1>
+<h2>v 1.2.0</h2>
+<ul>
+	<li>Fixed issue with Splunk 7.3 showing 'undefined' on the options menu</li>
+	<li>Fixed bug where null values were converted to zero. Now you can display 'No Data' coloring where all values were null.</li>
+</ul>
+
 <h2>v 1.2.0</h2>
 <ul>
 	<li>Events previously had to be in time order, causing some searches to show incorrect results. That requirement has now been removed. Even when sorted in a random order the viz will display the start and end times correctly.</li>
