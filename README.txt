@@ -2,7 +2,7 @@ Daniel Spavin
 daniel@spavin.net
 
 # Version Support #
-7.2, 7.1, 7.0, 6.6, 6.5, 6.4, 6.3
+7.3, 7.2, 7.1, 7.0, 6.6, 6.5, 6.4, 6.3
 
 # What does the app do? #
 The Performance Analysis Visualization allows you to compare two related metrics over time in a tabular format. Use cases include comparing your infrastructure and application health, showing performance and availability of synthetic monitoring scripts, and tracking build status vs code commits over time. This app provides a visualization that you can use in your own apps and dashboards. 
@@ -41,6 +41,17 @@ A sample data set is included with the app:
 | inputlookup sample-data.csv
 
 # Release Notes #
+##v 1.3.0 ##
+- Fixed issue with Splunk 7.3 showing 'undefined' on the options menu
+- Fixed bug where null values were converted to zero. Now you can display 'No Data' coloring where all values were null.
+- Down-time is now turned off by default. It can still be enabled via the Options window.
+
+## v 1.2.0 ##
+- Events previously had to be in time order, causing some searches to show incorrect results. That requirement has now been removed. Even when sorted in a random order the viz will display the start and end times correctly.
+- You can now have Critical values lower than OK values - e.g. number of purchases per hour is critical at 0, but OK at 50. See Options - Default Thresholds.
+- Names can now be sorted by order found in search results (default), alphabetical, or reverse alphabetical.
+- The maximum size of the visualization has been increased from 1,000px to 10,000px so you can view more KPIs without seeing a scroll bar.
+
 ## v 1.1.0 ##
 - Updated drill down support to filter by name as well as date
 - Added token support to allow interactive dashboards
