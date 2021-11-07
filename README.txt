@@ -2,7 +2,7 @@ Daniel Spavin
 daniel@spavin.net
 
 # Version Support #
-7.3, 7.2, 7.1, 7.0, 6.6, 6.5, 6.4, 6.3
+8.2, 8.1, 8.0, 7.3
 
 # What does the app do? #
 The Performance Analysis Visualization allows you to compare two related metrics over time in a tabular format. Use cases include comparing your infrastructure and application health, showing performance and availability of synthetic monitoring scripts, and tracking build status vs code commits over time. This app provides a visualization that you can use in your own apps and dashboards. 
@@ -41,7 +41,11 @@ A sample data set is included with the app:
 | inputlookup sample-data.csv
 
 # Release Notes #
-##v 1.3.0 ##
+
+## v 1.4.0 ##
+- Minor updates to work with Splunk Cloud
+
+## v 1.3.0 ##
 - Fixed issue with Splunk 7.3 showing 'undefined' on the options menu
 - Fixed bug where null values were converted to zero. Now you can display 'No Data' coloring where all values were null.
 - Down-time is now turned off by default. It can still be enabled via the Options window.

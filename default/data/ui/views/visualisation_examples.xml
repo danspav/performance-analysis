@@ -1,4 +1,4 @@
-<dashboard>
+<dashboard version="1.1">
   <label>Visualisation Examples</label>
   <description>Showing Server and Application performance</description>
   <row>
