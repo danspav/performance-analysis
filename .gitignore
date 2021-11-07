@@ -1,3 +1,5 @@
 #Ignore these files
 npm-debug.log
 rebuild.sh
+restart.sh
+refreshapp.py
