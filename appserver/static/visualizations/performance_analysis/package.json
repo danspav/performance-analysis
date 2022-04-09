@@ -16,7 +16,7 @@
   "dependencies": {
     "classes": "^0.3.0",
     "jquery": "^3.6.0",
-    "moment": "^2.18.1",
+    "moment": "^2.29.2",
     "stringify": "^5.1.0",
     "tooltip": "^1.6.1",
     "underscore": "^1.8.3"
