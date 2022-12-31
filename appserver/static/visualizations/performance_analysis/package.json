@@ -11,7 +11,7 @@
   "author": "Daniel Spavin (https://spavin.org)",
   "license": "MIT",
   "devDependencies": {
-    "webpack": "^1.12.6"
+    "webpack": "^5.75.0"
   },
   "dependencies": {
     "classes": "^0.3.0",
