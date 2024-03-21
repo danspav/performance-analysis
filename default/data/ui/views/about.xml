@@ -8,7 +8,7 @@
     <panel>
       <html>
       <h2>Performance Analysis Visualization</h2>
-      <h4>Version: 1.4</h4>
+      <h4>Version: 1.5</h4>
       <h4>Created by Daniel Spavin (<a href="mailto:daniel@spavin.net">daniel@spavin.net</a>)</h4>
         </html>
     </panel>
@@ -51,7 +51,7 @@
     
     
 <h1>Version Support</h1>
-<p>8.2, 8.1, 8.0, 7.3</p>
+<p>9.2, 9.1, 9.0, 8.2, 8.1, 8.0, 7.3</p>
 
 
 <h1> Who is this app for? </h1>

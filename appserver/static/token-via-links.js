@@ -1,4 +1,4 @@
-require(['jquery', 'underscore', 'splunkjs/mvc', 'util/console'], function($, _, mvc, console) {
+require(['jquery', 'underscore', 'splunkjs/mvc'], function($, _, mvc) {
      function setToken(name, value) {
          var defaultTokenModel = mvc.Components.get('default');
          if (defaultTokenModel) {
@@ -11,11 +11,8 @@ require(['jquery', 'underscore', 'splunkjs/mvc', 'util/console'], function($, _,
      }
      $('.dashboard-body').on('click', '[data-on-class],[data-off-class],[data-set-token],[data-unset-token],[data-token-json]', function(e) {
          e.preventDefault();
-		console.log("Inside the click bit.");
          var target = $(e.currentTarget);
-console.log("here");
-console.log("target.data('on-class')=" + target.data('on-class'));
-		 
+	 
 		 var cssOnClass= target.data('on-class');
 		 var cssOffClass = target.data('off-class');
 		 if (cssOnClass) {
@@ -50,7 +47,7 @@ console.log("target.data('on-class')=" + target.data('on-class'));
                      });
                  }
              } catch (e) {
-                 console.warn('Cannot parse token JSON: ', e);
+                // console.warn('Cannot parse token JSON: ', e);
              }
          }
      });
