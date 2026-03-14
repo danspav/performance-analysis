@@ -4,15 +4,12 @@
   "description": "A Splunk visualisation for showing tabular performance and availabilty metrics over time.",
   "main": "visualization.js",
   "scripts": {
-    "build": "$SPLUNK_HOME/bin/splunk cmd node ./node_modules/webpack/bin/webpack.js",
-    "devbuild": "$SPLUNK_HOME/bin/splunk cmd node ./node_modules/webpack/bin/webpack.js --progress",
-    "watch": "$SPLUNK_HOME/bin/splunk cmd node ./node_modules/webpack/bin/webpack.js -d --watch --progress"
+    "build": "webpack --config webpack.config.js",
+    "build:dev": "webpack --mode development --config webpack.config.js",
+    "start": "webpack serve --config webpack.config.js"
   },
   "author": "Daniel Spavin (https://spavin.org)",
   "license": "MIT",
-  "devDependencies": {
-    "webpack": "^1.12.6"
-  },
   "dependencies": {
     "classes": "^0.3.0",
     "jquery": "^3.6.0",
@@ -24,5 +21,17 @@
   "keywords": [
     "visualization",
     "JDS"
-  ]
+  ],
+  "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.0",
+    "babel-loader": "^10.1.1",
+    "css-loader": "^7.1.4",
+    "mini-css-extract-plugin": "^2.10.1",
+    "style-loader": "^4.0.0",
+    "terser-webpack-plugin": "^5.4.0",
+    "webpack": "^5.105.4",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.2"
+  }
 }

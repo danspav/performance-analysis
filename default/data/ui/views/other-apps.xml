@@ -1,0 +1,730 @@
+<dashboard version="1.1" theme="dark" stylesheet="apps.css">
+  <label>Other Apps</label>
+  <search>
+    <query>
+      <![CDATA[ | rest /services/apps/local search="disabled=0 core=0 author=\"Daniel Spavin*\"" f="title" | table title | transpose 30 | foreach row* [| eval "{<<FIELD>>}"=1] | fields - row*, title, column]]>
+    </query>
+    <done>
+      <eval token="TA_publish_to_confluence">if($result.TA_publish_to_confluence$==1,"installed","notinstalled")</eval>      <eval token="TA_publish_to_confluenceURL">if($result.TA_publish_to_confluence$==1,"/app/TA_publish_to_confluence/","https://splunkbase.splunk.com/app/7595")</eval>
+      <eval token="otel-yaml-validator">if($result.otel-yaml-validato$==1,"installed","notinstalled")</eval>      <eval token="otel-yaml-validatorURL">if($result.otel-yaml-validato$==1,"/app/otel-yaml-validator/","https://splunkbase.splunk.com/app/7157")</eval>
+      <eval token="network-diagram-viz">if($result.network-diagram-viz$==1,"installed","notinstalled")</eval>      <eval token="network-diagram-vizURL">if($result.network-diagram-viz$==1,"/app/network-diagram-viz/","https://splunkbase.splunk.com/app/4438")</eval>
+      <eval token="event-timeline-viz">if($result.event-timeline-viz$==1,"installed","notinstalled")</eval>      <eval token="event-timeline-vizURL">if($result.event-timeline-viz$==1,"/app/event-timeline-viz/","https://splunkbase.splunk.com/app/4370")</eval>
+      <eval token="heat-map-viz">if($result.heat-map-viz$==1,"installed","notinstalled")</eval>      <eval token="heat-map-vizURL">if($result.heat-map-viz$==1,"/app/heat-map-viz/","https://splunkbase.splunk.com/app/4460")</eval>
+      <eval token="performance-analysis">if($result.performance-analysis$==1,"installed","notinstalled")</eval>      <eval token="performance-analysisURL">if($result.performance-analysis$==1,"/app/performance-analysis/","https://splunkbase.splunk.com/app/4258")</eval>
+      <eval token="carousel-viz">if($result.carousel-viz$==1,"installed","notinstalled")</eval>      <eval token="carousel-vizURL">if($result.carousel-viz$==1,"/app/carousel-viz/","https://splunkbase.splunk.com/app/4342")</eval>
+      <eval token="treeview-viz">if($result.treeview-viz$==1,"installed","notinstalled")</eval>      <eval token="treeview-vizURL">if($result.treeview-viz$==1,"/app/treeview-viz/","https://splunkbase.splunk.com/app/5101")</eval>
+      <eval token="animated_chart_viz">if($result.animated_chart_viz$==1,"installed","notinstalled")</eval>      <eval token="animated_chart_vizURL">if($result.animated_chart_viz$==1,"/app/animated_chart_viz/","https://splunkbase.splunk.com/app/5465")</eval>
+      <eval token="departures-board-viz">if($result.departures-board-viz$==1,"installed","notinstalled")</eval>      <eval token="departures-board-vizURL">if($result.departures-board-viz$==1,"/app/departures-board-viz/","https://splunkbase.splunk.com/app/4292")</eval>
+      <eval token="pictorial-chart-viz">if($result.pictorial-chart-viz$==1,"installed","notinstalled")</eval>      <eval token="pictorial-chart-vizURL">if($result.pictorial-chart-viz$==1,"/app/pictorial-chart-viz/","https://splunkbase.splunk.com/app/4687")</eval>
+      <eval token="simple-maps-viz">if($result.simple-maps-viz$==1,"installed","notinstalled")</eval>      <eval token="simple-maps-vizURL">if($result.simple-maps-viz$==1,"/app/simple-maps-viz/","https://splunkbase.splunk.com/app/5166")</eval>
+      <eval token="word-tree-viz">if($result.word-tree-viz$==1,"installed","notinstalled")</eval>      <eval token="word-tree-vizURL">if($result.word-tree-viz$==1,"/app/word-tree-viz/","https://splunkbase.splunk.com/app/6318")</eval>
+      <eval token="flappy_pony">if($result.flappy_pony$==1,"installed","notinstalled")</eval>      <eval token="flappy_ponyURL">if($result.flappy_pony$==1,"/app/flappy_pony/","https://splunkbase.splunk.com/app/6112")</eval>
+      <eval token="olly-dashboard-cloner">if($result.olly-dashboard-cloner$==1,"installed","notinstalled")</eval>      <eval token="olly-dashboard-clonerURL">if($result.olly-dashboard-cloner$==1,"/app/o11y-dashboard-cloner/","https://splunkbase.splunk.com/app/7195")</eval>
+      <eval token="treemap-viz">if($result.treemap-viz$==1,"installed","notinstalled")</eval>      <eval token="treemap-vizURL">if($result.treemap-viz$==1,"/app/treemap-viz/","https://splunkbase.splunk.com/app/7890")</eval>
+      <eval token="sankey-viz">if($result.sankey-viz$==1,"installed","notinstalled")</eval>      <eval token="sankey-vizURL">if($result.sankey-viz$==1,"/app/sankey-viz/","https://splunkbase.splunk.com/app/7977")</eval>   
+    </done>
+  </search>
+  <row>
+    <panel>
+      <html>
+        
+<div class="bg"/>
+<div class="bg bg2"/>
+<div class="bg bg3"/>
+<style>
+.bg {  animation:slide 18s ease-in-out infinite alternate;  background-image: linear-gradient(-60deg, #3c444d 50%, #171d21 50%);  bottom:0;  left:-50%;  opacity:.5;  position:fixed;  right:-50%;  top:0;  z-index:-1;}
+.bg2 {animation-direction:alternate-reverse;  animation-duration:24s;}
+.bg3 {animation-duration:30s;}
+@keyframes slide {  0% {    transform:translateX(-25%);  }  100% {    transform:translateX(25%);  }}
+
+
+.ClickableStyles__StyledA.CardStyles__Styled {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* pushes footer to bottom */
+  min-width: 200px;
+  max-width: 200px;
+  margin: 0 20px 20px 0;
+  text-decoration: none;
+}
+
+
+div.CardStyles.installed button.cmdInstall{display:none!important;}
+
+.cmdInstall {
+  --width: 100px;
+  --height: 35px;
+  --tooltip-height: 35px;
+  --tooltip-width: 90px;
+  --gap-between-tooltip-to-button: 18px;
+  --button-color: #1163ff;
+  --tooltip-color: #fff;
+  margin: 10px auto;
+  width: var(--width);
+  height: var(--height);
+  background: var(--button-color);
+  position: relative;
+  text-align: center;
+  border-radius: 0.45em;
+  font-family: "Arial";
+  transition: background 0.3s;
+}
+
+.cmdInstall::before {
+  position: absolute;
+  content: attr(data-tooltip);
+  width: var(--tooltip-width);
+  height: var(--tooltip-height);
+  background-color: var(--tooltip-color);
+  font-size: 0.9rem;
+  color: #111;
+  border-radius: .25em;
+  line-height: var(--tooltip-height);
+  bottom: calc(var(--height) + var(--gap-between-tooltip-to-button) + 10px);
+  left: calc(50% - var(--tooltip-width) / 2);
+}
+
+.cmdInstall::after {
+  position: absolute;
+  content: '';
+  width: 0;
+  height: 0;
+  border: 10px solid transparent;
+  border-top-color: var(--tooltip-color);
+  left: calc(50% - 10px);
+  bottom: calc(100% + var(--gap-between-tooltip-to-button) - 10px);
+}
+
+.cmdInstall::after,.cmdInstall::before {
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.5s;
+}
+
+.text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button-wrapper,.text,.icon {
+  overflow: hidden;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  color: #fff;
+}
+
+.text {
+  top: 0
+}
+
+.text,.icon {
+  transition: top 0.5s;
+}
+
+.icon {
+  color: #fff;
+  top: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.cmdInstall:hover {
+  background: #28a745;
+}
+
+.cmdInstall:hover .text {
+  top: -100%;
+}
+
+.cmdInstall:hover .icon {
+  top: 0;
+}
+
+
+</style>
+<h1 style="text-align:center">Check out some of my other Splunkbase Apps</h1>
+<br />
+<div data-test="card-layout" class="CardLayoutStyles__Styled" style="padding: 5px;">
+  <a data-test="card" href="$otel-yaml-validatorURL$" target="_blank" data-clickable="true" value="7157"
+    class="ClickableStyles__StyledA CardStyles__Styled $otel-yaml-validator$"
+    style="min-width: 200px; max-width: 200px; margin: 0px 20px 20px 0px;">
+    <div class="CardStyles $otel-yaml-validator$">
+      <div data-test="header" class="BoxStyles__Styled HeaderStyles__StyledBox">
+        <div class="HeaderStyles__StyledTitleContainer">
+          <div class="HeaderStyles__StyledTitle">Otel YAML Validator</div>
+          <div class="HeaderStyles__StyledSubtitle"></div>
+        </div>
+      </div>
+      <div data-test="body" class="BoxStyles__Styled BodyStyles__StyledBox">
+        <div style="width: 150px;">
+          <div id="otelyamlvalidator" style="float: left; margin-right: 10px; width: 50px;" />Create and validate OTel
+          config
+          for Splunk Observability Cloud.
+        </div>
+      </div>
+    </div>
+    <div class="cmdInstall">
+      <div class="button-wrapper">
+        <div class="text">Install</div>
+        <span class="icon">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" width="2em" height="2em"
+            preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17">
+            </path>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </a>
+  <a data-test="card" href="$network-diagram-vizURL$" target="_blank" data-clickable="true" value="4438"
+    class="ClickableStyles__StyledA CardStyles__Styled $network-diagram-viz$"
+    style="min-width: 200px; max-width: 200px; margin: 0px 20px 20px 0px;">
+    <div class="CardStyles $network-diagram-viz$">
+      <div data-test="header" class="BoxStyles__Styled HeaderStyles__StyledBox">
+        <div class="HeaderStyles__StyledTitleContainer">
+          <div class="HeaderStyles__StyledTitle">Network Diagram Viz</div>
+          <div class="HeaderStyles__StyledSubtitle"></div>
+        </div>
+      </div>
+      <div data-test="body" class="BoxStyles__Styled BodyStyles__StyledBox">
+        <div style="width: 150px;">
+          <div id="networkdiagramviz" style="float: left; margin-right: 10px; width: 50px;" />Show interactive network diagrams on dashboards.
+        </div>
+      </div>
+    </div>
+    <div class="cmdInstall">
+      <div class="button-wrapper">
+        <div class="text">Install</div>
+        <span class="icon">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" width="2em" height="2em"
+            preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17">
+            </path>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </a>
+  <a data-test="card" href="$event-timeline-vizURL$" target="_blank" data-clickable="true" value="4370"
+    class="ClickableStyles__StyledA CardStyles__Styled $event-timeline-viz$"
+    style="min-width: 200px; max-width: 200px; margin: 0px 20px 20px 0px;">
+    <div class="CardStyles $event-timeline-viz$">
+      <div data-test="header" class="BoxStyles__Styled HeaderStyles__StyledBox">
+        <div class="HeaderStyles__StyledTitleContainer">
+          <div class="HeaderStyles__StyledTitle">Event Timeline Viz</div>
+          <div class="HeaderStyles__StyledSubtitle"></div>
+        </div>
+      </div>
+      <div data-test="body" class="BoxStyles__Styled BodyStyles__StyledBox">
+        <div style="width: 150px;">
+          <div id="eventtimelineviz" style="float: left; margin-right: 10px; width: 50px;" />The Event Timeline Viz
+          shows
+          multiple events on an interactive timeline.
+        </div>
+
+      </div>
+    </div>
+    <div class="cmdInstall">
+      <div class="button-wrapper">
+        <div class="text">Install</div>
+        <span class="icon">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" width="2em" height="2em"
+            preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17">
+            </path>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </a>
+  <a data-test="card" href="$heat-map-vizURL$" target="_blank" data-clickable="true" value="4460"
+    class="ClickableStyles__StyledA CardStyles__Styled $heat-map-viz$"
+    style="min-width: 200px; max-width: 200px; margin: 0px 20px 20px 0px;">
+    <div class="CardStyles $heat-map-viz$">
+      <div data-test="header" class="BoxStyles__Styled HeaderStyles__StyledBox">
+        <div class="HeaderStyles__StyledTitleContainer">
+          <div class="HeaderStyles__StyledTitle">Heat Map Viz</div>
+          <div class="HeaderStyles__StyledSubtitle"></div>
+        </div>
+      </div>
+      <div data-test="body" class="BoxStyles__Styled BodyStyles__StyledBox">
+        <div style="width: 150px;">
+          <div id="heatmapviz" style="float: left; margin-right: 10px; width: 50px;" />The Heat Map Viz shows a grid of
+          related measurements, with the color intensity relative to the metric value.
+        </div>
+
+      </div>
+    </div>
+    <div class="cmdInstall">
+      <div class="button-wrapper">
+        <div class="text">Install</div>
+        <span class="icon">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" width="2em" height="2em"
+            preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17">
+            </path>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </a>
+
+
+
+  <a data-test="card" href="$performance-analysisURL$" target="_blank" data-clickable="true" value="4258"
+    class="ClickableStyles__StyledA CardStyles__Styled $performance-analysis$"
+    style="min-width: 200px; max-width: 200px; margin: 0px 20px 20px 0px;">
+    <div class="CardStyles $performance-analysis$">
+      <div data-test="header" class="BoxStyles__Styled HeaderStyles__StyledBox">
+        <div class="HeaderStyles__StyledTitleContainer">
+          <div class="HeaderStyles__StyledTitle">Performance Analysis Viz</div>
+          <div class="HeaderStyles__StyledSubtitle"></div>
+        </div>
+      </div>
+      <div data-test="body" class="BoxStyles__Styled BodyStyles__StyledBox">
+        <div style="width: 150px;">
+          <div id="performanceanalysisviz" style="float: left; margin-right: 10px; width: 50px;" />This app allows you
+          to compare two
+          related metrics over time in a tabular format.
+        </div>
+
+      </div>
+    </div>
+    <div class="cmdInstall">
+      <div class="button-wrapper">
+        <div class="text">Install</div>
+        <span class="icon">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" width="2em" height="2em"
+            preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17">
+            </path>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </a>
+  <a data-test="card" href="$carousel-vizURL$" target="_blank" data-clickable="true" value="4342"
+    class="ClickableStyles__StyledA CardStyles__Styled $carousel-viz$"
+    style="min-width: 200px; max-width: 200px; margin: 0px 20px 20px 0px;">
+    <div class="CardStyles $carousel-viz$">
+      <div data-test="header" class="BoxStyles__Styled HeaderStyles__StyledBox">
+        <div class="HeaderStyles__StyledTitleContainer">
+          <div class="HeaderStyles__StyledTitle">Carousel Viz</div>
+          <div class="HeaderStyles__StyledSubtitle"></div>
+        </div>
+      </div>
+      <div data-test="body" class="BoxStyles__Styled BodyStyles__StyledBox">
+        <div style="width: 150px;">
+          <div id="carouselviz" style="float: left; margin-right: 10px; width: 50px;" />The Carousel Viz scrolls through
+          a
+          collection of values, each with a caption. You can use a Carousel Viz to provide information
+          at a glance, in a single dashboard panel.
+        </div>
+
+      </div>
+    </div>
+    <div class="cmdInstall">
+      <div class="button-wrapper">
+        <div class="text">Install</div>
+        <span class="icon">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" width="2em" height="2em"
+            preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17">
+            </path>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </a>
+
+
+
+
+  <a data-test="card" href="$treeview-vizURL$" target="_blank" data-clickable="true" value="5101"
+    class="ClickableStyles__StyledA CardStyles__Styled $treeview-viz$"
+    style="min-width: 200px; max-width: 200px; margin: 0px 20px 20px 0px;">
+    <div class="CardStyles $treeview-viz$">
+      <div data-test="header" class="BoxStyles__Styled HeaderStyles__StyledBox">
+        <div class="HeaderStyles__StyledTitleContainer">
+          <div class="HeaderStyles__StyledTitle">Treeview Viz</div>
+          <div class="HeaderStyles__StyledSubtitle"></div>
+        </div>
+      </div>
+      <div data-test="body" class="BoxStyles__Styled BodyStyles__StyledBox">
+        <div style="width: 150px;">
+          <div id="treeviewviz" style="float: left; margin-right: 10px; width: 50px;" />The Treeview Viz displays items
+          with parent-child relationships much like a directory listing. You can use Treeview Viz to
+          provide a categorized list of items, in a single dashboard panel.
+        </div>
+
+      </div>
+    </div>
+
+    <div class="cmdInstall">
+      <div class="button-wrapper">
+        <div class="text">Install</div>
+        <span class="icon">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" width="2em" height="2em"
+            preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17">
+            </path>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </a>
+  <a data-test="card" href="$animated_chart_vizURL$" target="_blank" data-clickable="true" value="5465"
+    class="ClickableStyles__StyledA CardStyles__Styled $animated_chart_viz$"
+    style="min-width: 200px; max-width: 200px; margin: 0px 20px 20px 0px;">
+    <div class="CardStyles $animated_chart_viz$">
+      <div data-test="header" class="BoxStyles__Styled HeaderStyles__StyledBox">
+        <div class="HeaderStyles__StyledTitleContainer">
+          <div class="HeaderStyles__StyledTitle">Animated Chart Viz</div>
+          <div class="HeaderStyles__StyledSubtitle"></div>
+        </div>
+      </div>
+      <div data-test="body" class="BoxStyles__Styled BodyStyles__StyledBox">
+        <div style="width: 150px;">
+          <div id="animatedchartviz" style="float: left; margin-right: 10px; width: 50px;" />The Animated Chart Viz
+          animates
+          different time periods on graphs to show the trend of metrics across a custom time period.
+        </div>
+
+      </div>
+    </div>
+    <div class="cmdInstall">
+      <div class="button-wrapper">
+        <div class="text">Install</div>
+        <span class="icon">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" width="2em" height="2em"
+            preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17">
+            </path>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </a>
+  <a data-test="card" href="$departures-board-vizURL$" target="_blank" data-clickable="true" value="4292"
+    class="ClickableStyles__StyledA CardStyles__Styled $departures-board-viz$"
+    style="min-width: 200px; max-width: 200px; margin: 0px 20px 20px 0px;">
+    <div class="CardStyles $departures-board-viz$">
+      <div data-test="header" class="BoxStyles__Styled HeaderStyles__StyledBox">
+        <div class="HeaderStyles__StyledTitleContainer">
+          <div class="HeaderStyles__StyledTitle">Departures Board Viz</div>
+          <div class="HeaderStyles__StyledSubtitle"></div>
+        </div>
+      </div>
+      <div data-test="body" class="BoxStyles__Styled BodyStyles__StyledBox">
+        <div style="width: 150px;">
+          <div id="departuresboardviz" style="float: left; margin-right: 10px; width: 50px;" />The Departures Board Viz
+          is a
+          single value animated visualization in the style of airport departure boards. Drop it into
+          your own dashboards to display places, users, or timestamps in an eye catching and fun way.
+        </div>
+
+      </div>
+    </div>
+    <div class="cmdInstall">
+      <div class="button-wrapper">
+        <div class="text">Install</div>
+        <span class="icon">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" width="2em" height="2em"
+            preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17">
+            </path>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </a>
+  <a data-test="card" href="$pictorial-chart-vizURL$" target="_blank" data-clickable="true" value="4687"
+    class="ClickableStyles__StyledA CardStyles__Styled $pictorial-chart-viz$"
+    style="min-width: 200px; max-width: 200px; margin: 0px 20px 20px 0px;">
+    <div class="CardStyles $pictorial-chart-viz$">
+      <div data-test="header" class="BoxStyles__Styled HeaderStyles__StyledBox">
+        <div class="HeaderStyles__StyledTitleContainer">
+          <div class="HeaderStyles__StyledTitle">Pictorial Chart Viz</div>
+          <div class="HeaderStyles__StyledSubtitle"></div>
+        </div>
+      </div>
+      <div data-test="body" class="BoxStyles__Styled BodyStyles__StyledBox">
+        <div style="width: 150px;">
+          <div id="pictorialchartviz" style="float: left; margin-right: 10px; width: 50px;" />The Pictorial Chart Viz
+          provides
+          an infographic style chart showing the relative proportions of data points using a grid of
+          custom icons. You can use the Pictorial Chart Viz to provide information at a glance, in a
+          dashboard panel.
+        </div>
+
+      </div>
+    </div>
+    <div class="cmdInstall">
+      <div class="button-wrapper">
+        <div class="text">Install</div>
+        <span class="icon">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" width="2em" height="2em"
+            preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17">
+            </path>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </a>
+  <a data-test="card" href="$simple-maps-vizURL$" target="_blank" data-clickable="true" value="5166"
+    class="ClickableStyles__StyledA CardStyles__Styled $simple-maps-viz$"
+    style="min-width: 200px; max-width: 200px; margin: 0px 20px 20px 0px;">
+    <div class="CardStyles $simple-maps-viz$">
+      <div data-test="header" class="BoxStyles__Styled HeaderStyles__StyledBox">
+        <div class="HeaderStyles__StyledTitleContainer">
+          <div class="HeaderStyles__StyledTitle">Simple Maps Viz</div>
+          <div class="HeaderStyles__StyledSubtitle"></div>
+        </div>
+      </div>
+      <div data-test="body" class="BoxStyles__Styled BodyStyles__StyledBox">
+        <div style="width: 150px;">
+          <div id="simplemapsviz" style="float: left; margin-right: 10px; width: 50px;" />This app is for anyone who
+          wants
+          an easy way to display a choropleth map without needing to know anything about KML files.
+        </div>
+
+      </div>
+    </div>
+    <div class="cmdInstall">
+      <div class="button-wrapper">
+        <div class="text">Install</div>
+        <span class="icon">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" width="2em" height="2em"
+            preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17">
+            </path>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </a>
+  <a data-test="card" href="$word-tree-vizURL$" target="_blank" data-clickable="true" value="6318"
+    class="ClickableStyles__StyledA CardStyles__Styled $word-tree-viz$"
+    style="min-width: 200px; max-width: 200px; margin: 0px 20px 20px 0px;">
+    <div class="CardStyles $word-tree-viz$">
+      <div data-test="header" class="BoxStyles__Styled HeaderStyles__StyledBox">
+        <div class="HeaderStyles__StyledTitleContainer">
+          <div class="HeaderStyles__StyledTitle">Word Tree Viz</div>
+          <div class="HeaderStyles__StyledSubtitle"></div>
+        </div>
+      </div>
+      <div data-test="body" class="BoxStyles__Styled BodyStyles__StyledBox">
+        <div style="width: 150px;">
+          <div id="wordtreeviz" style="float: left; margin-right: 10px; width: 50px;" />The Word Tree Viz provides an
+          interactive way to visualize how words are related to each other. A word tree depicts
+          multiple parallel sequences of words.
+        </div>
+
+      </div>
+    </div>
+    <div class="cmdInstall">
+      <div class="button-wrapper">
+        <div class="text">Install</div>
+        <span class="icon">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" width="2em" height="2em"
+            preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17">
+            </path>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </a>
+  <a data-test="card" href="$flappy_ponyURL$" target="_blank" data-clickable="true"
+    class="ClickableStyles__StyledA CardStyles__Styled $flappy_pony$"
+    style="min-width: 200px; max-width: 200px; margin: 0px 20px 20px 0px;">
+    <div class="CardStyles $flappy_pony$">
+      <div data-test="header" class="BoxStyles__Styled HeaderStyles__StyledBox">
+        <div class="HeaderStyles__StyledTitleContainer">
+          <div class="HeaderStyles__StyledTitle">Flappy Pony</div>
+          <div class="HeaderStyles__StyledSubtitle"></div>
+        </div>
+      </div>
+      <div data-test="body" class="BoxStyles__Styled BodyStyles__StyledBox">
+        <div style="width: 150px;">
+          <div id="flappypony" style="float: left; margin-right: 10px; width: 50px;" />Flappy Pony is the classic Flappy
+          game with a Splunk twist. Guide the pony through the dangling ethernet cables and beat your
+          personal best.
+        </div>
+
+      </div>
+    </div>
+    <div class="cmdInstall">
+      <div class="button-wrapper">
+        <div class="text">Install</div>
+        <span class="icon">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" width="2em" height="2em"
+            preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17">
+            </path>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </a>
+  <a data-test="card" href="$olly-dashboard-clonerURL$" target="_blank" data-clickable="true"
+    class="ClickableStyles__StyledA CardStyles__Styled $olly-dashboard-cloner$"
+    style="min-width: 200px; max-width: 200px; margin: 0px 20px 20px 0px;">
+    <div class="CardStyles $olly-dashboard-cloner$">
+      <div data-test="header" class="BoxStyles__Styled HeaderStyles__StyledBox">
+        <div class="HeaderStyles__StyledTitleContainer">
+          <div class="HeaderStyles__StyledTitle">Olly Dashboard Cloner</div>
+          <div class="HeaderStyles__StyledSubtitle"></div>
+        </div>
+      </div>
+      <div data-test="body" class="BoxStyles__Styled BodyStyles__StyledBox">
+        <div style="width: 150px;">
+          <div id="ollydashboardcloner" style="float: left; margin-right: 10px; width: 50px;" />This app will help you
+          clone dashboards created in Splunk Observability Cloud into your Splunk Enterprise or Splunk Cloud instance.
+        </div>
+
+      </div>
+    </div>
+    <div class="cmdInstall">
+      <div class="button-wrapper">
+        <div class="text">Install</div>
+        <span class="icon">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" width="2em" height="2em"
+            preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17">
+            </path>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </a>
+  <a data-test="card" href="$TA_publish_to_confluenceURL$" target="_blank" data-clickable="true"
+    class="ClickableStyles__StyledA CardStyles__Styled $TA_publish_to_confluence$"
+    style="min-width: 200px; max-width: 200px; margin: 0px 20px 20px 0px;">
+    <div class="CardStyles $TA_publish_to_confluence$">
+      <div data-test="header" class="BoxStyles__Styled HeaderStyles__StyledBox">
+        <div class="HeaderStyles__StyledTitleContainer">
+          <div class="HeaderStyles__StyledTitle">TA Publish to Confluence</div>
+          <div class="HeaderStyles__StyledSubtitle"></div>
+        </div>
+      </div>
+      <div data-test="body" class="BoxStyles__Styled BodyStyles__StyledBox">
+        <div style="width: 150px;">
+          <div id="tapublishtoconfluence" style="float: left; margin-right: 10px; width: 50px;" />Have you ever wanted
+          to update Confluence with data from Splunk? This app lets you do exactly that! Update a Confluence page on a
+          schedule with this alert action.
+        </div>
+
+      </div>
+    </div>
+    <div class="cmdInstall">
+      <div class="button-wrapper">
+        <div class="text">Install</div>
+        <span class="icon">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" width="2em" height="2em"
+            preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17">
+            </path>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </a>
+  <a data-test="card" href="$treemap-vizURL$" target="_blank" data-clickable="true"
+    class="ClickableStyles__StyledA CardStyles__Styled $treemap-viz$"
+    style="min-width: 200px; max-width: 200px; margin: 0px 20px 20px 0px;">
+    <div class="CardStyles $treemap-viz$">
+      <div data-test="header" class="BoxStyles__Styled HeaderStyles__StyledBox">
+        <div class="HeaderStyles__StyledTitleContainer">
+          <div class="HeaderStyles__StyledTitle">Treemap Viz</div>
+          <div class="HeaderStyles__StyledSubtitle"></div>
+        </div>
+      </div>
+      <div data-test="body" class="BoxStyles__Styled BodyStyles__StyledBox">
+        <div style="width: 150px;">
+          <div id="treemapviz" style="float: left; margin-right: 10px; width: 50px;" />Use a treemap to visualize how a
+          general metric divides across different areas or categories like Budgets and expenses, Data center server
+          status, University departments and courses offered, Incident ticket severity and duration
+        </div>
+
+      </div>
+    </div>
+    <div class="cmdInstall">
+      <div class="button-wrapper">
+        <div class="text">Install</div>
+        <span class="icon">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" width="2em" height="2em"
+            preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17">
+            </path>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </a>
+  <a data-test="card" href="$sankey-vizURL$" target="_blank" data-clickable="true"
+    class="ClickableStyles__StyledA CardStyles__Styled $sankey-viz$"
+    style="min-width: 200px; max-width: 200px; margin: 0px 20px 20px 0px;">
+    <div class="CardStyles $sankey-viz$">
+      <div data-test="header" class="BoxStyles__Styled HeaderStyles__StyledBox">
+        <div class="HeaderStyles__StyledTitleContainer">
+          <div class="HeaderStyles__StyledTitle">Sankey Viz</div>
+          <div class="HeaderStyles__StyledSubtitle"></div>
+        </div>
+      </div>
+      <div data-test="body" class="BoxStyles__Styled BodyStyles__StyledBox">
+        <div style="width: 150px;">
+          <div id="sankeyviz" style="float: left; margin-right: 10px; width: 50px;" />The Sankey Viz adds the ability to
+          create Sankey diagrams to Splunk dashboards. Show metric flows and category relationships between your
+          monitored entities. Choose color themes and add animation to make your dashboards look slick and informative.
+        </div>
+
+      </div>
+
+    </div>
+    <div class="cmdInstall">
+      <div class="button-wrapper">
+        <div class="text">Install</div>
+        <span class="icon">
+          <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" width="2em" height="2em"
+            preserveAspectRatio="xMidYMid meet" viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17">
+            </path>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </a>
+</div>
+
+        </html>
+    </panel>
+  </row>
+</dashboard>

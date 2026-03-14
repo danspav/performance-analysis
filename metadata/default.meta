@@ -2,7 +2,7 @@
 # Application-level permissions
 
 []
-access = read : [ * ], write : [ admin, power ]
+access = read : [ user, * ], write : [ admin, power ]
 
 [lookups]
 export = system

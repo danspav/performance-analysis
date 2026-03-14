@@ -4,5 +4,6 @@
   <view name="visualisation_examples" />
   <view name="drill_down_and_token_examples" />
   <view name="settings" />
+  <view name="other-apps" />
   
 </nav>

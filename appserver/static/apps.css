@@ -1,0 +1,380 @@
+#flappypony {
+    width: 72px;
+    height: 72px;
+    background: url(/static/app/heat-map-viz/images/sprites.png) -0px -0px;
+    background-size: auto 50px;
+    background-repeat: no-repeat;
+    background-position: 0px 0;
+}
+#heatmapviz {
+    width: 72px;
+    height: 72px;
+    background: url(/static/app/heat-map-viz/images/sprites.png) -72px -0px;
+    background-size: auto 50px;
+    background-repeat: no-repeat;
+    background-position: -50px 0;
+}
+#networkdiagramviz {
+    width: 72px;
+    height: 72px;
+    background: url(/static/app/heat-map-viz/images/sprites.png) -144px -0px;
+    background-size: auto 50px;
+    background-repeat: no-repeat;
+    background-position: -100px 0;
+}
+#pictorialchartviz {
+    width: 72px;
+    height: 72px;
+    background: url(/static/app/heat-map-viz/images/sprites.png) -216px -0px;
+    background-size: auto 50px;
+    background-repeat: no-repeat;
+    background-position: -150px 0;
+}
+#ollydashboardcloner {
+    width: 72px;
+    height: 72px;
+    background: url(/static/app/heat-map-viz/images/sprites.png) -288px -0px;
+    background-size: auto 50px;
+    background-repeat: no-repeat;
+    background-position: -200px 0;
+}
+#otelyamlvalidator {
+    width: 72px;
+    height: 72px;
+    background: url(/static/app/heat-map-viz/images/sprites.png) -360px -0px;
+    background-size: auto 50px;
+    background-repeat: no-repeat;
+    background-position: -250px 0;
+}
+#performanceanalysisviz {
+    width: 72px;
+    height: 72px;
+    background: url(/static/app/heat-map-viz/images/sprites.png) -432px -0px;
+    background-size: auto 50px;
+    background-repeat: no-repeat;
+    background-position: -300px 0;
+}
+#simplemapsviz {
+    width: 72px;
+    height: 72px;
+    background: url(/static/app/heat-map-viz/images/sprites.png) -504px -0px;
+    background-size: auto 50px;
+    background-repeat: no-repeat;
+    background-position: -350px 0;
+}
+#tapublishtoconfluence {
+    width: 72px;
+    height: 72px;
+    background: url(/static/app/heat-map-viz/images/sprites.png) -576px -0px;
+    background-size: auto 50px;
+    background-repeat: no-repeat;
+    background-position: -400px 0;
+}
+#treemapviz {
+    width: 72px;
+    height: 72px;
+    background: url(/static/app/heat-map-viz/images/sprites.png) -648px -0px;
+    background-size: auto 50px;
+    background-repeat: no-repeat;
+    background-position: -450px 0;
+}
+#animatedchartviz {
+    width: 72px;
+    height: 72px;
+    background: url(/static/app/heat-map-viz/images/sprites.png) -720px -0px;
+    background-size: auto 50px;
+    background-repeat: no-repeat;
+    background-position: -500px 0;
+}
+#treeviewviz {
+    width: 72px;
+    height: 72px;
+    background: url(/static/app/heat-map-viz/images/sprites.png) -792px -0px;
+    background-size: auto 50px;
+    background-repeat: no-repeat;
+    background-position: -550px 0;
+}
+#wordtreeviz {
+    width: 72px;
+    height: 72px;
+    background: url(/static/app/heat-map-viz/images/sprites.png) -864px -0px;
+    background-size: auto 50px;
+    background-repeat: no-repeat;
+    background-position: -600px 0;
+}
+#eventtimelineviz {
+    width: 72px;
+    height: 72px;
+    background: url(/static/app/heat-map-viz/images/sprites.png) -936px -0px;
+    background-size: auto 50px;
+    background-repeat: no-repeat;
+    background-position: -650px 0;
+}
+#carouselviz {
+    width: 72px;
+    height: 72px;
+    background: url(/static/app/heat-map-viz/images/sprites.png) -1008px -0px;
+    background-size: auto 50px;
+    background-repeat: no-repeat;
+    background-position: -700px 0;
+}
+#departuresboardviz {
+    width: 72px;
+    height: 72px;
+    background: url(/static/app/heat-map-viz/images/sprites.png) -1080px -0px;
+    background-size: auto 50px;
+    background-repeat: no-repeat;
+    background-position: -750px 0;
+}
+#sankeyviz {
+    width: 72px;
+    height: 72px;
+    background: url(/static/app/heat-map-viz/images/sprites.png) -1152px -0px;
+    background-size: auto 50px;
+    background-repeat: no-repeat;
+    background-position: -800px 0;
+}
+
+
+.html h1{
+    display:block;
+    line-height:32px;
+    font-size:32px;
+    border:1px solid #373f48;
+    border-radius:15px;
+    background-color: #373f4850;
+    padding: 8px;
+    width:80%;
+    margin: auto;
+}
+
+div.installed::before {
+  content: "Installed!";
+  position:relative;
+  top: 14px;
+  left: 50%;
+  z-index:1;
+  width: 140px;
+  background: #28a745; /* green */
+  color: white;
+  text-align: center;
+  font-weight: bold;
+  transform: rotate(45deg);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  font-size: 12px;
+  padding: 4px 0;
+  letter-spacing: 0.5px;
+}
+
+div.installed div.HeaderStyles__StyledSubtitle::before{content:'Installed - Open this app.'}
+div.notinstalled div.HeaderStyles__StyledSubtitle::before{content:'See app in Splunkbase.'}
+div.installed:hover::before{
+    animation: jiggle 0.8s ease-in-out infinite;
+}
+
+@keyframes jiggle {
+  0%   { transform: rotate(45deg) translateX(0); }
+  20%  { transform: rotate(41deg) translateX(-3px); }
+  40%  { transform: rotate(47.5deg) translateX(2px); }
+  60%  { transform: rotate(43deg) translateX(-1px); }
+  80%  { transform: rotate(45.5deg) translateX(1px); }
+  100% { transform: rotate(45deg) translateX(0); }
+}
+ /* Light mode defaults */
+:root {
+  --card-bg: #ffffff;
+  --card-border: #ddd;
+  --card-text: #333;
+  --card-subtext: #888;
+  --card-shadow: rgba(0, 0, 0, 0.05);
+  --card-hover-shadow: rgba(0, 0, 0, 0.6);
+}
+
+/* Dark mode overrides */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --card-bg: #1e1e1e;
+    --card-border: #ff0000;
+    --card-text: #f0f0f0;
+    --card-subtext: #aaa;
+    --card-shadow: rgba(255, 255, 255, 0.05);
+    --card-hover-shadow: rgba(255, 255, 255, 0.5);
+  }
+}
+
+.CardLayoutStyles__Styled {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 10px;
+  align-items: stretch;
+  align-content: center!important;
+  justify-content: center;
+  width: 80%;
+  margin: 0px auto;
+}
+
+.CardStyles__Styled {
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  text-decoration: none !important;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.CardStyles__Styled:hover {
+  box-shadow: 0px 10px 30px rgb(13 190 255 / 80%)!important;;
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+.CardStyles {
+    overflow:hidden;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  padding: 10px;
+}
+
+.HeaderStyles__StyledBox {
+  border-bottom: 1px solid white;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+}
+
+.HeaderStyles__StyledTitle {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  color: var(--card-text);
+}
+
+.HeaderStyles__StyledSubtitle {
+  font-size: 12px;
+  color: var(--card-subtext);
+}
+
+.BodyStyles__StyledBox {
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--card-text);
+  flex-grow: 1;
+}
+body{
+    height:100vh;
+}
+div.dashboard-body{background-color:transparent;}
+div.dashboard-panel{border-radius: 20px;padding: 15px;background-color:#3c444d00!important;}
+
+
+
+.ClickableStyles__StyledA.CardStyles__Styled {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* pushes footer to bottom */
+  min-width: 200px;
+  max-width: 200px;
+  margin: 0 20px 20px 0;
+  text-decoration: none;
+}
+
+
+.installed .cmdInstall{display:none!important;}
+
+.cmdInstall {
+  --width: 100px;
+  --height: 35px;
+  --tooltip-height: 35px;
+  --tooltip-width: 90px;
+  --gap-between-tooltip-to-button: 18px;
+  --button-color: #1163ff;
+  --tooltip-color: #fff;
+  margin: 10px auto;
+  width: var(--width);
+  height: var(--height);
+  background: var(--button-color);
+  position: relative;
+  text-align: center;
+  border-radius: 0.45em;
+  font-family: "Arial";
+  transition: background 0.3s;
+}
+
+.cmdInstall::before {
+  position: absolute;
+  content: attr(data-tooltip);
+  width: var(--tooltip-width);
+  height: var(--tooltip-height);
+  background-color: var(--tooltip-color);
+  font-size: 0.9rem;
+  color: #111;
+  border-radius: .25em;
+  line-height: var(--tooltip-height);
+  bottom: calc(var(--height) + var(--gap-between-tooltip-to-button) + 10px);
+  left: calc(50% - var(--tooltip-width) / 2);
+}
+
+.cmdInstall::after {
+  position: absolute;
+  content: '';
+  width: 0;
+  height: 0;
+  border: 10px solid transparent;
+  border-top-color: var(--tooltip-color);
+  left: calc(50% - 10px);
+  bottom: calc(100% + var(--gap-between-tooltip-to-button) - 10px);
+}
+
+.cmdInstall::after,.cmdInstall::before {
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.5s;
+}
+
+.text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button-wrapper,.text,.icon {
+  overflow: hidden;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  color: #fff;
+}
+
+.text {
+  top: 0
+}
+
+.text,.icon {
+  transition: top 0.5s;
+}
+
+.icon {
+  color: #fff;
+  top: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.cmdInstall:hover {
+  background: #28a745;
+}
+
+.cmdInstall:hover .text {
+  top: -100%;
+}
+
+.cmdInstall:hover .icon {
+  top: 0;
+}

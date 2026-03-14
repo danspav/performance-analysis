@@ -34,3 +34,4 @@ table.performance_analysis_legend{background: none!important; border: 1px solid 
 table.performance_analysis_legend_container .icon-alert{font-size: 25px;}
 
 .tooltip{color:black;}
+td.jds_ta_clickable:hover {box-shadow: inset 0 0 0 1000px rgba(255, 255, 255, 0.25);cursor: pointer;}
